@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<div style="max-width:1200px;margin:0 auto;padding:32px 24px 80px">
+  <div class="mono" style="font-size:12px;color:oklch(50% 0.008 90);margin-bottom:4px">RESIDENCIAL AURORA · PRADO ENGENHARIA</div>
+  <h1 style="font-size:26px;margin:0 0 20px;font-weight:700">Fila de solicitações</h1>
+
+  <div style="display:flex;gap:10px;margin-bottom:20px;flex-wrap:wrap">
+    <sc-for list="{{ filters }}" as="f" hint-placeholder-count="5">
+      <button style="{{ f.style }}" onClick="{{ f.onClick }}">{{ f.label }}<span class="mono" style="margin-left:6px;opacity:.7">{{ f.count }}</span></button>
+    </sc-for>
+  </div>
+
+  <div style="display:flex;gap:12px;margin-bottom:24px;flex-wrap:wrap">
+    <div style="flex:1 1 140px;background:oklch(95% 0.035 75);border-radius:10px;padding:14px;text-align:center">
+      <div class="mono" style="font-size:22px;font-weight:700;color:oklch(42% 0.12 75)">{{ pendCount }}</div>
+      <div style="font-size:12px;color:oklch(45% 0.1 75)">Pendentes</div>
+    </div>
+    <div style="flex:1 1 140px;background:oklch(95% 0.035 260);border-radius:10px;padding:14px;text-align:center">
+      <div class="mono" style="font-size:22px;font-weight:700;color:oklch(42% 0.12 260)">{{ analiseCount }}</div>
+      <div style="font-size:12px;color:oklch(45% 0.1 260)">Em análise</div>
+    </div>
+    <div style="flex:1 1 140px;background:oklch(95% 0.035 155);border-radius:10px;padding:14px;text-align:center">
+      <div class="mono" style="font-size:22px;font-weight:700;color:oklch(40% 0.12 155)">{{ aprovCount }}</div>
+      <div style="font-size:12px;color:oklch(42% 0.1 155)">Aprovados</div>
+    </div>
+    <div style="flex:1 1 140px;background:oklch(96% 0.02 25);border-radius:10px;padding:14px;text-align:center">
+      <div class="mono" style="font-size:22px;font-weight:700;color:oklch(42% 0.12 25)">{{ recusCount }}</div>
+      <div style="font-size:12px;color:oklch(45% 0.1 25)">Recusados</div>
+    </div>
+  </div>
+
+  <div style="background:#fff;border:1px solid oklch(91% 0.005 90);border-radius:12px;overflow:hidden">
+    <div style="display:grid;grid-template-columns:90px 1fr 1.2fr 100px 100px 110px 120px;padding:12px 18px;background:oklch(97% 0.003 90);font-size:12px;font-weight:600;color:oklch(45% 0.008 90);gap:8px">
+      <div>ID</div><div>Cliente</div><div>Item</div><div>Nível</div><div>Diferença</div><div>Data</div><div>Ações</div>
+    </div>
+    <sc-for list="{{ rows }}" as="r" hint-placeholder-count="6">
+      <div style="display:grid;grid-template-columns:90px 1fr 1.2fr 100px 100px 110px 120px;padding:12px 18px;border-top:1px solid oklch(93% 0.004 90);font-size:13px;align-items:center;gap:8px">
+        <div class="mono" style="font-size:12px;color:oklch(50% 0.008 90)">{{ r.id }}</div>
+        <div><div style="font-weight:600">{{ r.cliente }}</div><div style="font-size:11px;color:oklch(55% 0.008 90)">{{ r.unidade }} · T{{ r.torre }}</div></div>
+        <div><div>{{ r.item }}</div><div style="font-size:11px;color:oklch(55% 0.008 90)">{{ r.de }} → {{ r.para }}</div></div>
+        <div><span style="{{ r.nivelStyle }}">{{ r.nivelLabel }}</span></div>
+        <div class="mono" style="font-weight:600">{{ r.difLabel }}</div>
+        <div style="font-size:12px;color:oklch(55% 0.008 90)">{{ r.data }}</div>
+        <div style="display:flex;gap:4px">
+          <sc-if value="{{ r.canApprove }}"><button style="padding:5px 10px;border-radius:5px;border:none;background:oklch(55% 0.14 155);color:#fff;font:600 11px 'Plus Jakarta Sans',sans-serif;cursor:pointer" onClick="{{ r.onApprove }}">Aprovar</button></sc-if>
+          <sc-if value="{{ r.canReject }}"><button style="padding:5px 10px;border-radius:5px;border:1px solid oklch(88% 0.005 90);background:#fff;color:oklch(35% 0.01 90);font:600 11px 'Plus Jakarta Sans',sans-serif;cursor:pointer" onClick="{{ r.onReject }}">Recusar</button></sc-if>
+        </div>
+      </div>
+    </sc-for>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  state = { data: null, overrides: {}, filter: "todos" };
+  async componentDidMount(){
+    const mod = await import("./plantta-data.js");
+    this.setState({ data: mod.solicitacoes });
+  }
+  nStyle(n){
+    if(n===1) return "font:600 10px 'Plus Jakarta Sans',sans-serif;padding:3px 8px;border-radius:5px;color:oklch(40% 0.12 155);background:oklch(94% 0.04 155)";
+    if(n===2) return "font:600 10px 'Plus Jakarta Sans',sans-serif;padding:3px 8px;border-radius:5px;color:oklch(42% 0.12 75);background:oklch(94% 0.05 75)";
+    return "font:600 10px 'Plus Jakarta Sans',sans-serif;padding:3px 8px;border-radius:5px;color:oklch(42% 0.12 25);background:oklch(94% 0.02 25)";
+  }
+  renderVals(){
+    const data = this.state.data;
+    if(!data) return {};
+    const withS = data.map(r => ({...r, status: this.state.overrides[r.id] || r.status}));
+    const counts = { pendente:0, em_analise:0, aprovado:0, recusado:0 };
+    withS.forEach(r => counts[r.status]=(counts[r.status]||0)+1);
+    const filterOpts = [
+      { key:"todos", label:"Todos" },
+      { key:"pendente", label:"Pendente" },
+      { key:"em_analise", label:"Em análise" },
+      { key:"aprovado", label:"Aprovado" },
+      { key:"recusado", label:"Recusado" }
+    ];
+    const filters = filterOpts.map(f => {
+      const active = this.state.filter === f.key;
+      const cnt = f.key === "todos" ? withS.length : (counts[f.key]||0);
+      return {
+        label: f.label, count: `${cnt}`,
+        style: `padding:8px 14px;border-radius:7px;font:600 13px 'Plus Jakarta Sans',sans-serif;cursor:pointer;border:1px solid ${active?'oklch(55% 0.16 155)':'oklch(88% 0.005 90)'};background:${active?'oklch(95% 0.035 155)':'#fff'};color:${active?'oklch(35% 0.12 155)':'oklch(40% 0.008 90)'}`,
+        onClick: () => this.setState({ filter: f.key })
+      };
+    });
+    const filtered = this.state.filter === "todos" ? withS : withS.filter(r => r.status === this.state.filter);
+    const rows = filtered.map(r => ({
+      id: r.id, cliente: r.cliente, unidade: r.unidade, torre: r.torre,
+      item: r.item, de: r.de, para: r.para, data: r.data,
+      nivelLabel: r.nivel===1?"Simples":r.nivel===2?"Técnico":"Bloqueado",
+      nivelStyle: this.nStyle(r.nivel),
+      difLabel: r.diferenca != null ? `+R$ ${r.diferenca.toLocaleString('pt-BR')}` : "—",
+      canApprove: r.status === "pendente" || r.status === "em_analise",
+      canReject: r.status === "pendente" || r.status === "em_analise",
+      onApprove: () => this.setState({ overrides: {...this.state.overrides, [r.id]:"aprovado"} }),
+      onReject: () => this.setState({ overrides: {...this.state.overrides, [r.id]:"recusado"} })
+    }));
+    return {
+      filters, rows,
+      pendCount: `${counts.pendente||0}`, analiseCount: `${counts.em_analise||0}`,
+      aprovCount: `${counts.aprovado||0}`, recusCount: `${counts.recusado||0}`
+    };
+  }
+}
+</script>
+</body>
+</html>

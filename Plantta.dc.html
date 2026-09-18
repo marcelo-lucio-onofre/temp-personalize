@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    body{margin:0;background:oklch(97% 0.003 90);font-family:'Plus Jakarta Sans',system-ui,sans-serif;color:oklch(20% 0.015 260)}
+    *{box-sizing:border-box}
+    a{color:oklch(48% 0.14 155)} a:hover{color:oklch(40% 0.14 155)}
+    .mono{font-family:'IBM Plex Mono',monospace}
+  </style>
+</helmet>
+<div style="min-height:100vh;display:flex;flex-direction:column">
+  <div style="position:sticky;top:0;z-index:40;background:oklch(20% 0.025 260);display:flex;align-items:center;gap:4px;padding:10px 16px;overflow-x:auto;flex-wrap:nowrap">
+    <div style="display:flex;align-items:center;gap:8px;margin-right:10px;cursor:pointer" onClick="{{ goTo_landing }}">
+      <svg width="22" height="22" viewBox="0 0 22 22" fill="none" style="flex-shrink:0"><circle cx="5" cy="17" r="2.3" fill="oklch(55% 0.16 155)"/><circle cx="11" cy="10.5" r="2.3" fill="oklch(55% 0.16 155)"/><circle cx="17" cy="4" r="2.3" fill="oklch(55% 0.16 155)"/><path d="M5 17 L11 10.5 L17 4" stroke="oklch(55% 0.16 155)" stroke-width="1.8" fill="none"/></svg>
+      <span style="font-size:17px;font-weight:800;color:#fff;letter-spacing:-.02em">plantta</span>
+    </div>
+    <div style="width:1px;height:22px;background:oklch(32% 0.02 260);margin:0 6px;flex-shrink:0"></div>
+    <span style="font-size:9px;font-weight:700;color:oklch(55% 0.16 155);text-transform:uppercase;letter-spacing:.1em;padding:0 6px;flex-shrink:0">Cliente</span>
+    <button style="{{ ns_portal }}" onClick="{{ goTo_portal }}">Portal</button>
+    <button style="{{ ns_selecao }}" onClick="{{ goTo_selecao }}">Seleção</button>
+    <button style="{{ ns_carrinho }}" onClick="{{ goTo_carrinho }}">Carrinho</button>
+    <button style="{{ ns_calculadora }}" onClick="{{ goTo_calculadora }}">Calculadora</button>
+    <div style="width:1px;height:22px;background:oklch(32% 0.02 260);margin:0 6px;flex-shrink:0"></div>
+    <span style="font-size:9px;font-weight:700;color:oklch(55% 0.16 155);text-transform:uppercase;letter-spacing:.1em;padding:0 6px;flex-shrink:0">Construtora</span>
+    <button style="{{ ns_painel }}" onClick="{{ goTo_painel }}">Painel</button>
+    <button style="{{ ns_aprovacao }}" onClick="{{ goTo_aprovacao }}">Aprovação</button>
+    <button style="{{ ns_termo }}" onClick="{{ goTo_termo }}">Termo</button>
+    <button style="{{ ns_dashboard }}" onClick="{{ goTo_dashboard }}">Dashboard</button>
+  </div>
+
+  <sc-if value="{{ is_landing }}" hint-placeholder-val="{{ true }}"><dc-import name="Plantta-Landing" hint-size="100%,2600px"></dc-import></sc-if>
+  <sc-if value="{{ is_portal }}"><dc-import name="Plantta-Portal" hint-size="100%,1600px"></dc-import></sc-if>
+  <sc-if value="{{ is_selecao }}"><dc-import name="Plantta-Selecao" hint-size="100%,1200px"></dc-import></sc-if>
+  <sc-if value="{{ is_carrinho }}"><dc-import name="Plantta-Carrinho" hint-size="100%,1400px"></dc-import></sc-if>
+  <sc-if value="{{ is_calculadora }}"><dc-import name="Plantta-Calculadora" hint-size="100%,1200px"></dc-import></sc-if>
+  <sc-if value="{{ is_painel }}"><dc-import name="Plantta-Painel" hint-size="100%,1400px"></dc-import></sc-if>
+  <sc-if value="{{ is_aprovacao }}"><dc-import name="Plantta-Aprovacao" hint-size="100%,1600px"></dc-import></sc-if>
+  <sc-if value="{{ is_termo }}"><dc-import name="Plantta-Termo" hint-size="100%,1800px"></dc-import></sc-if>
+  <sc-if value="{{ is_dashboard }}"><dc-import name="Plantta-Dashboard" hint-size="100%,1400px"></dc-import></sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  state = { screen: "landing" };
+  go(s){ this.setState({ screen: s }); window.scrollTo(0,0); }
+  ns(s){
+    const active = this.state.screen === s;
+    return `padding:6px 12px;border-radius:6px;font:600 12px 'Plus Jakarta Sans',sans-serif;cursor:pointer;border:none;white-space:nowrap;background:${active?'oklch(55% 0.16 155)':'transparent'};color:${active?'#fff':'oklch(75% 0.01 90)'}`;
+  }
+  renderVals(){
+    const screens = ["landing","portal","selecao","carrinho","calculadora","painel","aprovacao","termo","dashboard"];
+    const vals = {};
+    screens.forEach(s => {
+      vals[`is_${s}`] = this.state.screen === s;
+      vals[`ns_${s}`] = this.ns(s);
+      vals[`goTo_${s}`] = () => this.go(s);
+    });
+    return vals;
+  }
+}
+</script>
+</body>
+</html>

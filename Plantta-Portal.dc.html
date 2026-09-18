@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<div style="max-width:1100px;margin:0 auto;padding:36px 24px 80px">
+  <div class="mono" style="font-size:12px;color:oklch(50% 0.008 90);margin-bottom:4px">RESIDENCIAL AURORA · APTO 1204 · TORRE B</div>
+  <div style="display:flex;justify-content:space-between;align-items:flex-end;flex-wrap:wrap;gap:12px;margin-bottom:8px">
+    <h1 style="font-size:26px;margin:0;font-weight:700">Meu apartamento</h1>
+    <div style="display:flex;gap:12px;align-items:center">
+      <div style="font-size:13px;color:oklch(50% 0.008 90)">Prazo: <strong>01/11/2026</strong></div>
+    </div>
+  </div>
+
+  <div style="display:flex;gap:16px;flex-wrap:wrap;margin-bottom:28px">
+    <div style="flex:1 1 180px;background:oklch(95% 0.035 155);border-radius:10px;padding:16px">
+      <div style="font-size:12px;color:oklch(40% 0.1 155);margin-bottom:4px">Créditos gerados</div>
+      <div class="mono" style="font-size:22px;font-weight:700;color:oklch(35% 0.12 155)">{{ creditoLabel }}</div>
+    </div>
+    <div style="flex:1 1 180px;background:oklch(96% 0.02 25);border-radius:10px;padding:16px">
+      <div style="font-size:12px;color:oklch(42% 0.1 25);margin-bottom:4px">Custos adicionais</div>
+      <div class="mono" style="font-size:22px;font-weight:700;color:oklch(42% 0.12 25)">{{ debitoLabel }}</div>
+    </div>
+    <div style="flex:1 1 180px;background:#fff;border:2px solid oklch(55% 0.16 155);border-radius:10px;padding:16px">
+      <div style="font-size:12px;color:oklch(40% 0.1 155);margin-bottom:4px">Saldo líquido</div>
+      <div class="mono" style="font-size:22px;font-weight:700;color:{{ saldoColor }}">{{ saldoLabel }}</div>
+    </div>
+  </div>
+
+  <div style="display:flex;flex-direction:column;gap:28px">
+    <sc-for list="{{ ambientes }}" as="amb" hint-placeholder-count="4">
+      <div>
+        <div style="display:flex;align-items:baseline;justify-content:space-between;margin-bottom:12px">
+          <h2 style="font-size:19px;font-weight:700;margin:0">{{ amb.nome }}</h2>
+          <span class="mono" style="font-size:11px;color:oklch(50% 0.008 90)">{{ amb.countLabel }}</span>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:10px">
+          <sc-for list="{{ amb.itens }}" as="item" hint-placeholder-count="3">
+            <div style="background:#fff;border:1px solid oklch(91% 0.005 90);border-radius:12px;padding:18px 20px;display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap">
+              <div style="flex:1 1 200px">
+                <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
+                  <span style="font-weight:600;font-size:15px">{{ item.nome }}</span>
+                  <span style="{{ item.nivelStyle }}">{{ item.nivelLabel }}</span>
+                </div>
+                <div style="font-size:13px;color:oklch(50% 0.008 90)">{{ item.statusLine }}</div>
+              </div>
+              <div style="display:flex;align-items:center;gap:10px">
+                <sc-if value="{{ item.diffLabel }}"><span class="mono" style="font-size:14px;font-weight:600;color:{{ item.diffColor }}">{{ item.diffLabel }}</span></sc-if>
+                <sc-if value="{{ item.hasAction }}"><button style="padding:8px 16px;border-radius:7px;border:1px solid oklch(88% 0.005 90);background:#fff;font:600 13px 'Plus Jakarta Sans',sans-serif;cursor:pointer;color:oklch(30% 0.01 90)" onClick="{{ item.onSelect }}">{{ item.actionLabel }}</button></sc-if>
+              </div>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+    </sc-for>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  state = { data: null, choices: {}, parametrico: { eletrica_sala: 14, hidraulica: 5 } };
+  async componentDidMount(){
+    const mod = await import("./plantta-data.js");
+    this.setState({ data: mod.ambientes });
+  }
+  nStyle(n){
+    if(n===1) return "font:600 10px 'Plus Jakarta Sans',sans-serif;padding:3px 8px;border-radius:5px;color:oklch(40% 0.12 155);background:oklch(94% 0.04 155);white-space:nowrap";
+    if(n===2) return "font:600 10px 'Plus Jakarta Sans',sans-serif;padding:3px 8px;border-radius:5px;color:oklch(42% 0.12 75);background:oklch(94% 0.05 75);white-space:nowrap";
+    return "font:600 10px 'Plus Jakarta Sans',sans-serif;padding:3px 8px;border-radius:5px;color:oklch(42% 0.12 25);background:oklch(94% 0.02 25);white-space:nowrap";
+  }
+  renderVals(){
+    const data = this.state.data;
+    if(!data) return {};
+    let totalCredito = 0, totalDebito = 0;
+    const ambientes = data.map(room => {
+      const itens = room.itens.map(it => {
+        const chosen = this.state.choices[it.id];
+        const chosenOpt = chosen ? it.opcoes.find(o => o.id === chosen) : null;
+        let statusLine = `Padrão: ${it.padrao}`;
+        let diffLabel = null, diffColor = "oklch(50% 0.008 90)";
+        if(it.nivel === 3){
+          statusLine = it.motivoBloqueio || "Alteração proibida";
+        } else if(it.parametrico){
+          const qty = this.state.parametrico[it.id] || it.qtdPadrao;
+          const extra = qty - it.qtdPadrao;
+          if(extra > 0){
+            const cost = extra * it.custoPorUnidade.total;
+            totalDebito += cost;
+            diffLabel = `+R$ ${cost.toLocaleString('pt-BR',{minimumFractionDigits:2})}`;
+            diffColor = "oklch(42% 0.12 25)";
+            statusLine = `${it.qtdPadrao} padrão → ${qty} solicitados (+${extra})`;
+          } else {
+            statusLine = `${it.padrao} · prazo: ${it.prazo}`;
+          }
+        } else if(chosenOpt){
+          if(chosenOpt.remocao){
+            totalCredito += it.valorPadrao;
+            diffLabel = `+R$ ${it.valorPadrao.toLocaleString('pt-BR')}`;
+            diffColor = "oklch(40% 0.12 155)";
+            statusLine = `Removido (crédito gerado)`;
+          } else if(!chosenOpt.padrao){
+            const diff = chosenOpt.preco - it.valorPadrao;
+            totalCredito += it.valorPadrao;
+            totalDebito += chosenOpt.preco;
+            diffLabel = diff > 0 ? `+R$ ${diff.toLocaleString('pt-BR')}` : `−R$ ${Math.abs(diff).toLocaleString('pt-BR')}`;
+            diffColor = diff > 0 ? "oklch(42% 0.12 25)" : "oklch(40% 0.12 155)";
+            statusLine = `${it.padrao} → ${chosenOpt.nome}`;
+          } else {
+            statusLine = `Padrão: ${it.padrao} · prazo: ${it.prazo}`;
+          }
+        } else {
+          statusLine = `Padrão: ${it.padrao}` + (it.prazo ? ` · prazo: ${it.prazo}` : '');
+        }
+        return {
+          nome: it.nome,
+          nivelLabel: it.nivel===1?"Simples":it.nivel===2?"Técnico":"Bloqueado",
+          nivelStyle: this.nStyle(it.nivel),
+          statusLine, diffLabel, diffColor,
+          hasAction: it.nivel < 3,
+          actionLabel: (chosenOpt && !chosenOpt.padrao) || (it.parametrico && (this.state.parametrico[it.id]||it.qtdPadrao) > it.qtdPadrao) ? "Alterar" : "Personalizar",
+          onSelect: () => {}
+        };
+      });
+      return { nome: room.nome, countLabel: `${room.itens.length} itens`, itens };
+    });
+    const saldo = totalCredito - totalDebito;
+    return {
+      ambientes,
+      creditoLabel: `R$ ${totalCredito.toLocaleString('pt-BR')}`,
+      debitoLabel: `R$ ${totalDebito.toLocaleString('pt-BR',{minimumFractionDigits:2})}`,
+      saldoLabel: (saldo >= 0 ? "+" : "−") + ` R$ ${Math.abs(saldo).toLocaleString('pt-BR',{minimumFractionDigits:2})}`,
+      saldoColor: saldo >= 0 ? "oklch(40% 0.12 155)" : "oklch(42% 0.12 25)"
+    };
+  }
+}
+</script>
+</body>
+</html>

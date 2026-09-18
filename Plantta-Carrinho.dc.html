@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<div style="max-width:1100px;margin:0 auto;padding:36px 24px 80px">
+  <div class="mono" style="font-size:12px;color:oklch(50% 0.008 90);margin-bottom:4px">RESIDENCIAL AURORA · APTO 1204</div>
+  <h1 style="font-size:26px;margin:0 0 24px;font-weight:700">Carrinho de personalização</h1>
+
+  <div style="display:flex;gap:24px;flex-wrap:wrap;align-items:flex-start">
+    <div style="flex:1.6 1 460px;display:flex;flex-direction:column;gap:12px">
+      <div style="font-weight:700;font-size:15px;margin-bottom:4px">Alterações selecionadas</div>
+      <sc-for list="{{ selecoes }}" as="s" hint-placeholder-count="4">
+        <div style="background:#fff;border:1px solid oklch(91% 0.005 90);border-radius:10px;padding:16px 18px">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;margin-bottom:6px">
+            <div><span style="font-weight:600;font-size:14px">{{ s.item }}</span><span style="font-size:12px;color:oklch(50% 0.008 90);margin-left:8px">{{ s.ambiente }}</span></div>
+            <span style="{{ s.nivelStyle }}">{{ s.nivelLabel }}</span>
+          </div>
+          <div style="font-size:13px;color:oklch(50% 0.008 90);margin-bottom:8px">{{ s.de }} → {{ s.para }}</div>
+          <div style="display:flex;gap:16px;font-size:13px">
+            <span>Crédito: <span class="mono" style="color:oklch(40% 0.12 155);font-weight:600">{{ s.creditoLabel }}</span></span>
+            <span>Custo: <span class="mono" style="color:oklch(42% 0.12 25);font-weight:600">{{ s.custoLabel }}</span></span>
+            <span>Líquido: <span class="mono" style="font-weight:700;color:{{ s.liquidoColor }}">{{ s.liquidoLabel }}</span></span>
+          </div>
+        </div>
+      </sc-for>
+    </div>
+
+    <div style="flex:1 1 320px;position:sticky;top:24px">
+      <div style="background:#fff;border:1px solid oklch(91% 0.005 90);border-radius:14px;padding:22px;margin-bottom:16px">
+        <div style="font-weight:700;font-size:17px;margin-bottom:16px">Ledger de crédito</div>
+        <sc-for list="{{ ledger }}" as="tx" hint-placeholder-count="4">
+          <div style="display:flex;justify-content:space-between;gap:8px;padding:8px 0;border-bottom:1px solid oklch(93% 0.004 90);font-size:12px">
+            <div style="flex:1"><div class="mono" style="color:oklch(60% 0.008 90);font-size:11px;margin-bottom:2px">{{ tx.data }}</div><div>{{ tx.desc }}</div></div>
+            <div class="mono" style="font-weight:600;white-space:nowrap;color:{{ tx.color }}">{{ tx.valorLabel }}</div>
+          </div>
+        </sc-for>
+      </div>
+      <div style="background:oklch(20% 0.025 260);color:#fff;border-radius:14px;padding:22px">
+        <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:8px"><span style="opacity:.7">Créditos gerados</span><span class="mono" style="font-weight:600;color:oklch(70% 0.12 155)">{{ totalCredLabel }}</span></div>
+        <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:12px"><span style="opacity:.7">Custos adicionais</span><span class="mono" style="font-weight:600;color:oklch(75% 0.1 25)">{{ totalDebLabel }}</span></div>
+        <div style="border-top:1px solid oklch(35% 0.02 260);padding-top:12px;display:flex;justify-content:space-between;font-size:16px;font-weight:700">
+          <span>Saldo líquido</span><span class="mono">{{ saldoLabel }}</span>
+        </div>
+        <button style="width:100%;margin-top:16px;padding:13px;border-radius:8px;border:none;background:oklch(55% 0.16 155);color:#fff;font:700 14px 'Plus Jakarta Sans',sans-serif;cursor:pointer">Enviar para aprovação</button>
+      </div>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  renderVals(){
+    const items = [
+      { item:"Piso", ambiente:"Sala", de:"Standard 60×60", para:"Portobello Premium 80×80", nivel:1, credito:6000, custo:8500 },
+      { item:"Bancada", ambiente:"Cozinha", de:"Granito Cinza Corumbá", para:"Quartzo Branco Ibiza", nivel:1, credito:3200, custo:4900 },
+      { item:"Louças e Metais", ambiente:"Banheiro", de:"Deca Aspen + Deca Link", para:"Docol Benefit Black", nivel:1, credito:2100, custo:3400 },
+      { item:"Piso Varanda", ambiente:"Varanda", de:"Externo Cinza", para:"Removido (crédito)", nivel:1, credito:3800, custo:0 },
+      { item:"Pontos Elétricos", ambiente:"Sala", de:"8 pontos", para:"14 pontos (+6)", nivel:2, credito:0, custo:904.80 }
+    ];
+    const nS = n => n===1?"font:600 10px 'Plus Jakarta Sans',sans-serif;padding:3px 8px;border-radius:5px;color:oklch(40% 0.12 155);background:oklch(94% 0.04 155)":"font:600 10px 'Plus Jakarta Sans',sans-serif;padding:3px 8px;border-radius:5px;color:oklch(42% 0.12 75);background:oklch(94% 0.05 75)";
+    const selecoes = items.map(s => {
+      const liq = s.credito - s.custo;
+      return { ...s, nivelLabel: s.nivel===1?"Simples":"Técnico", nivelStyle: nS(s.nivel),
+        creditoLabel: s.credito > 0 ? `+R$ ${s.credito.toLocaleString('pt-BR')}` : "—",
+        custoLabel: s.custo > 0 ? `−R$ ${s.custo.toLocaleString('pt-BR',{minimumFractionDigits:2})}` : "—",
+        liquidoLabel: (liq>=0?"+":"−")+` R$ ${Math.abs(liq).toLocaleString('pt-BR',{minimumFractionDigits:2})}`,
+        liquidoColor: liq >= 0 ? "oklch(40% 0.12 155)" : "oklch(42% 0.12 25)"
+      };
+    });
+    const ledger = [
+      { data:"12/09 09:14", desc:"Crédito: Piso Sala (padrão)", valor:6000, tipo:"c" },
+      { data:"12/09 09:14", desc:"Upgrade: Portobello Premium", valor:-8500, tipo:"d" },
+      { data:"12/09 09:22", desc:"Crédito: Bancada (padrão)", valor:3200, tipo:"c" },
+      { data:"12/09 09:22", desc:"Upgrade: Quartzo Branco Ibiza", valor:-4900, tipo:"d" },
+      { data:"12/09 09:30", desc:"Crédito: Louças (padrão)", valor:2100, tipo:"c" },
+      { data:"12/09 09:30", desc:"Upgrade: Docol Benefit Black", valor:-3400, tipo:"d" },
+      { data:"13/09 14:05", desc:"Remoção: Piso Varanda (crédito)", valor:3800, tipo:"c" },
+      { data:"13/09 15:20", desc:"Pontos elétricos: 6 extras × R$ 150,80", valor:-904.80, tipo:"d" }
+    ].map(tx => ({
+      ...tx,
+      valorLabel: (tx.valor > 0 ? "+" : "") + `R$ ${tx.valor.toLocaleString('pt-BR',{minimumFractionDigits:2})}`,
+      color: tx.tipo === "c" ? "oklch(40% 0.12 155)" : "oklch(42% 0.12 25)"
+    }));
+    const totalCred = items.reduce((s,i)=>s+i.credito,0);
+    const totalDeb = items.reduce((s,i)=>s+i.custo,0);
+    const saldo = totalCred - totalDeb;
+    return {
+      selecoes, ledger,
+      totalCredLabel: `+R$ ${totalCred.toLocaleString('pt-BR')}`,
+      totalDebLabel: `−R$ ${totalDeb.toLocaleString('pt-BR',{minimumFractionDigits:2})}`,
+      saldoLabel: (saldo>=0?"+":"−")+` R$ ${Math.abs(saldo).toLocaleString('pt-BR',{minimumFractionDigits:2})}`
+    };
+  }
+}
+</script>
+</body>
+</html>
