@@ -1,0 +1,219 @@
+// Pure calculation functions — no React, no I/O. Shared by Portal, Carrinho
+// and Selecao pages so the ledger math has exactly one implementation.
+import type { AllowanceGroup, Ambiente, Item, NivelAprovacao, Opcao, Solicitacao, StatusSolicitacao, Vinculo } from "./types";
+
+const statusLabels: Record<StatusSolicitacao, string> = {
+  pendente: "Pendente",
+  em_analise: "Em análise",
+  aprovado: "Aprovado",
+  recusado: "Recusado",
+};
+
+export const statusLabel = (status: StatusSolicitacao): string => statusLabels[status];
+
+/**
+ * A request can only be edited by the client up until someone starts
+ * handling it — once it's picked up (em_analise) or resolved, it's locked.
+ */
+export const isEditavel = (s: Pick<Solicitacao, "status">): boolean => s.status === "pendente";
+
+/** Strips leading zeros from a zero-padded numeric code ("00001" → "1"). */
+const semZerosEsquerda = (codigo: string): string => String(parseInt(codigo, 10) || 0);
+
+/** Short, stable reference: SOL-{construtora}-{empreendimento}-{sequencial}.
+ * construtoraId/empreendimentoId are canonically 5-digit numeric codes
+ * ("00001") — displayed here without the leading zeros. The solicitação's
+ * own sequential number keeps its 4-digit padding. */
+export const formatSolicitacaoRef = (vinculo: Pick<Vinculo, "construtoraId" | "empreendimentoId">, id: string): string => {
+  const numero = id.replace(/^SOL-/, "").padStart(4, "0");
+  return `SOL-${semZerosEsquerda(vinculo.construtoraId)}-${semZerosEsquerda(vinculo.empreendimentoId)}-${numero}`;
+};
+
+/** "3 dias e 4h" style duration between an ISO instant and now (or a close instant). */
+export function tempoDecorrido(desdeIso: string, ateIso?: string): string {
+  const inicio = new Date(desdeIso).getTime();
+  const fim = ateIso ? new Date(ateIso).getTime() : Date.now();
+  const ms = Math.max(0, fim - inicio);
+  const horas = Math.floor(ms / 3_600_000);
+  const dias = Math.floor(horas / 24);
+  const horasRestantes = horas % 24;
+  if (dias === 0) return `${horas}h`;
+  if (horasRestantes === 0) return `${dias}d`;
+  return `${dias}d ${horasRestantes}h`;
+}
+
+export function fmtDataHora(iso: string): string {
+  const d = new Date(iso);
+  return d.toLocaleString("pt-BR", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" });
+}
+
+export const nivelLabel = (nivel: NivelAprovacao): string =>
+  nivel === 1 ? "Simples" : nivel === 2 ? "Técnico" : "Bloqueado";
+
+export const fmtBRL = (v: number, decimals = 0): string =>
+  `R$ ${v.toLocaleString("pt-BR", { minimumFractionDigits: decimals, maximumFractionDigits: decimals })}`;
+
+export const fmtSigned = (v: number, decimals = 0): string =>
+  (v >= 0 ? "+" : "−") + ` ${fmtBRL(Math.abs(v), decimals)}`;
+
+/** Same as fmtSigned but no space after the sign — for tight ledger rows. */
+export const fmtLedgerValor = (v: number, decimals = 2): string =>
+  (v >= 0 ? "+" : "−") + fmtBRL(Math.abs(v), decimals);
+
+export interface LinhaAlteracao {
+  itemId: string;
+  ambiente: string;
+  item: string;
+  nivel: NivelAprovacao;
+  de: string;
+  para: string;
+  credito: number;
+  custo: number;
+}
+
+export interface ResumoAlteracoes {
+  linhas: LinhaAlteracao[];
+  totalCredito: number;
+  totalDebito: number;
+  saldo: number;
+}
+
+/** Extra quantity above the included default, for parametric items (elétrica/hidráulica). */
+export const qtdExtra = (item: Item, qtd: number): number => Math.max(0, qtd - (item.qtdPadrao ?? 0));
+
+export const custoParametrico = (item: Item, qtd: number): number => {
+  const extra = qtdExtra(item, qtd);
+  return extra * (item.custoPorUnidade?.total ?? 0);
+};
+
+export interface AvaliacaoItem {
+  de: string;
+  para: string;
+  /** Magnitude of the credit/debit delta — always positive, matches the
+   * `diferenca` shown in Painel and stored on Solicitacao. */
+  diferenca: number;
+}
+
+/** What choosing a given option means for an item — used when building a
+ * new solicitação in the wizard. */
+export function avaliarOpcao(item: Item, opt: Opcao): AvaliacaoItem {
+  if (opt.padrao) return { de: item.padrao, para: item.padrao, diferenca: 0 };
+  if (opt.remocao) return { de: item.padrao, para: "Removido (crédito)", diferenca: item.valorPadrao };
+  return { de: item.padrao, para: opt.nome, diferenca: Math.abs(opt.preco - item.valorPadrao) };
+}
+
+/** Same as avaliarOpcao, for parametric items (pontos elétricos/hidráulicos). */
+export function avaliarParametrico(item: Item, qtd: number): AvaliacaoItem {
+  const extra = qtdExtra(item, qtd);
+  return {
+    de: `${item.qtdPadrao} pontos`,
+    para: `${qtd} pontos (+${extra})`,
+    diferenca: custoParametrico(item, qtd),
+  };
+}
+
+export interface SaldoAllowance {
+  valorTotal: number;
+  consumido: number;
+  saldo: number;
+}
+
+/**
+ * Saldo ao vivo de uma verba compartilhada entre vários itens de um mesmo
+ * ambiente (ex.: piso + revestimento + louças do banheiro dividindo uma só
+ * verba) — gastar mais num item reduz o saldo visível nos itens irmãos.
+ * `choices` é o mesmo `Record<itemId, opcaoId>` já usado por
+ * `resumirAlteracoes`; `preview` deixa o wizard mostrar o impacto de uma
+ * opção sendo escolhida agora, antes de confirmar (ainda não está em
+ * `choices`, que só é gravado na submissão).
+ */
+export function saldoAllowanceGroup(
+  group: AllowanceGroup,
+  itensDoGrupo: Item[],
+  choices: Record<string, string>,
+  preview?: { itemId: string; opcaoId: string | null },
+): SaldoAllowance {
+  let consumido = 0;
+  for (const item of itensDoGrupo) {
+    const chosenId = preview && preview.itemId === item.id ? preview.opcaoId : choices[item.id];
+    const opt = chosenId ? item.opcoes.find((o) => o.id === chosenId) : undefined;
+    if (!opt || opt.padrao) consumido += item.valorPadrao;
+    else if (!opt.remocao) consumido += opt.preco;
+  }
+  return { valorTotal: group.valorTotal, consumido, saldo: group.valorTotal - consumido };
+}
+
+/**
+ * Builds the list of items whose choice differs from the built-in default —
+ * this is what powers the Portal status lines, the Carrinho line items and
+ * the ledger totals, all from the same source of truth.
+ */
+export function resumirAlteracoes(
+  ambientes: Ambiente[],
+  choices: Record<string, string>,
+  parametrico: Record<string, number>,
+): ResumoAlteracoes {
+  const linhas: LinhaAlteracao[] = [];
+  let totalCredito = 0;
+  let totalDebito = 0;
+
+  for (const amb of ambientes) {
+    for (const item of amb.itens) {
+      if (item.nivel === 3) continue;
+
+      if (item.parametrico) {
+        const qtd = parametrico[item.id] ?? item.qtdPadrao ?? 0;
+        const extra = qtdExtra(item, qtd);
+        if (extra > 0) {
+          const custo = custoParametrico(item, qtd);
+          totalDebito += custo;
+          linhas.push({
+            itemId: item.id,
+            ambiente: amb.nome,
+            item: item.nome,
+            nivel: item.nivel,
+            de: `${item.qtdPadrao} pontos`,
+            para: `${qtd} pontos (+${extra})`,
+            credito: 0,
+            custo,
+          });
+        }
+        continue;
+      }
+
+      const chosenId = choices[item.id];
+      if (!chosenId) continue;
+      const opt = item.opcoes.find((o) => o.id === chosenId);
+      if (!opt || opt.padrao) continue;
+
+      if (opt.remocao) {
+        totalCredito += item.valorPadrao;
+        linhas.push({
+          itemId: item.id,
+          ambiente: amb.nome,
+          item: item.nome,
+          nivel: item.nivel,
+          de: item.padrao,
+          para: "Removido (crédito)",
+          credito: item.valorPadrao,
+          custo: 0,
+        });
+      } else {
+        totalCredito += item.valorPadrao;
+        totalDebito += opt.preco;
+        linhas.push({
+          itemId: item.id,
+          ambiente: amb.nome,
+          item: item.nome,
+          nivel: item.nivel,
+          de: item.padrao,
+          para: opt.nome,
+          credito: item.valorPadrao,
+          custo: opt.preco,
+        });
+      }
+    }
+  }
+
+  return { linhas, totalCredito, totalDebito, saldo: totalCredito - totalDebito };
+}
