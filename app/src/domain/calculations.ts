@@ -2,6 +2,38 @@
 // and Selecao pages so the ledger math has exactly one implementation.
 import type { AllowanceGroup, Ambiente, Item, NivelAprovacao, Opcao, Solicitacao, StatusSolicitacao, Vinculo } from "./types";
 
+export interface ResumoUnidade {
+  valorImovel: number;
+  totalAprovado: number;
+  totalPendente: number;
+  totalGeral: number;
+}
+
+/** True when a solicitação's outcome was removing the padrão item entirely
+ * (generates a credit, so it should reduce the unit's running total)
+ * rather than swapping it for a pricier option (a cost, adds to the
+ * total) — the one signal a stored Solicitacao carries for this, since
+ * only the net `diferenca` magnitude survives avaliarOpcao, not separate
+ * credit/cost legs. */
+export const isRemocao = (s: Pick<Solicitacao, "para">): boolean => s.para === "Removido (crédito)";
+
+/**
+ * A unidade's running total — o "Monte sua unidade": valor do imóvel mais
+ * toda personalização já aprovada (definitiva) e ainda pendente (estimada),
+ * a mesma agregação que alimenta o Termo de alteração (ver TermoPage).
+ */
+export function resumirUnidade(solicitacoes: Solicitacao[], vinculoId: string, valorImovel: number): ResumoUnidade {
+  let totalAprovado = 0;
+  let totalPendente = 0;
+  for (const s of solicitacoes) {
+    if (s.vinculoId !== vinculoId || !s.diferenca) continue;
+    const valor = isRemocao(s) ? -s.diferenca : s.diferenca;
+    if (s.status === "aprovado") totalAprovado += valor;
+    else if (s.status === "pendente" || s.status === "em_analise") totalPendente += valor;
+  }
+  return { valorImovel, totalAprovado, totalPendente, totalGeral: valorImovel + totalAprovado + totalPendente };
+}
+
 const statusLabels: Record<StatusSolicitacao, string> = {
   pendente: "Pendente",
   em_analise: "Em análise",
@@ -27,6 +59,14 @@ const semZerosEsquerda = (codigo: string): string => String(parseInt(codigo, 10)
 export const formatSolicitacaoRef = (vinculo: Pick<Vinculo, "construtoraId" | "empreendimentoId">, id: string): string => {
   const numero = id.replace(/^SOL-/, "").padStart(4, "0");
   return `SOL-${semZerosEsquerda(vinculo.construtoraId)}-${semZerosEsquerda(vinculo.empreendimentoId)}-${numero}`;
+};
+
+/** Document number for a unit's aggregate Termo de alteração — same
+ * construtora/empreendimento numeric-code convention as formatSolicitacaoRef,
+ * closed with the unit's own number instead of a single solicitação's. */
+export const formatTermoRef = (vinculo: Pick<Vinculo, "construtoraId" | "empreendimentoId" | "unidadeLabel">): string => {
+  const unidade = vinculo.unidadeLabel.replace(/\D/g, "") || "0";
+  return `ALT-${semZerosEsquerda(vinculo.construtoraId)}-${semZerosEsquerda(vinculo.empreendimentoId)}-${unidade}`;
 };
 
 /** "3 dias e 4h" style duration between an ISO instant and now (or a close instant). */

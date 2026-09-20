@@ -113,7 +113,7 @@ export function AprovacaoPage() {
             {recusado ? "Recusado" : "Recusar com justificativa"}
           </button>
           {approved && (
-            <Link to="/termo" className="btn" style={{ marginLeft: "auto" }}>
+            <Link to={`/termo/${solicitacao.vinculoId}`} className="btn" style={{ marginLeft: "auto" }}>
               Ver termo de alteração
             </Link>
           )}

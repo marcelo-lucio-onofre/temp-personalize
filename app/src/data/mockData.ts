@@ -598,6 +598,20 @@ export const solicitacoesIniciais: Solicitacao[] = [
       { id: "SOL-018-t2", data: "2026-08-15T17:00:00-03:00", autor: "Sistema", papel: "Automático", texto: "Aprovada automaticamente — item de nível Simples.", tipo: "aprovacao" },
     ],
   },
+  {
+    id: "SOL-019",
+    vinculoId: "v-aurora-1204",
+    itemId: "eletrica_sala",
+    unidade: "Apto 1204", torre: "B", cliente: "Marina Alves",
+    item: "Pontos Elétricos +4", de: "8 pontos", para: "12 pontos (+4)", diferenca: 603.2,
+    status: "aprovado", nivel: 2, data: "11/09/2026", abertoEm: "2026-09-11T10:00:00-03:00", encerradoEm: "2026-09-12T09:00:00-03:00", responsavel: "Eng. Carlos Medeiros",
+    timeline: [
+      { id: "SOL-019-t1", data: "2026-09-11T10:00:00-03:00", autor: "Marina Alves", papel: "Cliente", texto: "Solicitação criada: 4 pontos elétricos extras na sala.", tipo: "criacao" },
+      { id: "SOL-019-t2", data: "2026-09-11T10:05:00-03:00", autor: "Sistema", papel: "Automático", texto: "Roteada para engenharia (nível técnico detectado).", tipo: "roteamento" },
+      { id: "SOL-019-t3", data: "2026-09-11T15:30:00-03:00", autor: "Eng. Carlos Medeiros", papel: "Responsável técnico", texto: "Quadro elétrico suporta adição de 4 pontos sem troca de disjuntor geral. Execução conforme projeto complementar.", tipo: "parecer" },
+      { id: "SOL-019-t4", data: "2026-09-12T09:00:00-03:00", autor: "Eng. Carlos Medeiros", papel: "Responsável técnico", texto: "Solicitação aprovada com assinatura digital.", tipo: "aprovacao" },
+    ],
+  },
 ];
 
 export const dashboardData: DashboardData = {

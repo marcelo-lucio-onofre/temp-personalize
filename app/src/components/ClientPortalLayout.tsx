@@ -1,15 +1,16 @@
 import { NavLink, Navigate, Outlet } from "react-router-dom";
-import { ClipboardList } from "lucide-react";
+import { ClipboardList, Home } from "lucide-react";
 import { SidebarShell } from "./SidebarShell";
 import { useApp } from "../state/AppContext";
 
 /**
- * Client portal shell, built on the shared SidebarShell template. There is
- * exactly one standing destination — "Minhas personalizações". "Nova
- * personalização" is NOT a menu item on purpose: it already has its own
- * button on that page, and duplicating it in the sidebar just repeats the
- * same action twice. The old Construtora → Empreendimento → Unidade tree
- * is gone too — picking a unit happens as step 1 of the wizard.
+ * Client portal shell, built on the shared SidebarShell template. Two
+ * standing destinations — "Minha unidade" (running total) and "Minhas
+ * personalizações" (the request list). "Nova personalização" is NOT a menu
+ * item on purpose: it already has its own button on that page, and
+ * duplicating it in the sidebar just repeats the same action twice. The old
+ * Construtora → Empreendimento → Unidade tree is gone too — picking a unit
+ * happens as step 1 of the wizard.
  */
 export function ClientPortalLayout() {
   const { role, vinculos, activeVinculo, effectiveBrand, catalogo, logout } = useApp();
@@ -21,6 +22,9 @@ export function ClientPortalLayout() {
 
   const navContent = (
     <div className="stack gap-sm">
+      <NavLink to="/minha-unidade" className={({ isActive }) => "sidebar-nav-btn" + (isActive ? " active" : "")}>
+        <Home className="sidebar-nav-icon" /> Minha unidade
+      </NavLink>
       <NavLink to="/personalizacoes" className={({ isActive }) => "sidebar-nav-btn" + (isActive ? " active" : "")}>
         <ClipboardList className="sidebar-nav-icon" /> Minhas personalizações
       </NavLink>

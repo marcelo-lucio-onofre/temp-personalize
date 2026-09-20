@@ -11,6 +11,7 @@ import { LandingPage } from "./pages/LandingPage";
 import { LoginClientePage } from "./pages/LoginClientePage";
 import { LoginConstrutoraPage } from "./pages/LoginConstrutoraPage";
 import { MarcaPage } from "./pages/MarcaPage";
+import { MinhaUnidadePage } from "./pages/MinhaUnidadePage";
 import { NovaPersonalizacaoPage } from "./pages/NovaPersonalizacaoPage";
 import { PainelPage } from "./pages/PainelPage";
 import { PersonalizacaoDetalhePage } from "./pages/PersonalizacaoDetalhePage";
@@ -29,6 +30,11 @@ export default function App() {
       <Route path="/login/cliente" element={<SimpleLoginClientePage />} />
       <Route path="/login/cliente/marca" element={<LoginClientePage />} />
       <Route path="/login/construtora" element={<LoginConstrutoraPage />} />
+      {/* Reachable from both portals (cliente's "Minha unidade" and
+          construtora's Aprovação) — lives outside either layout, with its
+          own role check, since it's a standalone document, not nav-bound
+          to one portal. */}
+      <Route path="/termo/:vinculoId" element={<TermoPage />} />
 
       {/* Client portal — brand-themed (plantta or construtora, see
           ClientPortalLayout / effectiveBrand). "Minhas personalizações" is
@@ -38,6 +44,7 @@ export default function App() {
           from "Editar escolha" on a personalização's detail) but aren't
           advertised in the sidebar anymore. */}
       <Route element={<ClientPortalLayout />}>
+        <Route path="/minha-unidade" element={<MinhaUnidadePage />} />
         <Route path="/personalizacoes" element={<PersonalizacoesPage />} />
         <Route path="/personalizacoes/nova" element={<NovaPersonalizacaoPage />} />
         <Route path="/personalizacoes/:id" element={<PersonalizacaoDetalhePage />} />
@@ -54,7 +61,6 @@ export default function App() {
         <Route path="/marca" element={<MarcaPage />} />
         <Route path="/painel" element={<PainelPage />} />
         <Route path="/aprovacao/:id" element={<AprovacaoPage />} />
-        <Route path="/termo" element={<TermoPage />} />
         <Route path="/dashboard" element={<DashboardPage />} />
       </Route>
 
