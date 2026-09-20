@@ -35,16 +35,18 @@ function NavGroup({ items }: { items: typeof operacao }) {
  * not as standalone legacy shortcuts.
  */
 export function ConstrutoraPortalLayout() {
-  const { role, logout } = useApp();
+  const { role, vinculos, construtoraLogadaId, logout } = useApp();
 
   if (role !== "construtora") return <Navigate to="/login/construtora" replace />;
+
+  const construtoraNome = vinculos.find((v) => v.construtoraId === construtoraLogadaId)?.construtoraNome ?? "Construtora";
 
   return (
     <SidebarShell
       brandName={planttaBrand.nome}
       brandColor={planttaBrand.color}
       brandLogo={planttaBrand.logo}
-      brandTag="Construtora"
+      brandTag={construtoraNome}
       sections={[
         { label: "Operação", icon: LayoutDashboard, content: <NavGroup items={operacao} /> },
         { label: "Configuração", icon: Settings2, content: <NavGroup items={configuracao} /> },

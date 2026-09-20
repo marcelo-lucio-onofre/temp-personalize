@@ -1,16 +1,22 @@
 import { useNavigate } from "react-router-dom";
+import { planttaBrand } from "../data/mockData";
 import { useApp } from "../state/AppContext";
 
 const heroPhoto = "https://alliance.com.br/wp-content/uploads/2025/11/Copia-de-Guarita-1.jpg";
+const ALLIANCE_CONSTRUTORA_ID = "00003";
 
 /**
  * Branded (white-label) client login — this is Alliance's own login page,
  * so signing in here goes straight to the Alliance vínculo's portal
  * (skipping the "meus imóveis" picker the generic login uses) and that
- * portal renders with Alliance's brand throughout.
+ * portal renders with Alliance's brand throughout. Reads Alliance's brand
+ * live from the repository (what MarcaPage edits), same as effectiveBrand
+ * does post-login — this page renders before any session exists, so it
+ * can't rely on loginScopeConstrutoraId.
  */
 export function LoginClientePage() {
-  const { brand, loginCliente } = useApp();
+  const { brandRepo, loginCliente } = useApp();
+  const brand = brandRepo.getBrand(ALLIANCE_CONSTRUTORA_ID) ?? planttaBrand;
   const navigate = useNavigate();
 
   function handleEnter() {

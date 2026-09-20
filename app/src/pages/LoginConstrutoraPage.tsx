@@ -1,13 +1,18 @@
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { BrandMark } from "../components/BrandMark";
 import { useApp } from "../state/AppContext";
 
 export function LoginConstrutoraPage() {
-  const { loginConstrutora } = useApp();
+  const { vinculos, loginConstrutora } = useApp();
   const navigate = useNavigate();
 
+  const construtoras = [...new Map(vinculos.map((v) => [v.construtoraId, v.construtoraNome])).entries()];
+  const [construtoraId, setConstrutoraId] = useState(construtoras[0]?.[0] ?? "");
+
   function handleEnter() {
-    loginConstrutora();
+    if (!construtoraId) return;
+    loginConstrutora(construtoraId);
     navigate("/painel");
   }
 
@@ -38,6 +43,14 @@ export function LoginConstrutoraPage() {
         </p>
 
         <div className="stack gap-sm" style={{ marginBottom: 20 }}>
+          <div>
+            <label className="label">Construtora</label>
+            <select className="input" value={construtoraId} onChange={(e) => setConstrutoraId(e.target.value)}>
+              {construtoras.map(([id, nome]) => (
+                <option key={id} value={id}>{nome}</option>
+              ))}
+            </select>
+          </div>
           <div>
             <label className="label">E-mail corporativo</label>
             <input className="input" placeholder="voce@construtora.com.br" />

@@ -396,10 +396,10 @@ function CatalogoEmpreendimentoEditor({ empreendimentoId, construtoraId }: Edito
  * nunca vazar edição de um catálogo pro outro).
  */
 export function CatalogoPage() {
-  const { vinculos, catalogo } = useApp();
+  const { vinculos, catalogo, construtoraLogadaId } = useApp();
 
-  const construtoras = [...new Map(vinculos.map((v) => [v.construtoraId, v.construtoraNome])).entries()];
-  const [construtoraId, setConstrutoraId] = useState(construtoras[0]?.[0] ?? "");
+  const construtoraId = construtoraLogadaId ?? "";
+  const construtoraNome = vinculos.find((v) => v.construtoraId === construtoraId)?.construtoraNome ?? "Construtora";
   const empreendimentos = catalogo.listEmpreendimentosByConstrutora(construtoraId);
   const [empreendimentoIdSelecionado, setEmpreendimentoIdSelecionado] = useState("");
   const empreendimentoId = empreendimentos.some((e) => e.empreendimentoId === empreendimentoIdSelecionado)
@@ -409,20 +409,12 @@ export function CatalogoPage() {
   return (
     <div className="container">
       <Breadcrumb items={[{ label: "Painel", to: "/painel" }, { label: "Catálogo" }]} />
-      <h1 style={{ fontSize: 24, fontWeight: 700, marginBottom: 8 }}>Catálogo</h1>
+      <h1 style={{ fontSize: 24, fontWeight: 700, marginBottom: 8 }}>Catálogo — {construtoraNome}</h1>
       <p style={{ fontSize: 14, color: "var(--ink-soft)", marginBottom: 24, maxWidth: "70ch", lineHeight: 1.5 }}>
         O que o cliente vê no portal de personalização vem daqui — ambientes, itens, opções, preços e verbas de cada empreendimento, além da biblioteca de materiais reutilizável.
       </p>
 
       <div className="row gap-sm" style={{ marginBottom: 24, flexWrap: "wrap" }}>
-        <div style={{ minWidth: 220 }}>
-          <label className="label">Construtora</label>
-          <select className="input" value={construtoraId} onChange={(e) => { setConstrutoraId(e.target.value); setEmpreendimentoIdSelecionado(""); }}>
-            {construtoras.map(([id, nome]) => (
-              <option key={id} value={id}>{nome}</option>
-            ))}
-          </select>
-        </div>
         <div style={{ minWidth: 220 }}>
           <label className="label">Empreendimento</label>
           <select className="input" value={empreendimentoId} onChange={(e) => setEmpreendimentoIdSelecionado(e.target.value)}>

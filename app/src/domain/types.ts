@@ -150,6 +150,9 @@ export interface TimelineEvent {
 export interface Solicitacao {
   id: string;
   vinculoId: string;
+  /** Denormalized on purpose — Painel needs to scope by construtora even
+   * for demo rows whose vinculoId has no matching Vinculo record. */
+  construtoraId: string;
   /** The catalog Item.id this request is about — powers the "edit" deep
    * link (Seleção for fixed-option items, Calculadora for parametric ones). */
   itemId: string;

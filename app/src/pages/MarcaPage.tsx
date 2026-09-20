@@ -6,12 +6,15 @@ import { useApp } from "../state/AppContext";
 const SWATCHES = ["#fd3541", "#2e9e68", "#0163a3", "#7c3aed", "#d9622b", "#0891b2"];
 
 export function MarcaPage() {
-  const { brand, saveBrand } = useApp();
+  const { vinculos, construtoraLogadaId, brandRepo, saveBrand } = useApp();
   const navigate = useNavigate();
 
-  const [nome, setNome] = useState(brand.nome);
-  const [color, setColor] = useState(brand.color);
-  const [logo, setLogo] = useState<string | null>(brand.logo);
+  const construtoraNome = vinculos.find((v) => v.construtoraId === construtoraLogadaId)?.construtoraNome ?? "Construtora";
+  const brand = construtoraLogadaId ? brandRepo.getBrand(construtoraLogadaId) : null;
+
+  const [nome, setNome] = useState(brand?.nome ?? construtoraNome);
+  const [color, setColor] = useState(brand?.color ?? SWATCHES[0]);
+  const [logo, setLogo] = useState<string | null>(brand?.logo ?? null);
 
   const initial = nome.trim()[0]?.toUpperCase() ?? "P";
 
@@ -24,7 +27,8 @@ export function MarcaPage() {
   }
 
   function handleSave() {
-    saveBrand({ nome, color, logo });
+    if (!construtoraLogadaId) return;
+    saveBrand(construtoraLogadaId, { nome, color, logo });
     navigate("/painel");
   }
 

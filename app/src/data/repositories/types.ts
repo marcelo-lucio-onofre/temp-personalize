@@ -43,12 +43,15 @@ export interface IVinculoRepository {
 }
 
 export interface IBrandRepository {
-  getBrand(): Brand;
-  saveBrand(brand: Brand): Brand;
+  /** null when that construtora hasn't opted into white-label yet — the
+   * client portal falls back to plantta's own brand in that case. */
+  getBrand(construtoraId: string): Brand | null;
+  saveBrand(construtoraId: string, brand: Brand): Brand;
 }
 
 export interface NovaSolicitacaoInput {
   vinculoId: string;
+  construtoraId: string;
   itemId: string;
   item: string;
   unidade: string;

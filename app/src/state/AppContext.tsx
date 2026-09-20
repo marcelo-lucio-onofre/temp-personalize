@@ -29,6 +29,7 @@ interface PersistedSession {
   role: Role;
   activeVinculoId: string | null;
   loginScopeConstrutoraId: string | null;
+  construtoraLogadaId: string | null;
 }
 
 function loadSession(): PersistedSession | null {
@@ -51,7 +52,6 @@ function saveSession(session: PersistedSession) {
 
 interface AppState {
   role: Role;
-  brand: Brand;
   vinculos: Vinculo[];
   activeVinculoId: string | null;
   /** Set only when the client logged in through a specific construtora's
@@ -59,6 +59,10 @@ interface AppState {
    * token tied to that construtora. Null for the generic plantta login,
    * which sees every construtora the client holds a unit with. */
   loginScopeConstrutoraId: string | null;
+  /** Which construtora a construtora-side session logged in as — Painel,
+   * Marca and Catálogo all scope to this, never to every construtora at
+   * once. Set at LOGIN_CONSTRUTORA time, from the login screen's picker. */
+  construtoraLogadaId: string | null;
   /** Personalization choices, namespaced by vínculo so two units never
    * bleed into each other even when they share item ids. */
   choices: Record<string, Record<string, string>>;
@@ -66,18 +70,17 @@ interface AppState {
   customSubmissions: Record<string, SolicitacaoMaterialProprio>;
   solicitacoes: Solicitacao[];
   cadastros: EmpreendimentoCadastrado[];
-  /** Bumped whenever the catalog (ambientes/allowance/materiais) is edited,
-   * so anything reading it live in the same session re-renders — mirrors
-   * the REFRESH_SOLICITACOES pattern below. */
-  catalogoVersion: number;
+  /** Bumped whenever data that lives outside the reducer (catalog, brand)
+   * is edited, so anything reading it live in the same session re-renders
+   * — mirrors the REFRESH_SOLICITACOES pattern below. */
+  dadosVersion: number;
 }
 
 type Action =
   | { type: "LOGIN_CLIENTE"; vinculoId: string | null }
-  | { type: "LOGIN_CONSTRUTORA" }
+  | { type: "LOGIN_CONSTRUTORA"; construtoraId: string }
   | { type: "LOGOUT" }
   | { type: "SELECIONAR_VINCULO"; vinculoId: string }
-  | { type: "SAVE_BRAND"; brand: Brand }
   | { type: "CHOOSE_OPTION"; vinculoId: string; itemId: string; opcaoId: string }
   | { type: "SET_PARAMETRICO"; vinculoId: string; itemId: string; qtd: number }
   | { type: "SUBMIT_CUSTOM_MATERIAL"; submission: SolicitacaoMaterialProprio }
@@ -85,22 +88,22 @@ type Action =
   | { type: "RECUSAR_SOLICITACAO"; id: string }
   | { type: "REFRESH_SOLICITACOES" }
   | { type: "CADASTRAR_EMPREENDIMENTO"; input: CadastroEmpreendimentoInput }
-  | { type: "CATALOGO_ATUALIZADO" };
+  | { type: "DADOS_ATUALIZADOS" };
 
 function buildInitialState(): AppState {
   const session = loadSession();
   return {
     role: session?.role ?? null,
-    brand: repositories.brand.getBrand(),
     vinculos: repositories.vinculos.listForCliente(),
     activeVinculoId: session?.activeVinculoId ?? null,
     loginScopeConstrutoraId: session?.loginScopeConstrutoraId ?? null,
+    construtoraLogadaId: session?.construtoraLogadaId ?? null,
     choices: {},
     parametrico: {},
     customSubmissions: {},
     solicitacoes: repositories.solicitacoes.list(),
     cadastros: repositories.cadastros.list(),
-    catalogoVersion: 0,
+    dadosVersion: 0,
   };
 }
 
@@ -116,15 +119,11 @@ function reducer(state: AppState, action: Action): AppState {
       };
     }
     case "LOGIN_CONSTRUTORA":
-      return { ...state, role: "construtora" };
+      return { ...state, role: "construtora", construtoraLogadaId: action.construtoraId };
     case "LOGOUT":
-      return { ...state, role: null, activeVinculoId: null, loginScopeConstrutoraId: null };
+      return { ...state, role: null, activeVinculoId: null, loginScopeConstrutoraId: null, construtoraLogadaId: null };
     case "SELECIONAR_VINCULO":
       return { ...state, activeVinculoId: action.vinculoId };
-    case "SAVE_BRAND": {
-      const brand = repositories.brand.saveBrand(action.brand);
-      return { ...state, brand };
-    }
     case "CHOOSE_OPTION":
       return {
         ...state,
@@ -160,8 +159,8 @@ function reducer(state: AppState, action: Action): AppState {
       repositories.cadastros.create(action.input);
       return { ...state, cadastros: [...repositories.cadastros.list()] };
     }
-    case "CATALOGO_ATUALIZADO":
-      return { ...state, catalogoVersion: state.catalogoVersion + 1 };
+    case "DADOS_ATUALIZADOS":
+      return { ...state, dadosVersion: state.dadosVersion + 1 };
     default:
       return state;
   }
@@ -175,10 +174,10 @@ interface AppContextValue extends AppState {
   vinculoChoices: Record<string, string>;
   vinculoParametrico: Record<string, number>;
   loginCliente: (vinculoId?: string) => void;
-  loginConstrutora: () => void;
+  loginConstrutora: (construtoraId: string) => void;
   logout: () => void;
   selecionarVinculo: (vinculoId: string) => void;
-  saveBrand: (brand: Brand) => void;
+  saveBrand: (construtoraId: string, brand: Brand) => void;
   chooseOption: (itemId: string, opcaoId: string) => void;
   setParametrico: (itemId: string, qtd: number) => void;
   submitCustomMaterial: (submission: SolicitacaoMaterialProprio) => void;
@@ -192,6 +191,7 @@ interface AppContextValue extends AppState {
   removerMaterial: (id: string) => void;
   catalogo: typeof repositories.catalogo;
   catalogoMateriais: typeof repositories.materiais;
+  brandRepo: typeof repositories.brand;
   dashboard: typeof repositories.dashboard;
 }
 
@@ -205,14 +205,18 @@ export function AppProvider({ children }: { children: ReactNode }) {
       role: state.role,
       activeVinculoId: state.activeVinculoId,
       loginScopeConstrutoraId: state.loginScopeConstrutoraId,
+      construtoraLogadaId: state.construtoraLogadaId,
     });
-  }, [state.role, state.activeVinculoId, state.loginScopeConstrutoraId]);
+  }, [state.role, state.activeVinculoId, state.loginScopeConstrutoraId, state.construtoraLogadaId]);
 
   const loginCliente = useCallback((vinculoId?: string) => dispatch({ type: "LOGIN_CLIENTE", vinculoId: vinculoId ?? null }), []);
-  const loginConstrutora = useCallback(() => dispatch({ type: "LOGIN_CONSTRUTORA" }), []);
+  const loginConstrutora = useCallback((construtoraId: string) => dispatch({ type: "LOGIN_CONSTRUTORA", construtoraId }), []);
   const logout = useCallback(() => dispatch({ type: "LOGOUT" }), []);
   const selecionarVinculo = useCallback((vinculoId: string) => dispatch({ type: "SELECIONAR_VINCULO", vinculoId }), []);
-  const saveBrand = useCallback((brand: Brand) => dispatch({ type: "SAVE_BRAND", brand }), []);
+  const saveBrand = useCallback((construtoraId: string, brand: Brand) => {
+    repositories.brand.saveBrand(construtoraId, brand);
+    dispatch({ type: "DADOS_ATUALIZADOS" });
+  }, []);
 
   const activeVinculoId = state.activeVinculoId;
   const chooseOption = useCallback(
@@ -247,31 +251,30 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const salvarCatalogo = useCallback((empreendimentoId: string, ambientesNovos: Ambiente[], allowanceGroups: AllowanceGroup[]) => {
     repositories.catalogo.replaceAmbientes(empreendimentoId, ambientesNovos);
     repositories.catalogo.replaceAllowanceGroups(empreendimentoId, allowanceGroups);
-    dispatch({ type: "CATALOGO_ATUALIZADO" });
+    dispatch({ type: "DADOS_ATUALIZADOS" });
   }, []);
   const criarMaterial = useCallback((input: Omit<MaterialCatalogItem, "id">) => {
     const created = repositories.materiais.create(input);
-    dispatch({ type: "CATALOGO_ATUALIZADO" });
+    dispatch({ type: "DADOS_ATUALIZADOS" });
     return created;
   }, []);
   const atualizarMaterial = useCallback((id: string, patch: Partial<Omit<MaterialCatalogItem, "id" | "construtoraId">>) => {
     repositories.materiais.update(id, patch);
-    dispatch({ type: "CATALOGO_ATUALIZADO" });
+    dispatch({ type: "DADOS_ATUALIZADOS" });
   }, []);
   const removerMaterial = useCallback((id: string) => {
     repositories.materiais.remove(id);
-    dispatch({ type: "CATALOGO_ATUALIZADO" });
+    dispatch({ type: "DADOS_ATUALIZADOS" });
   }, []);
 
   const activeVinculo = state.vinculos.find((v) => v.id === state.activeVinculoId);
   // Brand comes from how the session logged in (loginScopeConstrutoraId),
   // never from whichever vínculo is momentarily "active" — picking a unit
   // in the wizard, or the "Editar escolha" link, must not repaint the
-  // whole portal in another construtora's colors mid-session.
-  const loginVinculo = state.loginScopeConstrutoraId
-    ? state.vinculos.find((v) => v.construtoraId === state.loginScopeConstrutoraId)
-    : undefined;
-  const effectiveBrand = loginVinculo?.brand ?? planttaBrand;
+  // whole portal in another construtora's colors mid-session. Read live
+  // from the brand repository (what MarcaPage actually edits), not from
+  // the vínculo's own `brand` field, which is only a seed snapshot.
+  const effectiveBrand = (state.loginScopeConstrutoraId && repositories.brand.getBrand(state.loginScopeConstrutoraId)) || planttaBrand;
   const vinculoChoices = (activeVinculoId && state.choices[activeVinculoId]) || EMPTY_RECORD;
   const vinculoParametrico = (activeVinculoId && state.parametrico[activeVinculoId]) || EMPTY_RECORD;
 
@@ -300,6 +303,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       removerMaterial,
       catalogo: repositories.catalogo,
       catalogoMateriais: repositories.materiais,
+      brandRepo: repositories.brand,
       dashboard: repositories.dashboard,
     }),
     [

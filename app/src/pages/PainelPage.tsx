@@ -15,13 +15,16 @@ const FILTERS: { key: StatusSolicitacao | "todos"; label: string }[] = [
 ];
 
 export function PainelPage() {
-  const { solicitacoes, aprovarSolicitacao, recusarSolicitacao } = useApp();
+  const { solicitacoes, vinculos, construtoraLogadaId, aprovarSolicitacao, recusarSolicitacao } = useApp();
   const [filter, setFilter] = useState<StatusSolicitacao | "todos">("todos");
 
-  const counts: Record<StatusSolicitacao, number> = { pendente: 0, em_analise: 0, aprovado: 0, recusado: 0 };
-  for (const s of solicitacoes) counts[s.status]++;
+  const construtoraNome = vinculos.find((v) => v.construtoraId === construtoraLogadaId)?.construtoraNome ?? "Construtora";
+  const minhas = construtoraLogadaId ? solicitacoes.filter((s) => s.construtoraId === construtoraLogadaId) : solicitacoes;
 
-  const filtered = filter === "todos" ? solicitacoes : solicitacoes.filter((s) => s.status === filter);
+  const counts: Record<StatusSolicitacao, number> = { pendente: 0, em_analise: 0, aprovado: 0, recusado: 0 };
+  for (const s of minhas) counts[s.status]++;
+
+  const filtered = filter === "todos" ? minhas : minhas.filter((s) => s.status === filter);
 
   return (
     <div className="container container--wide">
@@ -29,7 +32,7 @@ export function PainelPage() {
       <div className="row" style={{ justifyContent: "space-between", alignItems: "flex-start", marginBottom: 24, gap: 12 }}>
         <div>
           <h1 style={{ fontSize: 24, fontWeight: 700, marginBottom: 4 }}>Fila de solicitações</h1>
-          <p style={{ fontSize: 14, color: "var(--ink-soft)" }}>Residencial Aurora, Prado Engenharia</p>
+          <p style={{ fontSize: 14, color: "var(--ink-soft)" }}>{construtoraNome}</p>
         </div>
         <div className="row gap-sm">
           <Link to="/cadastro" className="btn btn--sm">+ Cadastrar empreendimento</Link>
@@ -40,7 +43,7 @@ export function PainelPage() {
       <div className="row gap-sm" style={{ marginBottom: 20 }}>
         {FILTERS.map((f) => {
           const active = filter === f.key;
-          const count = f.key === "todos" ? solicitacoes.length : counts[f.key];
+          const count = f.key === "todos" ? minhas.length : counts[f.key];
           return (
             <button
               key={f.key}

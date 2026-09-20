@@ -386,6 +386,7 @@ export const solicitacoesIniciais: Solicitacao[] = [
   {
     id: "SOL-001",
     vinculoId: "v-aurora-1204",
+    construtoraId: "00001",
     itemId: "piso_sala",
     unidade: "Apto 1204", torre: "B", cliente: "Marina Alves",
     item: "Piso Sala", de: "Standard 60×60", para: "Portobello Premium 80×80", diferenca: 2500,
@@ -398,6 +399,7 @@ export const solicitacoesIniciais: Solicitacao[] = [
   {
     id: "SOL-002",
     vinculoId: "v-aurora-1204",
+    construtoraId: "00001",
     itemId: "bancada",
     unidade: "Apto 1204", torre: "B", cliente: "Marina Alves",
     item: "Bancada Cozinha", de: "Granito Cinza Corumbá", para: "Quartzo Branco Ibiza", diferenca: 1700,
@@ -410,6 +412,7 @@ export const solicitacoesIniciais: Solicitacao[] = [
   {
     id: "SOL-003",
     vinculoId: "v-outro-812-a",
+    construtoraId: "00001",
     itemId: "eletrica_sala",
     unidade: "Apto 812", torre: "A", cliente: "Ricardo Nogueira",
     item: "Pontos Elétricos +12", de: "20 pontos", para: "32 pontos", diferenca: 1809.6,
@@ -423,6 +426,7 @@ export const solicitacoesIniciais: Solicitacao[] = [
   {
     id: "SOL-004",
     vinculoId: "v-outro-305-a",
+    construtoraId: "00002",
     itemId: "loucas",
     unidade: "Apto 305", torre: "A", cliente: "Fernanda Lima",
     item: "Louças e Metais", de: "Deca Aspen", para: "Docol Benefit Black", diferenca: 1300,
@@ -435,6 +439,7 @@ export const solicitacoesIniciais: Solicitacao[] = [
   {
     id: "SOL-005",
     vinculoId: "v-outro-1104-b",
+    construtoraId: "00001",
     itemId: "integracao",
     unidade: "Apto 1104", torre: "B", cliente: "Bruno Castro",
     item: "Integração Varanda", de: "Esquadria fechada", para: "Retrátil total", diferenca: 8500,
@@ -448,6 +453,7 @@ export const solicitacoesIniciais: Solicitacao[] = [
   {
     id: "SOL-006",
     vinculoId: "v-outro-601-a",
+    construtoraId: "00003",
     itemId: "viga_banheiro",
     unidade: "Apto 601", torre: "A", cliente: "Larissa Prado",
     item: "Remoção viga banheiro", de: "—", para: "Remoção solicitada", diferenca: null,
@@ -460,6 +466,7 @@ export const solicitacoesIniciais: Solicitacao[] = [
   {
     id: "SOL-007",
     vinculoId: "v-outro-903-b",
+    construtoraId: "00002",
     itemId: "piso_varanda",
     unidade: "Apto 903", torre: "B", cliente: "André Souza",
     item: "Piso Varanda", de: "Externo Cinza", para: "Amadeirado Deck", diferenca: 1400,
@@ -472,6 +479,7 @@ export const solicitacoesIniciais: Solicitacao[] = [
   {
     id: "SOL-008",
     vinculoId: "v-outro-1507-b",
+    construtoraId: "00001",
     itemId: "hidraulica",
     unidade: "Apto 1507", torre: "B", cliente: "Camila Reis",
     item: "Pontos Hidráulicos +2", de: "3 pontos", para: "5 pontos", diferenca: 354,
@@ -484,6 +492,7 @@ export const solicitacoesIniciais: Solicitacao[] = [
   {
     id: "SOL-009",
     vinculoId: "v-outro-702-a",
+    construtoraId: "00003",
     itemId: "revestimento",
     unidade: "Apto 702", torre: "A", cliente: "Thiago Martins",
     item: "Revestimento Banheiro", de: "Acetinado Bege", para: "Off-White Grande Formato", diferenca: 1200,
@@ -495,6 +504,7 @@ export const solicitacoesIniciais: Solicitacao[] = [
   {
     id: "SOL-010",
     vinculoId: "v-outro-410-a",
+    construtoraId: "00002",
     itemId: "cuba",
     unidade: "Apto 410", torre: "A", cliente: "Juliana Rocha",
     item: "Cuba Cozinha", de: "Cuba simples", para: "Cuba dupla + gourmet", diferenca: 850,
@@ -507,6 +517,7 @@ export const solicitacoesIniciais: Solicitacao[] = [
   {
     id: "SOL-011",
     vinculoId: "v-vistaverde-2201",
+    construtoraId: "00002",
     itemId: "piso_sala",
     unidade: "Apto 2201", torre: "C", cliente: "Marina Alves",
     item: "Piso Sala", de: "Standard 60×60", para: "Marmorizado Extra", diferenca: 3800,
@@ -518,6 +529,7 @@ export const solicitacoesIniciais: Solicitacao[] = [
   {
     id: "SOL-012",
     vinculoId: "v-vistaverde-2201",
+    construtoraId: "00002",
     itemId: "bancada",
     unidade: "Apto 2201", torre: "C", cliente: "Marina Alves",
     item: "Bancada Cozinha", de: "Granito Cinza Corumbá", para: "Dekton Sirius", diferenca: 2900,
@@ -530,6 +542,7 @@ export const solicitacoesIniciais: Solicitacao[] = [
   {
     id: "SOL-013",
     vinculoId: "v-boulevard-501",
+    construtoraId: "00003",
     itemId: "revestimento",
     unidade: "Apto 501", torre: "A", cliente: "Marina Alves",
     item: "Revestimento Banheiro", de: "Acetinado Bege", para: "Off-White Grande Formato", diferenca: 1200,
@@ -542,6 +555,7 @@ export const solicitacoesIniciais: Solicitacao[] = [
   {
     id: "SOL-014",
     vinculoId: "v-boulevard-501",
+    construtoraId: "00003",
     itemId: "piso_varanda",
     unidade: "Apto 501", torre: "A", cliente: "Marina Alves",
     item: "Piso Varanda", de: "Externo Cinza", para: "Amadeirado Deck", diferenca: 1400,
@@ -554,6 +568,7 @@ export const solicitacoesIniciais: Solicitacao[] = [
   {
     id: "SOL-015",
     vinculoId: "v-boulevard-1502",
+    construtoraId: "00003",
     itemId: "cuba",
     unidade: "Apto 1502", torre: "B", cliente: "Marina Alves",
     item: "Cuba Cozinha", de: "Cuba simples inox + monocomando", para: "Cuba dupla + torneira gourmet", diferenca: 850,
@@ -566,6 +581,7 @@ export const solicitacoesIniciais: Solicitacao[] = [
   {
     id: "SOL-016",
     vinculoId: "v-boulevard-1502",
+    construtoraId: "00003",
     itemId: "loucas",
     unidade: "Apto 1502", torre: "B", cliente: "Marina Alves",
     item: "Louças e Metais", de: "Deca Aspen + Deca Link", para: "Docol Benefit Black", diferenca: 1300,
@@ -577,6 +593,7 @@ export const solicitacoesIniciais: Solicitacao[] = [
   {
     id: "SOL-017",
     vinculoId: "v-jardins-302",
+    construtoraId: "00003",
     itemId: "piso_sala",
     unidade: "Apto 302", torre: "Única", cliente: "Marina Alves",
     item: "Piso Sala", de: "Standard 60×60", para: "Portobello Premium 80×80", diferenca: 2500,
@@ -589,6 +606,7 @@ export const solicitacoesIniciais: Solicitacao[] = [
   {
     id: "SOL-018",
     vinculoId: "v-jardins-302",
+    construtoraId: "00003",
     itemId: "bancada",
     unidade: "Apto 302", torre: "Única", cliente: "Marina Alves",
     item: "Bancada Cozinha", de: "Granito Cinza Corumbá", para: "Quartzo Branco Ibiza", diferenca: 1700,
@@ -601,6 +619,7 @@ export const solicitacoesIniciais: Solicitacao[] = [
   {
     id: "SOL-019",
     vinculoId: "v-aurora-1204",
+    construtoraId: "00001",
     itemId: "eletrica_sala",
     unidade: "Apto 1204", torre: "B", cliente: "Marina Alves",
     item: "Pontos Elétricos +4", de: "8 pontos", para: "12 pontos (+4)", diferenca: 603.2,

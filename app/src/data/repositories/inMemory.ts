@@ -5,6 +5,7 @@
 import type {
   AllowanceGroup,
   Ambiente,
+  Brand,
   CadastroEmpreendimentoInput,
   EmpreendimentoCadastrado,
   MaterialCatalogItem,
@@ -116,13 +117,16 @@ export class InMemoryVinculoRepository implements IVinculoRepository {
 }
 
 export class InMemoryBrandRepository implements IBrandRepository {
-  private brand = { ...initialBrand };
-  getBrand() {
-    return this.brand;
+  // Only Alliance ("00003") starts opted into white-label — matches the
+  // Alliance vínculos' own seed brand. Prado/Horizonte start unset (null),
+  // same as their vínculos' brand: null.
+  private brands: Record<string, Brand> = { "00003": { ...initialBrand } };
+  getBrand(construtoraId: string) {
+    return this.brands[construtoraId] ?? null;
   }
-  saveBrand(brand: typeof this.brand) {
-    this.brand = brand;
-    return this.brand;
+  saveBrand(construtoraId: string, brand: Brand) {
+    this.brands[construtoraId] = brand;
+    return brand;
   }
 }
 

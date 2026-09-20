@@ -96,6 +96,7 @@ export function NovaPersonalizacaoPage() {
 
     const created = criarSolicitacao({
       vinculoId: vinculo.id,
+      construtoraId: vinculo.construtoraId,
       itemId: item.id,
       item: item.nome,
       unidade: vinculo.unidadeLabel,
