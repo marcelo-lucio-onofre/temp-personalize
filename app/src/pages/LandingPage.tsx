@@ -28,13 +28,13 @@ export function LandingPage() {
       <section style={{ background: "var(--navy)", color: "#fff", padding: "72px 16px 64px" }}>
         <div className="container text-center" style={{ maxWidth: 900 }}>
           <div className="mono" style={{ fontSize: 12, letterSpacing: ".08em", color: "var(--green)", textTransform: "uppercase", marginBottom: 20 }}>
-            Motor de personalização em obra
+            Controle da personalização, do catálogo à aprovação
           </div>
           <h1 style={{ fontSize: "clamp(28px,5vw,48px)", lineHeight: 1.1, fontWeight: 800, marginBottom: 20 }}>
-            Do pedido do cliente à ordem de execução — com crédito calculado e responsabilidade técnica.
+            A construtora monta o catálogo e as regras. O comprador monta a unidade dele.
           </h1>
           <p style={{ fontSize: 17, lineHeight: 1.55, color: "oklch(78% 0.005 90)", maxWidth: 620, margin: "0 auto 32px" }}>
-            Ledger de crédito, custo paramétrico e governança técnica num único fluxo. Nada passa por planilha ou WhatsApp.
+            Um catálogo de materiais reutilizável alimenta memorial, personalização e crédito calculado — com governança técnica em cada troca. Nada passa por planilha ou WhatsApp.
           </p>
           <div className="row gap-sm" style={{ justifyContent: "center" }}>
             <button type="button" className="btn btn--primary" onClick={() => navigate("/login/construtora")}>
@@ -84,10 +84,16 @@ export function LandingPage() {
       <section style={{ background: "#fff", borderTop: "1px solid var(--rule)", borderBottom: "1px solid var(--rule)", padding: "56px 16px" }}>
         <div className="container" style={{ padding: 0 }}>
           <div className="mono" style={{ fontSize: 12, color: "var(--green-ink)", textTransform: "uppercase", marginBottom: 12 }}>
-            Três peças, um motor
+            Quatro peças, um motor
           </div>
           <h2 style={{ fontSize: 26, marginBottom: 28, fontWeight: 700 }}>O que nenhum concorrente brasileiro entrega junto.</h2>
           <div className="grid grid-auto">
+            <div className="card" style={{ background: "var(--paper-2)", border: "none" }}>
+              <div style={{ fontWeight: 700, color: "var(--ink)", marginBottom: 8 }}>Catálogo de materiais</div>
+              <div style={{ fontSize: 14, lineHeight: 1.6 }}>
+                Marca, SKU, preço e prazo de entrega — cadastrados uma vez, reutilizados em quantos itens quiser. Memorial, personalização e custo saem da mesma fonte.
+              </div>
+            </div>
             <div className="card" style={{ background: "var(--green-bg)", border: "none" }}>
               <div style={{ fontWeight: 700, color: "var(--green-ink)", marginBottom: 8 }}>Ledger de crédito</div>
               <div style={{ fontSize: 14, lineHeight: 1.6 }}>
