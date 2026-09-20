@@ -9,7 +9,7 @@ Especificação de identidade visual pra quem (humano ou agente) for mexer na in
 Princípios:
 - **Neutros quentes, nunca azul-marinho.** Preto-azulado é o padrão de qualquer dashboard SaaS gerado. Aqui os neutros puxam pra um cinza-grafite quente (hue ~85-95 em oklch), como papel de rascunho técnico.
 - **Verde funcional, não decorativo.** Verde só aparece onde significa crédito, aprovado, ou ação primária — nunca como wash decorativo.
-- **Marca da construtora é dado, não decisão de design.** Quando o portal do cliente está em modo white-label, a cor de destaque (`--brand`) vem do banco (`Vinculo.brand`), não da paleta plantta. Ver seção 6.
+- **Marca da construtora é dado, não decisão de design.** Quando o portal do cliente está em modo white-label, a cor de destaque (`--brand`) vem do repositório de marca da construtora, não da paleta plantta. Ver seção 6.
 - **Sem chrome decorativo.** Nada de eyebrow ALL-CAPS repetindo o que o breadcrumb já disse, nada de seta "→" no fim de botão/link só por estética. Se um elemento não carrega informação nova, ele não existe.
 
 ## 2. Paleta de cores
@@ -30,7 +30,7 @@ Definida em `src/index.css`, bloco `:root`. Valores em oklch (fonte da verdade �
 | `--amber-ink` / `--amber-bg` | `oklch(42%/94% 0.12/0.05 75)` | Nível técnico, pendente |
 | `--red-ink` / `--red-bg` | `oklch(42%/94% 0.12/0.05 25)` | Débito, bloqueado, recusado |
 | `--violet-bg` / `--violet-ink` | `oklch(95%/42% 0.035/0.12 260)` | Em análise |
-| `--brand` | `var(--green)` por padrão, **sobrescrito por vínculo** | Ver seção 6 |
+| `--brand` | `var(--green)` por padrão, **sobrescrito pela marca da construtora logada** | Ver seção 6 |
 
 Regra: `--green` é sempre um verde **desaturado** (chroma ~0.10, não 0.16+) — verde de segurança de canteiro, não esmeralda de startup.
 
@@ -58,7 +58,7 @@ Regra: `--green` é sempre um verde **desaturado** (chroma ~0.10, não 0.16+) �
 
 ## 6. White-label — regra crítica
 
-O portal do cliente pode rodar com a marca da plantta (padrão) ou com a marca real da construtora (vínculo com `brand` preenchido em `mockData.vinculos`). Isso é resolvido em `AppContext.effectiveBrand` = `activeVinculo?.brand ?? planttaBrand`, e propagado via CSS var `--brand` no `SidebarShell`. **Qualquer cor de destaque na tela do cliente deve ler `var(--brand)`, nunca `var(--green)` fixo** — senão a troca de marca fica pela metade (alguns elementos mudam, outros não). O back-office da construtora nunca troca de marca — sempre plantta.
+O portal do cliente pode rodar com a marca da plantta (padrão) ou com a marca real da construtora. A marca em si é dado por-construtora, editável em `MarcaPage` e guardado em `IBrandRepository` (`repositories.brand`, chaveado por `construtoraId` — `null` quando a construtora não opinou pelo white-label ainda). `AppContext.effectiveBrand` resolve `state.loginScopeConstrutoraId` (setado só no login do cliente por uma tela de marca específica, nunca por qual vínculo está "ativo" no momento) e lê o brand **ao vivo** do repositório — `repositories.brand.getBrand(loginScopeConstrutoraId) ?? planttaBrand` — nunca um snapshot estático em `Vinculo.brand`. Propagado via CSS var `--brand` no `SidebarShell`. **Qualquer cor de destaque na tela do cliente deve ler `var(--brand)`, nunca `var(--green)` fixo** — senão a troca de marca fica pela metade (alguns elementos mudam, outros não). O back-office da construtora nunca troca de marca — sempre plantta, mas mostra o nome da construtora logada (`construtoraLogadaId`) como tag no cabeçalho da sidebar.
 
 ## 7. Histórico de decisões (não repetir)
 
@@ -68,4 +68,16 @@ O portal do cliente pode rodar com a marca da plantta (padrão) ou com a marca r
 - ~~`.eyebrow` ALL-CAPS acima de todo H1~~ → removido; info real (quando existe) virou parágrafo normal.
 - ~~Seta "→" decorativa no fim de link/botão~~ → removida em todo lugar.
 - ~~Ícone emoji na sidebar~~ → `lucide-react` em todo lugar (mesma lib usada em `reservas-hub` e `omnix`, os dois projetos-referência do time).
-- ~~Menu lateral com árvore estática de construtora/empreendimento/unidade~~ → removido; seleção de unidade virou passo 1 do wizard "Nova personalização". Sidebar do cliente só tem "Nova personalização" + "Minhas personalizações".
+- ~~Menu lateral com árvore estática de construtora/empreendimento/unidade~~ → removido; seleção de unidade virou passo 1 do wizard "Nova personalização". Sidebar do cliente tem "Minha unidade" (resumo financeiro) + "Minhas personalizações" (a lista) — "Nova personalização" nunca foi item de menu, só o botão na própria página.
+- ~~`CatalogoPage` com seletor de construtora local (qualquer construtora logada podia editar o catálogo de qualquer outra)~~ → removido; login de construtora agora carrega identidade real (`construtoraLogadaId`, escolhida num seletor na própria tela de login), e Painel/Catálogo/Marca escopam a ela — nunca mais um seletor cruzado dentro da tela.
+- ~~`MarcaPage` salvando num singleton único de marca~~ → marca virou dado por-construtora (`IBrandRepository` chaveado por `construtoraId`) — ver seção 6. O singleton antigo nunca chegava a `effectiveBrand`, então editar marca não tinha efeito visível nenhum; corrigido junto.
+
+## 8. Telas adicionadas (fechamento de gap vs. benchmark de mercado)
+
+Sessão de benchmarking (comparação com Buildertrend/CoConstruct/Nuki/Spotlar/FastBuilt etc.) resultou em cinco fases de trabalho — ver histórico de commits a partir de "Add plantta React prototype; Phase 1 catalog authoring". Novas telas seguem exatamente as convenções acima (nenhum padrão paralelo foi criado):
+
+- `CatalogoPage` (`/catalogo`, construtora) — autoria de ambientes/itens/opções/verbas e biblioteca de materiais reutilizável (`MaterialCatalogItem`). É a tela com maior risco de "SaaS-card-kit genérico" — usa blocos tintados simples (não `.card` aninhado) para linhas de item/opção, só o container de ambiente é `.card`.
+- `MinhaUnidadePage` (`/minha-unidade`, cliente) — "Monte sua unidade": valor do imóvel + personalizações aprovadas/pendentes + total, via `domain/calculations.resumirUnidade`.
+- `TermoPage` (`/termo/:vinculoId`) — documento de alteração dinâmico, agora fora dos dois shells de portal (acessível por cliente e construtora, guard próprio por `role`), lendo dados reais em vez de conteúdo fixo.
+- `AllowanceGroup` (verba compartilhada entre itens de um ambiente) — saldo ao vivo via `domain/calculations.saldoAllowanceGroup`, mostrado como painel adicional ao lado do "Impacto no ledger de crédito" já existente, tanto no wizard quanto em `SelecaoPage`.
+- `PrazoBadge` (`components/Badge.tsx`) — status aberto/encerrado do prazo de decisão do item, mesma semântica verde/vermelho de crédito/débito.
