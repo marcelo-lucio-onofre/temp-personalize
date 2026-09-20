@@ -1,9 +1,9 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { Breadcrumb } from "../components/Breadcrumb";
-import { NivelBadge } from "../components/Badge";
+import { NivelBadge, PrazoBadge } from "../components/Badge";
 import { fmtBRL } from "../domain/calculations";
-import type { StatusSolicitacao } from "../domain/types";
+import type { Solicitacao, StatusSolicitacao } from "../domain/types";
 import { useApp } from "../state/AppContext";
 
 const FILTERS: { key: StatusSolicitacao | "todos"; label: string }[] = [
@@ -15,11 +15,21 @@ const FILTERS: { key: StatusSolicitacao | "todos"; label: string }[] = [
 ];
 
 export function PainelPage() {
-  const { solicitacoes, vinculos, construtoraLogadaId, aprovarSolicitacao, recusarSolicitacao } = useApp();
+  const { solicitacoes, vinculos, catalogo, construtoraLogadaId, aprovarSolicitacao, recusarSolicitacao } = useApp();
   const [filter, setFilter] = useState<StatusSolicitacao | "todos">("todos");
 
   const construtoraNome = vinculos.find((v) => v.construtoraId === construtoraLogadaId)?.construtoraNome ?? "Construtora";
   const minhas = construtoraLogadaId ? solicitacoes.filter((s) => s.construtoraId === construtoraLogadaId) : solicitacoes;
+
+  function itemDaSolicitacao(s: Solicitacao) {
+    const vinculo = vinculos.find((v) => v.id === s.vinculoId);
+    if (!vinculo) return undefined;
+    for (const amb of catalogo.getAmbientes(vinculo.id)) {
+      const item = amb.itens.find((i) => i.id === s.itemId);
+      if (item) return item;
+    }
+    return undefined;
+  }
 
   const counts: Record<StatusSolicitacao, number> = { pendente: 0, em_analise: 0, aprovado: 0, recusado: 0 };
   for (const s of minhas) counts[s.status]++;
@@ -78,13 +88,13 @@ export function PainelPage() {
       </div>
 
       <div className="card table-scroll" style={{ padding: 0 }}>
-        <div style={{ display: "grid", gridTemplateColumns: "90px 1fr 1.2fr 100px 100px 110px 150px", padding: "12px 18px", background: "var(--paper)", fontSize: 12, fontWeight: 600, color: "var(--ink-soft)", gap: 8, minWidth: 760 }}>
-          <div>ID</div><div>Cliente</div><div>Item</div><div>Nível</div><div>Diferença</div><div>Data</div><div>Ações</div>
+        <div style={{ display: "grid", gridTemplateColumns: "90px 1fr 1.2fr 100px 130px 100px 110px 150px", padding: "12px 18px", background: "var(--paper)", fontSize: 12, fontWeight: 600, color: "var(--ink-soft)", gap: 8, minWidth: 860 }}>
+          <div>ID</div><div>Cliente</div><div>Item</div><div>Nível</div><div>Prazo</div><div>Diferença</div><div>Data</div><div>Ações</div>
         </div>
         {filtered.map((r) => (
           <div
             key={r.id}
-            style={{ display: "grid", gridTemplateColumns: "90px 1fr 1.2fr 100px 100px 110px 150px", padding: "12px 18px", borderTop: "1px solid var(--paper-2)", fontSize: 13, alignItems: "center", gap: 8, minWidth: 760 }}
+            style={{ display: "grid", gridTemplateColumns: "90px 1fr 1.2fr 100px 130px 100px 110px 150px", padding: "12px 18px", borderTop: "1px solid var(--paper-2)", fontSize: 13, alignItems: "center", gap: 8, minWidth: 860 }}
           >
             <Link to={`/aprovacao/${r.id}`} className="mono" style={{ fontSize: 12, color: "var(--green-ink)", textDecoration: "none", fontWeight: 600 }}>{r.id}</Link>
             <div>
@@ -96,6 +106,7 @@ export function PainelPage() {
               <div style={{ fontSize: 11, color: "var(--ink-soft)" }}>{r.de} → {r.para}</div>
             </div>
             <div><NivelBadge nivel={r.nivel} /></div>
+            <div>{(() => { const item = itemDaSolicitacao(r); return item ? <PrazoBadge item={item} /> : <span className="text-soft" style={{ fontSize: 12 }}>—</span>; })()}</div>
             <div className="mono" style={{ fontWeight: 600 }}>{r.diferenca != null ? "+" + fmtBRL(r.diferenca) : "—"}</div>
             <div style={{ fontSize: 12, color: "var(--ink-soft)" }}>{r.data}</div>
             <div className="row gap-xs">

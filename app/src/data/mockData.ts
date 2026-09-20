@@ -229,7 +229,12 @@ export const ambientes: Ambiente[] = [
         nivel: 1,
         padrao: "Granito Cinza Corumbá",
         valorPadrao: 3200,
-        prazo: "20/10/2026",
+        // Deliberately in the past (today in this demo is 2026-09-20) —
+        // gives the Prazo badge/status something to show as "Encerrado"
+        // without waiting for a real deadline to pass. SOL-002 (Aurora,
+        // pendente) is against this exact item, so it's a realistic
+        // "decision window closed while still pending" demo case.
+        prazo: "15/09/2026",
         opcoes: [
           { id: "b1", nome: "Granito Cinza Corumbá", preco: 3200, padrao: true },
           { id: "b2", nome: "Quartzo Branco Ibiza", preco: 4900 },

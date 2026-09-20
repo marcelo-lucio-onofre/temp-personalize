@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Building2, LayoutGrid, Package, SlidersHorizontal, CheckCircle2 } from "lucide-react";
 import { Breadcrumb } from "../components/Breadcrumb";
-import { NivelBadge } from "../components/Badge";
+import { NivelBadge, PrazoBadge } from "../components/Badge";
 import { ConstrutoraGroupHeader } from "../components/ConstrutoraGroupHeader";
 import { avaliarOpcao, avaliarParametrico, fmtBRL, fmtSigned, saldoAllowanceGroup } from "../domain/calculations";
 import { useApp } from "../state/AppContext";
@@ -213,9 +213,10 @@ export function NovaPersonalizacaoPage() {
                 onClick={() => !bloqueado && escolherItem(i.id, Boolean(i.parametrico), i.qtdPadrao)}
               >
                 <div>
-                  <div className="row gap-xs" style={{ marginBottom: 2 }}>
+                  <div className="row gap-xs" style={{ marginBottom: 2, flexWrap: "wrap" }}>
                     <span style={{ fontWeight: 600, fontSize: 14 }}>{i.nome}</span>
                     <NivelBadge nivel={i.nivel} />
+                    {!bloqueado && <PrazoBadge item={i} />}
                   </div>
                   <div className="text-soft" style={{ fontSize: 12 }}>{bloqueado ? i.motivoBloqueio : `Padrão: ${i.padrao}`}</div>
                 </div>
@@ -355,7 +356,10 @@ export function NovaPersonalizacaoPage() {
           <div className="card">
             <div style={{ fontSize: 12, fontWeight: 600, color: "var(--ink-soft)", textTransform: "uppercase", marginBottom: 10 }}>Resumo</div>
             <div style={{ fontSize: 14, marginBottom: 4 }}>{vinculo.empreendimentoNome} · {vinculo.unidadeLabel} · Torre {vinculo.torre}</div>
-            <div style={{ fontSize: 14, marginBottom: 4 }}>{ambiente?.nome} — <strong>{item.nome}</strong></div>
+            <div className="row gap-sm" style={{ alignItems: "center", marginBottom: 4, flexWrap: "wrap" }}>
+              <span style={{ fontSize: 14 }}>{ambiente?.nome} — <strong>{item.nome}</strong></span>
+              <PrazoBadge item={item} />
+            </div>
             {(() => {
               const opcaoSelecionada = item.opcoes.find((o) => o.id === opcaoId);
               const av = isParametrico ? avaliarParametrico(item, qtd ?? 0) : avaliarOpcao(item, opcaoSelecionada!);

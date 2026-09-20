@@ -17,6 +17,25 @@ export interface ResumoUnidade {
  * credit/cost legs. */
 export const isRemocao = (s: Pick<Solicitacao, "para">): boolean => s.para === "Removido (crédito)";
 
+/** Parses the app's "DD/MM/YYYY" date strings (item.prazo, empreendimento
+ * prazoPersonalizacao) — never use `new Date(str)` on these, it reads
+ * DD/MM as MM/DD in en-US locales. */
+export function parseDataBR(data: string): Date {
+  const [dia, mes, ano] = data.split("/").map(Number);
+  return new Date(ano, mes - 1, dia);
+}
+
+export type StatusPrazo = "aberto" | "encerrado" | "sem_prazo";
+
+/** Whether an item's client decision window is still open — `item.prazo`
+ * is the deadline to CHOOSE, independent of `item.leadTimeDias` (how long
+ * the chosen material takes to arrive after that). */
+export function statusPrazo(item: Pick<Item, "prazo">, now = new Date()): StatusPrazo {
+  if (!item.prazo) return "sem_prazo";
+  const hoje = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  return parseDataBR(item.prazo).getTime() >= hoje.getTime() ? "aberto" : "encerrado";
+}
+
 /**
  * A unidade's running total — o "Monte sua unidade": valor do imóvel mais
  * toda personalização já aprovada (definitiva) e ainda pendente (estimada),

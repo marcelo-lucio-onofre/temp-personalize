@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { Link, Navigate, useNavigate, useParams } from "react-router-dom";
 import { Breadcrumb } from "../components/Breadcrumb";
+import { PrazoBadge } from "../components/Badge";
 import { fmtBRL, fmtSigned, saldoAllowanceGroup } from "../domain/calculations";
 import { useApp } from "../state/AppContext";
 
@@ -62,8 +63,11 @@ export function SelecaoPage() {
         </h1>
         <span className="badge badge--simples">Simples</span>
       </div>
-      <div style={{ fontSize: 14, color: "var(--ink-soft)", marginBottom: 24 }}>
-        Prazo para decisão: <strong>{item.prazo}</strong>
+      <div className="row gap-sm" style={{ alignItems: "center", marginBottom: 24, flexWrap: "wrap" }}>
+        <PrazoBadge item={item} />
+        {item.leadTimeDias != null && (
+          <span style={{ fontSize: 13, color: "var(--ink-soft)" }}>Material leva {item.leadTimeDias} dias para chegar após aprovação.</span>
+        )}
       </div>
 
       <div className="card" style={{ background: "var(--paper)", marginBottom: 22 }}>
