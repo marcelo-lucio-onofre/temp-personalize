@@ -7,9 +7,11 @@ import type {
   DashboardData,
   Empreendimento,
   MaterialCatalogItem,
+  Planta,
   Solicitacao,
   Vinculo,
 } from "../domain/types";
+import { plantaKey } from "../domain/calculations";
 
 // Plain-data deep clone (Ambiente/Item/Opcao are all JSON-safe: no
 // functions/Dates) — used so each empreendimento gets its own independent
@@ -117,6 +119,8 @@ export const vinculos: Vinculo[] = [
     construtoraNome: "Prado Engenharia",
     empreendimentoId: "00001",
     empreendimentoNome: "Residencial Aurora",
+    plantaId: "planta-a",
+    plantaNome: "Planta A — 2 quartos",
     unidadeLabel: "Apto 1204",
     torre: "B",
     brand: null,
@@ -127,6 +131,8 @@ export const vinculos: Vinculo[] = [
     construtoraNome: "Horizonte Construções",
     empreendimentoId: "00002",
     empreendimentoNome: "Vista Verde Residence",
+    plantaId: "planta-unica",
+    plantaNome: "Planta Única",
     unidadeLabel: "Apto 2201",
     torre: "C",
     brand: null,
@@ -137,6 +143,8 @@ export const vinculos: Vinculo[] = [
     construtoraNome: "Alliance",
     empreendimentoId: "00003",
     empreendimentoNome: "Alliance Boulevard",
+    plantaId: "planta-unica",
+    plantaNome: "Planta Única",
     unidadeLabel: "Apto 501",
     torre: "A",
     brand: initialBrand,
@@ -147,6 +155,8 @@ export const vinculos: Vinculo[] = [
     construtoraNome: "Alliance",
     empreendimentoId: "00003",
     empreendimentoNome: "Alliance Boulevard",
+    plantaId: "planta-unica",
+    plantaNome: "Planta Única",
     unidadeLabel: "Apto 1502",
     torre: "B",
     brand: initialBrand,
@@ -157,6 +167,8 @@ export const vinculos: Vinculo[] = [
     construtoraNome: "Alliance",
     empreendimentoId: "00004",
     empreendimentoNome: "Alliance Jardins",
+    plantaId: "planta-unica",
+    plantaNome: "Planta Única",
     unidadeLabel: "Apto 302",
     torre: "Única",
     brand: initialBrand,
@@ -174,7 +186,8 @@ export const ambientes: Ambiente[] = [
         nivel: 1,
         padrao: "Porcelanato Standard 60×60",
         valorPadrao: 6000,
-        prazo: "20/10/2026",
+        prazoInicio: "01/09/2026",
+        prazoFim: "20/10/2026",
         opcoes: [
           { id: "p1", nome: "Porcelanato Standard 60×60", preco: 6000, padrao: true },
           { id: "p2", nome: "Porcelanato Portobello Premium 80×80", preco: 8500 },
@@ -188,7 +201,8 @@ export const ambientes: Ambiente[] = [
         nivel: 1,
         padrao: "MDF Branco 7 cm",
         valorPadrao: 1200,
-        prazo: "20/10/2026",
+        prazoInicio: "01/09/2026",
+        prazoFim: "20/10/2026",
         opcoes: [
           { id: "r1", nome: "MDF Branco 7 cm", preco: 1200, padrao: true },
           { id: "r2", nome: "MDF Amadeirado 10 cm", preco: 1600 },
@@ -201,7 +215,8 @@ export const ambientes: Ambiente[] = [
         nivel: 2,
         padrao: "8 pontos (padrão sala)",
         valorPadrao: 0,
-        prazo: "05/10/2026",
+        prazoInicio: "01/09/2026",
+        prazoFim: "05/10/2026",
         parametrico: true,
         qtdPadrao: 8,
         custoPorUnidade: { conduiteM: 12.5, fioM: 8.3, disjuntor: 45.0, maoDeObra: 85.0, total: 150.8 },
@@ -213,7 +228,8 @@ export const ambientes: Ambiente[] = [
         nivel: 3,
         padrao: "Alvenaria estrutural",
         valorPadrao: 0,
-        prazo: null,
+        prazoInicio: null,
+        prazoFim: null,
         motivoBloqueio: "Parede estrutural — remoção não permitida conforme laudo técnico RT-2024/087.",
         opcoes: [],
       },
@@ -234,7 +250,8 @@ export const ambientes: Ambiente[] = [
         // without waiting for a real deadline to pass. SOL-002 (Aurora,
         // pendente) is against this exact item, so it's a realistic
         // "decision window closed while still pending" demo case.
-        prazo: "15/09/2026",
+        prazoInicio: "20/08/2026",
+        prazoFim: "15/09/2026",
         opcoes: [
           { id: "b1", nome: "Granito Cinza Corumbá", preco: 3200, padrao: true },
           { id: "b2", nome: "Quartzo Branco Ibiza", preco: 4900 },
@@ -248,7 +265,8 @@ export const ambientes: Ambiente[] = [
         nivel: 1,
         padrao: "Cuba simples inox + monocomando",
         valorPadrao: 900,
-        prazo: "20/10/2026",
+        prazoInicio: "01/09/2026",
+        prazoFim: "20/10/2026",
         opcoes: [
           { id: "c1", nome: "Cuba simples inox + monocomando", preco: 900, padrao: true },
           { id: "c2", nome: "Cuba dupla + torneira gourmet", preco: 1750 },
@@ -261,7 +279,8 @@ export const ambientes: Ambiente[] = [
         nivel: 2,
         padrao: "3 pontos (padrão cozinha)",
         valorPadrao: 0,
-        prazo: "01/10/2026",
+        prazoInicio: "01/09/2026",
+        prazoFim: "01/10/2026",
         parametrico: true,
         qtdPadrao: 3,
         custoPorUnidade: { tubulacao: 35.0, conexoes: 22.0, maoDeObra: 120.0, total: 177.0 },
@@ -279,7 +298,8 @@ export const ambientes: Ambiente[] = [
         nivel: 1,
         padrao: "Porcelanato Acetinado Bege",
         valorPadrao: 2400,
-        prazo: "20/10/2026",
+        prazoInicio: "01/09/2026",
+        prazoFim: "20/10/2026",
         opcoes: [
           { id: "rv1", nome: "Porcelanato Acetinado Bege", preco: 2400, padrao: true },
           { id: "rv2", nome: "Porcelanato Off-White Grande Formato", preco: 3600 },
@@ -292,7 +312,8 @@ export const ambientes: Ambiente[] = [
         nivel: 1,
         padrao: "Deca Aspen + Deca Link",
         valorPadrao: 2100,
-        prazo: "20/10/2026",
+        prazoInicio: "01/09/2026",
+        prazoFim: "20/10/2026",
         opcoes: [
           { id: "l1", nome: "Deca Aspen + Deca Link", preco: 2100, padrao: true },
           { id: "l2", nome: "Docol Benefit Black", preco: 3400 },
@@ -305,7 +326,8 @@ export const ambientes: Ambiente[] = [
         nivel: 3,
         padrao: "Concreto armado",
         valorPadrao: 0,
-        prazo: null,
+        prazoInicio: null,
+        prazoFim: null,
         motivoBloqueio: "Elemento estrutural (viga) — alteração proibida por norma NBR 16280.",
         opcoes: [],
       },
@@ -321,7 +343,8 @@ export const ambientes: Ambiente[] = [
         nivel: 1,
         padrao: "Porcelanato Externo Cinza",
         valorPadrao: 3800,
-        prazo: "20/10/2026",
+        prazoInicio: "01/09/2026",
+        prazoFim: "20/10/2026",
         opcoes: [
           { id: "pv1", nome: "Porcelanato Externo Cinza", preco: 3800, padrao: true },
           { id: "pv2", nome: "Porcelanato Amadeirado Deck", preco: 5200 },
@@ -334,7 +357,8 @@ export const ambientes: Ambiente[] = [
         nivel: 2,
         padrao: "Esquadria padrão (fechada)",
         valorPadrao: 0,
-        prazo: "01/10/2026",
+        prazoInicio: "01/09/2026",
+        prazoFim: "01/10/2026",
         opcoes: [
           { id: "iv1", nome: "Esquadria padrão (fechada)", preco: 0, padrao: true },
           { id: "iv2", nome: "Abertura total com esquadria retrátil", preco: 8500 },
@@ -344,31 +368,166 @@ export const ambientes: Ambiente[] = [
   },
 ];
 
-// Aurora's catalog (empreendimentoId "00001") — verba compartilhada de
-// demonstração: revestimento + louças do Banheiro Suíte dividem uma única
-// verba, ao vivo (gastar mais num item reduz o saldo visível no outro).
+// Aurora's Planta A catalog — verba compartilhada de demonstração:
+// revestimento + louças do Banheiro Suíte dividem uma única verba, ao vivo
+// (gastar mais num item reduz o saldo visível no outro).
 const banheiroAurora = ambientes.find((a) => a.id === "banheiro")!;
 banheiroAurora.itens.find((i) => i.id === "revestimento")!.allowanceGroupId = "ag-banheiro-aurora";
 banheiroAurora.itens.find((i) => i.id === "loucas")!.allowanceGroupId = "ag-banheiro-aurora";
 
-// Every empreendimento gets its own independent catalog object — cloned
-// from the same starting point, but editing one via CatalogoPage must never
-// touch another's. Keyed by empreendimentoId (not vinculoId): Boulevard's
-// two units correctly share one catalog since they're the same building.
-export const ambientesPorEmpreendimento: Record<string, Ambiente[]> = {
-  "00001": ambientes, // Aurora — the original array IS this empreendimento's catalog
-  "00002": clonar(ambientes), // Vista Verde
-  "00003": clonar(ambientes), // Alliance Boulevard
-  "00004": clonar(ambientes), // Alliance Jardins
+// Aurora's Planta B — 3 quartos, catálogo genuinely diferente da Planta A:
+// não é um reaproveitamento com preços diferentes, tem um ambiente inteiro
+// (Suíte Master) que a Planta A não tem, e os padrões dos ambientes
+// compartilhados (Sala, Cozinha) são de outro patamar de acabamento.
+const ambientesPlantaBAurora: Ambiente[] = [
+  {
+    id: "sala",
+    nome: "Sala de Estar",
+    itens: [
+      {
+        id: "piso_sala",
+        nome: "Piso",
+        nivel: 1,
+        padrao: "Porcelanato Portobello Premium 80×80",
+        valorPadrao: 8500,
+        prazoInicio: "01/09/2026",
+        prazoFim: "20/10/2026",
+        opcoes: [
+          { id: "p1", nome: "Porcelanato Portobello Premium 80×80", preco: 8500, padrao: true },
+          { id: "p2", nome: "Porcelanato Marmorizado Extra", preco: 9800 },
+          { id: "p3", nome: "Porcelanato Importado 120×120", preco: 13500 },
+          { id: "p0", nome: "Remover item (gera crédito)", preco: 0, remocao: true },
+        ],
+      },
+      {
+        id: "rodape_sala",
+        nome: "Rodapé",
+        nivel: 1,
+        padrao: "MDF Amadeirado 10 cm",
+        valorPadrao: 1600,
+        prazoInicio: "01/09/2026",
+        prazoFim: "20/10/2026",
+        opcoes: [
+          { id: "r1", nome: "MDF Amadeirado 10 cm", preco: 1600, padrao: true },
+          { id: "r2", nome: "MDF Branco 7 cm", preco: 1200 },
+          { id: "r0", nome: "Remover item (gera crédito)", preco: 0, remocao: true },
+        ],
+      },
+      {
+        id: "eletrica_sala",
+        nome: "Pontos Elétricos",
+        nivel: 2,
+        padrao: "12 pontos (padrão sala ampliada)",
+        valorPadrao: 0,
+        prazoInicio: "01/09/2026",
+        prazoFim: "05/10/2026",
+        parametrico: true,
+        qtdPadrao: 12,
+        custoPorUnidade: { conduiteM: 12.5, fioM: 8.3, disjuntor: 45.0, maoDeObra: 85.0, total: 150.8 },
+        opcoes: [],
+      },
+    ],
+  },
+  {
+    id: "cozinha",
+    nome: "Cozinha",
+    itens: [
+      {
+        id: "bancada",
+        nome: "Bancada",
+        nivel: 1,
+        padrao: "Quartzo Branco Ibiza",
+        valorPadrao: 4900,
+        prazoInicio: "01/09/2026",
+        prazoFim: "20/10/2026",
+        opcoes: [
+          { id: "b1", nome: "Quartzo Branco Ibiza", preco: 4900, padrao: true },
+          { id: "b2", nome: "Dekton Sirius", preco: 6100 },
+          { id: "b0", nome: "Remover item (gera crédito)", preco: 0, remocao: true },
+        ],
+      },
+      {
+        id: "cuba",
+        nome: "Cuba e Torneira",
+        nivel: 1,
+        padrao: "Cuba dupla + torneira gourmet",
+        valorPadrao: 1750,
+        prazoInicio: "01/09/2026",
+        prazoFim: "20/10/2026",
+        opcoes: [
+          { id: "c1", nome: "Cuba dupla + torneira gourmet", preco: 1750, padrao: true },
+          { id: "c0", nome: "Remover item (gera crédito)", preco: 0, remocao: true },
+        ],
+      },
+    ],
+  },
+  {
+    id: "suite_master",
+    nome: "Suíte Master",
+    itens: [
+      {
+        id: "piso_suite",
+        nome: "Piso",
+        nivel: 1,
+        padrao: "Porcelanato Acetinado Bege",
+        valorPadrao: 3200,
+        prazoInicio: "01/09/2026",
+        prazoFim: "20/10/2026",
+        opcoes: [
+          { id: "ps1", nome: "Porcelanato Acetinado Bege", preco: 3200, padrao: true },
+          { id: "ps2", nome: "Porcelanato Off-White Grande Formato", preco: 4400 },
+          { id: "ps0", nome: "Remover item (gera crédito)", preco: 0, remocao: true },
+        ],
+      },
+      {
+        id: "closet_suite",
+        nome: "Closet planejado",
+        nivel: 2,
+        padrao: "Não incluso — opcional",
+        valorPadrao: 0,
+        prazoInicio: "01/09/2026",
+        prazoFim: "10/10/2026",
+        opcoes: [
+          { id: "cl1", nome: "Não incluso", preco: 0, padrao: true },
+          { id: "cl2", nome: "Closet planejado 6m linear", preco: 9500 },
+        ],
+      },
+    ],
+  },
+];
+
+// Plantas (tipologias de unidade) por empreendimento — um prédio de
+// centenas de unidades quase nunca tem uma planta só. O catálogo abaixo
+// pertence à Planta, não ao empreendimento (ver domain/types.ts Planta).
+export const plantasPorEmpreendimento: Record<string, Planta[]> = {
+  "00001": [
+    { id: "planta-a", nome: "Planta A — 2 quartos", descricao: "2 dormitórios, 1 suíte", areaM2: 68, quartos: 2, unidadesLabel: "Torres A e B, andares 2–14" },
+    { id: "planta-b", nome: "Planta B — 3 quartos", descricao: "3 dormitórios, suíte master com closet opcional", areaM2: 94, quartos: 3, unidadesLabel: "Torres A e B, andares 15–20 (coberturas e garden)" },
+  ],
+  "00002": [{ id: "planta-unica", nome: "Planta Única", descricao: "2 dormitórios, 1 suíte", areaM2: 62, quartos: 2, unidadesLabel: "Todas as unidades" }],
+  "00003": [{ id: "planta-unica", nome: "Planta Única", descricao: "2 dormitórios, 1 suíte", areaM2: 75, quartos: 2, unidadesLabel: "Torres A e B, todos os andares" }],
+  "00004": [{ id: "planta-unica", nome: "Planta Única", descricao: "3 dormitórios, 1 suíte", areaM2: 88, quartos: 3, unidadesLabel: "Torre única" }],
 };
 
-export const allowanceGroupsPorEmpreendimento: Record<string, AllowanceGroup[]> = {
-  "00001": [
+// Cada Planta tem seu próprio catálogo, completamente independente —
+// editar a Planta A via CatalogoPage nunca toca a Planta B nem outro
+// empreendimento. Chaveado por `plantaKey(empreendimentoId, plantaId)`.
+export const ambientesPorPlanta: Record<string, Ambiente[]> = {
+  [plantaKey("00001", "planta-a")]: ambientes,
+  [plantaKey("00001", "planta-b")]: ambientesPlantaBAurora,
+  [plantaKey("00002", "planta-unica")]: clonar(ambientes),
+  [plantaKey("00003", "planta-unica")]: clonar(ambientes),
+  [plantaKey("00004", "planta-unica")]: clonar(ambientes),
+};
+
+export const allowanceGroupsPorPlanta: Record<string, AllowanceGroup[]> = {
+  [plantaKey("00001", "planta-a")]: [
     { id: "ag-banheiro-aurora", nome: "Verba Banheiro Suíte", ambienteId: "banheiro", valorTotal: 4500, itemIds: ["revestimento", "loucas"] },
   ],
-  "00002": [],
-  "00003": [],
-  "00004": [],
+  [plantaKey("00001", "planta-b")]: [],
+  [plantaKey("00002", "planta-unica")]: [],
+  [plantaKey("00003", "planta-unica")]: [],
+  [plantaKey("00004", "planta-unica")]: [],
 };
 
 // Biblioteca de materiais reutilizável por construtora — o que a autoria de

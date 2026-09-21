@@ -9,6 +9,7 @@ import type {
   CadastroEmpreendimentoInput,
   EmpreendimentoCadastrado,
   MaterialCatalogItem,
+  Planta,
   Role,
   Solicitacao,
   SolicitacaoMaterialProprio,
@@ -183,7 +184,10 @@ interface AppContextValue extends AppState {
   recusarSolicitacao: (id: string) => void;
   criarSolicitacao: (input: NovaSolicitacaoInput) => Solicitacao;
   cadastrarEmpreendimento: (input: CadastroEmpreendimentoInput) => EmpreendimentoCadastrado;
-  salvarCatalogo: (empreendimentoId: string, ambientes: Ambiente[], allowanceGroups: AllowanceGroup[]) => void;
+  atualizarArquivosCadastro: (id: string, arquivos: CadastroEmpreendimentoInput["arquivos"]) => void;
+  salvarCatalogo: (empreendimentoId: string, plantaId: string, ambientes: Ambiente[], allowanceGroups: AllowanceGroup[]) => void;
+  salvarPlanta: (empreendimentoId: string, planta: Planta) => void;
+  removerPlanta: (empreendimentoId: string, plantaId: string) => void;
   criarMaterial: (input: Omit<MaterialCatalogItem, "id">) => MaterialCatalogItem;
   atualizarMaterial: (id: string, patch: Partial<Omit<MaterialCatalogItem, "id" | "construtoraId">>) => void;
   removerMaterial: (id: string) => void;
@@ -248,9 +252,21 @@ export function AppProvider({ children }: { children: ReactNode }) {
     dispatch({ type: "REFRESH_CADASTROS" });
     return created;
   }, []);
-  const salvarCatalogo = useCallback((empreendimentoId: string, ambientesNovos: Ambiente[], allowanceGroups: AllowanceGroup[]) => {
-    repositories.catalogo.replaceAmbientes(empreendimentoId, ambientesNovos);
-    repositories.catalogo.replaceAllowanceGroups(empreendimentoId, allowanceGroups);
+  const atualizarArquivosCadastro = useCallback((id: string, arquivos: CadastroEmpreendimentoInput["arquivos"]) => {
+    repositories.cadastros.updateArquivos(id, arquivos);
+    dispatch({ type: "REFRESH_CADASTROS" });
+  }, []);
+  const salvarCatalogo = useCallback((empreendimentoId: string, plantaId: string, ambientesNovos: Ambiente[], allowanceGroups: AllowanceGroup[]) => {
+    repositories.catalogo.replaceAmbientes(empreendimentoId, plantaId, ambientesNovos);
+    repositories.catalogo.replaceAllowanceGroups(empreendimentoId, plantaId, allowanceGroups);
+    dispatch({ type: "DADOS_ATUALIZADOS" });
+  }, []);
+  const salvarPlanta = useCallback((empreendimentoId: string, planta: Planta) => {
+    repositories.catalogo.upsertPlanta(empreendimentoId, planta);
+    dispatch({ type: "DADOS_ATUALIZADOS" });
+  }, []);
+  const removerPlanta = useCallback((empreendimentoId: string, plantaId: string) => {
+    repositories.catalogo.removePlanta(empreendimentoId, plantaId);
     dispatch({ type: "DADOS_ATUALIZADOS" });
   }, []);
   const criarMaterial = useCallback((input: Omit<MaterialCatalogItem, "id">) => {
@@ -297,7 +313,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
       recusarSolicitacao,
       criarSolicitacao,
       cadastrarEmpreendimento,
+      atualizarArquivosCadastro,
       salvarCatalogo,
+      salvarPlanta,
+      removerPlanta,
       criarMaterial,
       atualizarMaterial,
       removerMaterial,
@@ -324,7 +343,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
       recusarSolicitacao,
       criarSolicitacao,
       cadastrarEmpreendimento,
+      atualizarArquivosCadastro,
       salvarCatalogo,
+      salvarPlanta,
+      removerPlanta,
       criarMaterial,
       atualizarMaterial,
       removerMaterial,

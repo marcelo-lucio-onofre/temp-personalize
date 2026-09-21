@@ -30,7 +30,7 @@ export function CalculadoraPage() {
         <div className="row" style={{ justifyContent: "space-between", marginBottom: 16 }}>
           <div>
             <div style={{ fontWeight: 700, fontSize: 16 }}>Pontos Elétricos — Sala</div>
-            <div className="text-soft" style={{ fontSize: 13 }}>Padrão: 8 pontos incluídos · Prazo: {eletrica.prazo}</div>
+            <div className="text-soft" style={{ fontSize: 13 }}>Padrão: 8 pontos incluídos · Prazo: {eletrica.prazoFim}</div>
           </div>
           <span className="badge badge--tecnico">Técnico — requer RT</span>
         </div>
@@ -100,7 +100,7 @@ export function CalculadoraPage() {
 
       <div className="card">
         <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 12 }}>Pontos Hidráulicos — Cozinha</div>
-        <div className="text-soft" style={{ fontSize: 13, marginBottom: 12 }}>Padrão: 3 pontos · Prazo: {hidraulica.prazo}</div>
+        <div className="text-soft" style={{ fontSize: 13, marginBottom: 12 }}>Padrão: 3 pontos · Prazo: {hidraulica.prazoFim}</div>
         <div className="row" style={{ justifyContent: "space-between", fontSize: 13, marginBottom: 8 }}>
           <span>Quantidade desejada</span>
           <span className="mono" style={{ fontWeight: 700, fontSize: 16 }}>{qtdHid} pontos</span>

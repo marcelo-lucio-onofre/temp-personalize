@@ -27,6 +27,7 @@ export function SelecaoPage() {
   const [prop1Valor, setProp1Valor] = useState("");
   const [prop2Forn, setProp2Forn] = useState("");
   const [prop2Valor, setProp2Valor] = useState("");
+  const [avisoAceito, setAvisoAceito] = useState(false);
 
   if (!found) return <Navigate to="/personalizacoes" replace />;
   const { ambiente, item } = found;
@@ -37,8 +38,9 @@ export function SelecaoPage() {
   const custoOpcao = item.opcoes.find((o) => o.id === chosenId)?.preco ?? 0;
   const saldo = item.valorPadrao - custoOpcao;
   const alreadySubmitted = Boolean(customSubmissions[item.id]);
-  const canSubmitCustom =
-    customNome.trim() && customRef.trim() && prop1Forn.trim() && prop1Valor.trim() && prop2Forn.trim() && prop2Valor.trim();
+  const canSubmitCustom = Boolean(
+    customNome.trim() && customRef.trim() && prop1Forn.trim() && prop1Valor.trim() && prop2Forn.trim() && prop2Valor.trim() && avisoAceito,
+  );
 
   function handleSubmitCustom() {
     if (!canSubmitCustom) return;
@@ -51,6 +53,7 @@ export function SelecaoPage() {
         { fornecedor: prop2Forn, valor: prop2Valor },
       ],
       status: "enviado_para_analise",
+      avisoRiscoAceito: avisoAceito,
     });
   }
 
@@ -183,6 +186,20 @@ export function SelecaoPage() {
             <div style={{ fontSize: 12, color: "var(--ink-soft)", marginBottom: 16 }}>
               O crédito do item padrão ({fmtBRL(item.valorPadrao)}) permanece no seu ledger até a aprovação técnica e financeira do material proposto.
             </div>
+
+            <div style={{ border: "1px solid var(--red-bg)", background: "var(--red-bg)", borderRadius: 8, padding: 12, marginBottom: 14 }}>
+              <div style={{ fontWeight: 700, fontSize: 13, color: "var(--red-ink)", marginBottom: 4 }}>Risco de atraso na obra</div>
+              <div style={{ fontSize: 12.5, color: "var(--red-ink)", lineHeight: 1.5, marginBottom: 10 }}>
+                Material fora do catálogo não tem prazo de entrega garantido e pode atrasar a entrega da sua unidade. Conforme cláusula
+                contratual, um atraso causado por material fora do catálogo pode gerar multa ao comprador — sujeito a análise jurídica
+                caso a caso.
+              </div>
+              <label className="row gap-xs" style={{ alignItems: "flex-start", fontSize: 12.5, color: "var(--red-ink)", cursor: "pointer" }}>
+                <input type="checkbox" checked={avisoAceito} onChange={(e) => setAvisoAceito(e.target.checked)} style={{ marginTop: 2 }} />
+                <span>Estou ciente do risco de atraso na obra e de possível multa contratual, e desejo prosseguir mesmo assim.</span>
+              </label>
+            </div>
+
             <div className="row gap-sm">
               <button
                 type="button"

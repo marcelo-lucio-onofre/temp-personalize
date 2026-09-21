@@ -39,7 +39,11 @@ export interface Item {
   padrao: string;
   /** Preço base / verba inclusa — o que já está contemplado no contrato. */
   valorPadrao: number;
-  prazo: string | null;
+  /** Janela em que o cliente pode decidir — ambos null significa sem prazo
+   * definido. Ver domain/calculations.statusPrazo (aberto/nao_iniciado/
+   * encerrado/sem_prazo). */
+  prazoInicio: string | null;
+  prazoFim: string | null;
   opcoes: Opcao[];
   parametrico?: boolean;
   qtdPadrao?: number;
@@ -50,7 +54,7 @@ export interface Item {
   /** Days the chosen material takes to arrive after approval. */
   leadTimeDias?: number;
   /** Date the material needs to be on site (ISO), independent of the
-   * client's decision deadline (`prazo`). */
+   * client's decision deadline (`prazoFim`). */
   necessarioEmObra?: string;
   /** When set, this item's cost is drawn from a shared AllowanceGroup
    * instead of judged purely against its own valorPadrao. */
@@ -95,6 +99,26 @@ export interface AllowanceGroup {
   itemIds: string[];
 }
 
+/**
+ * Uma tipologia/planta de unidade dentro de um empreendimento — um prédio
+ * de centenas de unidades quase nunca tem uma única planta (dezenas de
+ * m², quartos e layouts diferentes convivem no mesmo empreendimento). O
+ * catálogo (ambientes/itens/opções) pertence à Planta, não diretamente ao
+ * empreendimento, porque a Sala da Planta A pode ter um padrão totalmente
+ * diferente da Sala da Planta B. Unidades reais se associam a uma Planta
+ * (ver Vinculo.plantaId).
+ */
+export interface Planta {
+  id: string;
+  nome: string;
+  descricao?: string;
+  areaM2?: number;
+  quartos?: number;
+  /** Faixas/números de unidade cadastrados nesta planta, só pra exibição —
+   * ex.: "101-110, 201-210". Não é usado pra resolver vínculo algum. */
+  unidadesLabel?: string;
+}
+
 export interface Empreendimento {
   nome: string;
   construtora: string;
@@ -122,6 +146,10 @@ export interface Vinculo {
   /** Same numeric-code convention as construtoraId. */
   empreendimentoId: string;
   empreendimentoNome: string;
+  /** Qual Planta esta unidade segue — decide qual catálogo (ambientes/
+   * itens/opções) o cliente vê. */
+  plantaId: string;
+  plantaNome: string;
   unidadeLabel: string;
   torre: string;
   brand: Brand | null;
@@ -257,4 +285,9 @@ export interface SolicitacaoMaterialProprio {
   referencia: string;
   propostas: MaterialPropostaFornecedor[];
   status: "enviado_para_analise";
+  /** Cliente marcou a ciência do aviso de risco de atraso/multa antes de
+   * enviar — registrado pra auditoria, não é uma validação de que a
+   * cláusula de multa é juridicamente aplicável (isso exige análise
+   * jurídica real, fora do escopo deste protótipo). */
+  avisoRiscoAceito: boolean;
 }

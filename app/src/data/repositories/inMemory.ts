@@ -9,12 +9,14 @@ import type {
   CadastroEmpreendimentoInput,
   EmpreendimentoCadastrado,
   MaterialCatalogItem,
+  Planta,
   Solicitacao,
   StatusSolicitacao,
 } from "../../domain/types";
+import { plantaKey } from "../../domain/calculations";
 import {
-  allowanceGroupsPorEmpreendimento,
-  ambientesPorEmpreendimento,
+  allowanceGroupsPorPlanta,
+  ambientesPorPlanta,
   dashboardData,
   empreendimento,
   empreendimentoAllianceBoulevard501,
@@ -23,6 +25,7 @@ import {
   empreendimentoVistaVerde,
   initialBrand,
   materialCatalogInicial,
+  plantasPorEmpreendimento,
   solicitacoesIniciais,
   vinculos,
 } from "../mockData";
@@ -57,12 +60,12 @@ export class InMemoryCatalogoRepository implements ICatalogoRepository {
     return empreendimentoPorVinculo[vinculoId];
   }
   getAmbientes(vinculoId: string) {
-    const empreendimentoId = vinculos.find((v) => v.id === vinculoId)?.empreendimentoId;
-    return empreendimentoId ? (ambientesPorEmpreendimento[empreendimentoId] ?? []) : [];
+    const v = vinculos.find((v) => v.id === vinculoId);
+    return v ? (ambientesPorPlanta[plantaKey(v.empreendimentoId, v.plantaId)] ?? []) : [];
   }
   getAllowanceGroups(vinculoId: string) {
-    const empreendimentoId = vinculos.find((v) => v.id === vinculoId)?.empreendimentoId;
-    return empreendimentoId ? (allowanceGroupsPorEmpreendimento[empreendimentoId] ?? []) : [];
+    const v = vinculos.find((v) => v.id === vinculoId);
+    return v ? (allowanceGroupsPorPlanta[plantaKey(v.empreendimentoId, v.plantaId)] ?? []) : [];
   }
   listEmpreendimentosByConstrutora(construtoraId: string) {
     const seen = new Map<string, string>();
@@ -78,22 +81,40 @@ export class InMemoryCatalogoRepository implements ICatalogoRepository {
     }
     return [...seen.entries()].map(([empreendimentoId, nome]) => ({ empreendimentoId, nome }));
   }
-  getAmbientesByEmpreendimentoId(empreendimentoId: string) {
-    return ambientesPorEmpreendimento[empreendimentoId] ?? [];
+  listPlantas(empreendimentoId: string) {
+    return plantasPorEmpreendimento[empreendimentoId] ?? [];
   }
-  getAllowanceGroupsByEmpreendimentoId(empreendimentoId: string) {
-    return allowanceGroupsPorEmpreendimento[empreendimentoId] ?? [];
+  upsertPlanta(empreendimentoId: string, planta: Planta) {
+    const lista = plantasPorEmpreendimento[empreendimentoId] ?? (plantasPorEmpreendimento[empreendimentoId] = []);
+    const i = lista.findIndex((p) => p.id === planta.id);
+    if (i >= 0) lista[i] = planta;
+    else lista.push(planta);
+    const key = plantaKey(empreendimentoId, planta.id);
+    if (!ambientesPorPlanta[key]) ambientesPorPlanta[key] = [];
+    if (!allowanceGroupsPorPlanta[key]) allowanceGroupsPorPlanta[key] = [];
   }
-  replaceAmbientes(empreendimentoId: string, ambientesNovos: Ambiente[]) {
-    ambientesPorEmpreendimento[empreendimentoId] = ambientesNovos;
+  removePlanta(empreendimentoId: string, plantaId: string) {
+    const lista = plantasPorEmpreendimento[empreendimentoId];
+    if (lista) plantasPorEmpreendimento[empreendimentoId] = lista.filter((p) => p.id !== plantaId);
+    const key = plantaKey(empreendimentoId, plantaId);
+    delete ambientesPorPlanta[key];
+    delete allowanceGroupsPorPlanta[key];
   }
-  replaceAllowanceGroups(empreendimentoId: string, groups: AllowanceGroup[]) {
-    allowanceGroupsPorEmpreendimento[empreendimentoId] = groups;
+  getAmbientesByPlanta(empreendimentoId: string, plantaId: string) {
+    return ambientesPorPlanta[plantaKey(empreendimentoId, plantaId)] ?? [];
+  }
+  getAllowanceGroupsByPlanta(empreendimentoId: string, plantaId: string) {
+    return allowanceGroupsPorPlanta[plantaKey(empreendimentoId, plantaId)] ?? [];
+  }
+  replaceAmbientes(empreendimentoId: string, plantaId: string, ambientesNovos: Ambiente[]) {
+    ambientesPorPlanta[plantaKey(empreendimentoId, plantaId)] = ambientesNovos;
+  }
+  replaceAllowanceGroups(empreendimentoId: string, plantaId: string, groups: AllowanceGroup[]) {
+    allowanceGroupsPorPlanta[plantaKey(empreendimentoId, plantaId)] = groups;
   }
   registrarEmpreendimento(empreendimentoId: string, construtoraId: string, nome: string) {
     this.cadastrados.push({ empreendimentoId, construtoraId, nome });
-    ambientesPorEmpreendimento[empreendimentoId] = [];
-    allowanceGroupsPorEmpreendimento[empreendimentoId] = [];
+    plantasPorEmpreendimento[empreendimentoId] = [];
   }
 }
 
@@ -222,6 +243,12 @@ export class InMemoryEmpreendimentoCadastroRepository implements IEmpreendimento
     };
     this.items.push(created);
     return created;
+  }
+  updateArquivos(id: string, arquivos: CadastroEmpreendimentoInput["arquivos"]) {
+    const found = this.items.find((i) => i.id === id);
+    if (!found) return undefined;
+    found.arquivos = arquivos;
+    return { ...found };
   }
 }
 

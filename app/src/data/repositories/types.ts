@@ -10,6 +10,7 @@ import type {
   Empreendimento,
   EmpreendimentoCadastrado,
   MaterialCatalogItem,
+  Planta,
   Solicitacao,
   StatusSolicitacao,
   Vinculo,
@@ -17,6 +18,8 @@ import type {
 
 export interface ICatalogoRepository {
   getEmpreendimento(vinculoId: string): Empreendimento | undefined;
+  /** Resolves the vínculo's own Planta internally — a unit's catalog is
+   * whichever Planta it's on, not shared flat across the empreendimento. */
   getAmbientes(vinculoId: string): Ambiente[];
   getAllowanceGroups(vinculoId: string): AllowanceGroup[];
 
@@ -26,10 +29,13 @@ export interface ICatalogoRepository {
    * registered via registrarEmpreendimento (freshly cadastrados, no
    * client/vínculo yet — still need somewhere to build their catalog). */
   listEmpreendimentosByConstrutora(construtoraId: string): { empreendimentoId: string; nome: string }[];
-  getAmbientesByEmpreendimentoId(empreendimentoId: string): Ambiente[];
-  getAllowanceGroupsByEmpreendimentoId(empreendimentoId: string): AllowanceGroup[];
-  replaceAmbientes(empreendimentoId: string, ambientes: Ambiente[]): void;
-  replaceAllowanceGroups(empreendimentoId: string, groups: AllowanceGroup[]): void;
+  listPlantas(empreendimentoId: string): Planta[];
+  upsertPlanta(empreendimentoId: string, planta: Planta): void;
+  removePlanta(empreendimentoId: string, plantaId: string): void;
+  getAmbientesByPlanta(empreendimentoId: string, plantaId: string): Ambiente[];
+  getAllowanceGroupsByPlanta(empreendimentoId: string, plantaId: string): AllowanceGroup[];
+  replaceAmbientes(empreendimentoId: string, plantaId: string, ambientes: Ambiente[]): void;
+  replaceAllowanceGroups(empreendimentoId: string, plantaId: string, groups: AllowanceGroup[]): void;
   /** Makes a freshly cadastrado empreendimento (no vínculo yet) show up in
    * listEmpreendimentosByConstrutora / show up in Catálogo, ready to build
    * on — otherwise a Cadastro just vanishes into a list nothing else reads. */
@@ -81,6 +87,10 @@ export interface ISolicitacaoRepository {
 export interface IEmpreendimentoCadastroRepository {
   list(): EmpreendimentoCadastrado[];
   create(input: CadastroEmpreendimentoInput): EmpreendimentoCadastrado;
+  /** Attaches files to an already-created cadastro — the wizard creates
+   * the record right after step 1 (so Plantas/Catálogo have a real id to
+   * work against) and only fills arquivos in at the files step. */
+  updateArquivos(id: string, arquivos: CadastroEmpreendimentoInput["arquivos"]): EmpreendimentoCadastrado | undefined;
 }
 
 export interface IDashboardRepository {

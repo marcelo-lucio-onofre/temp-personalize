@@ -17,23 +17,43 @@ export interface ResumoUnidade {
  * credit/cost legs. */
 export const isRemocao = (s: Pick<Solicitacao, "para">): boolean => s.para === "Removido (crédito)";
 
-/** Parses the app's "DD/MM/YYYY" date strings (item.prazo, empreendimento
- * prazoPersonalizacao) — never use `new Date(str)` on these, it reads
- * DD/MM as MM/DD in en-US locales. */
+/** Parses the app's "DD/MM/YYYY" date strings (item.prazoInicio/prazoFim,
+ * empreendimento prazoPersonalizacao) — never use `new Date(str)` on
+ * these, it reads DD/MM as MM/DD in en-US locales. */
 export function parseDataBR(data: string): Date {
   const [dia, mes, ano] = data.split("/").map(Number);
   return new Date(ano, mes - 1, dia);
 }
 
-export type StatusPrazo = "aberto" | "encerrado" | "sem_prazo";
+/** DD/MM/YYYY (app's stored format) -> YYYY-MM-DD, the only format
+ * `<input type="date">` accepts as its value. */
+export function paraInputDate(dataBR: string): string {
+  const [dia, mes, ano] = dataBR.split("/");
+  return `${ano}-${mes}-${dia}`;
+}
 
-/** Whether an item's client decision window is still open — `item.prazo`
- * is the deadline to CHOOSE, independent of `item.leadTimeDias` (how long
- * the chosen material takes to arrive after that). */
-export function statusPrazo(item: Pick<Item, "prazo">, now = new Date()): StatusPrazo {
-  if (!item.prazo) return "sem_prazo";
-  const hoje = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-  return parseDataBR(item.prazo).getTime() >= hoje.getTime() ? "aberto" : "encerrado";
+/** YYYY-MM-DD (from `<input type="date">`) -> DD/MM/YYYY. */
+export function deInputDate(dataISO: string): string {
+  const [ano, mes, dia] = dataISO.split("-");
+  return `${dia}/${mes}/${ano}`;
+}
+
+/** Composite key for catalog storage — the catalog (ambientes/itens/
+ * opções/verbas) belongs to a Planta within an empreendimento, since two
+ * plantas in the same building rarely share the same rooms/specs. */
+export const plantaKey = (empreendimentoId: string, plantaId: string): string => `${empreendimentoId}::${plantaId}`;
+
+export type StatusPrazo = "aberto" | "nao_iniciado" | "encerrado" | "sem_prazo";
+
+/** Whether an item's client decision WINDOW (prazoInicio → prazoFim) is
+ * open, not yet started, or closed — independent of `item.leadTimeDias`
+ * (how long the chosen material takes to arrive after a decision). */
+export function statusPrazo(item: Pick<Item, "prazoInicio" | "prazoFim">, now = new Date()): StatusPrazo {
+  if (!item.prazoInicio && !item.prazoFim) return "sem_prazo";
+  const hoje = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+  if (item.prazoInicio && parseDataBR(item.prazoInicio).getTime() > hoje) return "nao_iniciado";
+  if (item.prazoFim && parseDataBR(item.prazoFim).getTime() < hoje) return "encerrado";
+  return "aberto";
 }
 
 /**

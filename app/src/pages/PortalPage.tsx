@@ -82,7 +82,7 @@ export function PortalPage() {
                     diffColor = "var(--red-ink)";
                     statusLine = `${item.qtdPadrao} padrão → ${qtd} solicitados (+${extra})`;
                   } else {
-                    statusLine = `${item.padrao} · prazo: ${item.prazo}`;
+                    statusLine = `${item.padrao} · prazo: ${item.prazoFim}`;
                   }
                 } else if (chosenOpt && !chosenOpt.padrao) {
                   if (chosenOpt.remocao) {
@@ -96,7 +96,7 @@ export function PortalPage() {
                     statusLine = `${item.padrao} → ${chosenOpt.nome}`;
                   }
                 } else {
-                  statusLine = `Padrão: ${item.padrao}` + (item.prazo ? ` · prazo: ${item.prazo}` : "");
+                  statusLine = `Padrão: ${item.padrao}` + (item.prazoFim ? ` · prazo: ${item.prazoFim}` : "");
                 }
 
                 const hasAction = item.nivel < 3;
