@@ -1,8 +1,9 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { Building2, FileStack, CheckCircle2, Lock } from "lucide-react";
 import { Breadcrumb } from "../components/Breadcrumb";
-import type { ArquivoCadastro, CategoriaArquivo } from "../domain/types";
 import { useApp } from "../state/AppContext";
+import type { ArquivoCadastro, CategoriaArquivo } from "../domain/types";
 
 interface CategoriaMeta {
   key: CategoriaArquivo;
@@ -18,17 +19,25 @@ const META: CategoriaMeta[] = [
   { key: "memorial", label: "Memorial descritivo", accept: ".pdf,.doc,.docx", hint: "Especificação de acabamentos e materiais padrão." },
 ];
 
+const STEPS = [
+  { label: "Empreendimento", icon: Building2 },
+  { label: "Arquivos", icon: FileStack },
+  { label: "Revisão", icon: CheckCircle2 },
+];
+
 function fmtSize(bytes: number): string {
   if (bytes > 1024 * 1024) return (bytes / (1024 * 1024)).toFixed(1) + " MB";
   return Math.max(1, Math.round(bytes / 1024)) + " KB";
 }
 
 export function CadastroPage() {
-  const { cadastrarEmpreendimento } = useApp();
+  const { vinculos, construtoraLogadaId, cadastrarEmpreendimento } = useApp();
   const navigate = useNavigate();
 
+  const construtoraNome = vinculos.find((v) => v.construtoraId === construtoraLogadaId)?.construtoraNome ?? "Construtora";
+
+  const [step, setStep] = useState(0);
   const [nome, setNome] = useState("");
-  const [construtora, setConstrutora] = useState("");
   const [torres, setTorres] = useState("");
   const [unidades, setUnidades] = useState("");
   const [prazo, setPrazo] = useState("");
@@ -38,7 +47,7 @@ export function CadastroPage() {
     plantas: [],
     memorial: [],
   });
-  const [submitted, setSubmitted] = useState(false);
+  const [criado, setCriado] = useState<{ id: string; totalFiles: number } | null>(null);
 
   function addFiles(key: CategoriaArquivo, list: FileList | null) {
     if (!list?.length) return;
@@ -50,26 +59,30 @@ export function CadastroPage() {
     setFiles((prev) => ({ ...prev, [key]: prev[key].filter((f) => f.id !== id) }));
   }
 
-  const filled = nome.trim() && construtora.trim() && torres && unidades && prazo;
+  const dadosPreenchidos = Boolean(nome.trim() && torres && unidades && prazo);
   const uploaded = META.every((m) => files[m.key].length > 0);
-  const complete = Boolean(filled && uploaded);
   const doneCount = META.filter((m) => files[m.key].length > 0).length;
   const totalFiles = META.reduce((n, m) => n + files[m.key].length, 0);
 
-  function handleSubmit() {
-    if (!complete) return;
-    cadastrarEmpreendimento({
+  function irPara(i: number) {
+    if (i < step) setStep(i);
+  }
+
+  function handleConfirmar() {
+    if (!construtoraLogadaId || !dadosPreenchidos || !uploaded) return;
+    const created = cadastrarEmpreendimento({
       nome,
-      construtora,
+      construtoraId: construtoraLogadaId,
+      construtora: construtoraNome,
       torres: Number(torres),
       unidades: Number(unidades),
       prazo,
       arquivos: files,
     });
-    setSubmitted(true);
+    setCriado({ id: created.id, totalFiles });
   }
 
-  if (submitted) {
+  if (criado) {
     return (
       <div className="container container--narrow text-center" style={{ paddingTop: 64 }}>
         <div
@@ -90,11 +103,12 @@ export function CadastroPage() {
         </div>
         <h1 style={{ fontSize: 21, fontWeight: 700, marginBottom: 10 }}>Empreendimento cadastrado</h1>
         <p style={{ fontSize: 14, color: "var(--ink-soft)", marginBottom: 26, maxWidth: "46ch", marginInline: "auto", lineHeight: 1.5 }}>
-          {nome} foi criado com {totalFiles} arquivos — imagens, DWG, plantas e memorial descritivo já disponíveis para montar o catálogo de personalização.
+          {nome} foi criado com {criado.totalFiles} arquivos. Já aparece no Catálogo — o próximo passo é montar ambientes, itens e opções pra {construtoraNome}.
         </p>
-        <button type="button" className="btn btn--primary" onClick={() => navigate("/painel")}>
-          Ir para o painel
-        </button>
+        <div className="row gap-sm" style={{ justifyContent: "center" }}>
+          <Link to="/catalogo" className="btn btn--primary">Ir para o catálogo</Link>
+          <button type="button" className="btn" onClick={() => navigate("/painel")}>Ir para o painel</button>
+        </div>
       </div>
     );
   }
@@ -104,97 +118,181 @@ export function CadastroPage() {
       <Breadcrumb items={[{ label: "Painel", to: "/painel" }, { label: "Cadastro" }]} />
       <h1 style={{ fontSize: 24, fontWeight: 700, marginBottom: 8 }}>Cadastrar empreendimento</h1>
       <p style={{ fontSize: 14, color: "var(--ink-soft)", marginBottom: 24, maxWidth: "60ch", lineHeight: 1.5 }}>
-        Imagens, DWG, plantas e memorial descritivo são obrigatórios — é isso que alimenta o catálogo de personalização que o cliente vê no portal.
+        Dados, arquivos e revisão — em {construtoraNome}. É isso que alimenta o catálogo de personalização que o cliente vê no portal.
       </p>
 
-      <div className="card" style={{ marginBottom: 20 }}>
-        <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 16 }}>Dados do empreendimento</div>
-        <div className="grid grid-2">
-          <div style={{ gridColumn: "1 / -1" }}>
-            <label className="label">Nome do empreendimento *</label>
-            <input className="input" value={nome} onChange={(e) => setNome(e.target.value)} placeholder="Residencial Aurora" />
-          </div>
-          <div>
-            <label className="label">Construtora *</label>
-            <input className="input" value={construtora} onChange={(e) => setConstrutora(e.target.value)} placeholder="Prado Engenharia" />
-          </div>
-          <div>
-            <label className="label">Prazo de personalização *</label>
-            <input className="input" type="date" value={prazo} onChange={(e) => setPrazo(e.target.value)} />
-          </div>
-          <div>
-            <label className="label">Nº de torres *</label>
-            <input className="input" type="number" min={1} value={torres} onChange={(e) => setTorres(e.target.value)} placeholder="2" />
-          </div>
-          <div>
-            <label className="label">Nº de unidades *</label>
-            <input className="input" type="number" min={1} value={unidades} onChange={(e) => setUnidades(e.target.value)} placeholder="300" />
-          </div>
-        </div>
-      </div>
-
-      <div className="row" style={{ justifyContent: "space-between", marginBottom: 12 }}>
-        <div style={{ fontWeight: 700, fontSize: 14 }}>Arquivos do empreendimento</div>
-        <div className="mono text-soft" style={{ fontSize: 11 }}>{doneCount} de 4 categorias enviadas</div>
-      </div>
-
-      <div className="grid grid-2" style={{ marginBottom: 24 }}>
-        {META.map((cat) => {
-          const list = files[cat.key];
-          const has = list.length > 0;
+      <div className="row gap-sm" style={{ marginBottom: 28, flexWrap: "wrap" }}>
+        {STEPS.map((s, i) => {
+          const done = i < step;
+          const current = i === step;
           return (
-            <div
-              key={cat.key}
+            <button
+              key={s.label}
+              type="button"
+              onClick={() => irPara(i)}
+              disabled={i > step}
+              className="row gap-xs"
               style={{
-                border: `2px dashed ${has ? "var(--green)" : "var(--rule-strong)"}`,
-                borderRadius: 10,
-                padding: 16,
-                background: has ? "var(--green-bg)" : "var(--paper)",
+                border: "none",
+                background: "none",
+                cursor: i < step ? "pointer" : "default",
+                padding: "4px 8px 4px 0",
+                opacity: i > step ? 0.4 : 1,
+                fontSize: 12.5,
+                fontWeight: current ? 700 : 600,
+                color: current ? "var(--brand)" : done ? "var(--ink)" : "var(--ink-soft)",
               }}
             >
-              <div className="row" style={{ justifyContent: "space-between", marginBottom: 6 }}>
-                <div style={{ fontWeight: 700, fontSize: 13 }}>
-                  {cat.label} <span style={{ color: "var(--red-ink)" }}>*</span>
-                </div>
-                <span className={has ? "badge badge--simples" : "badge badge--bloqueado"}>
-                  {has ? `✓ ${list.length} arquivo${list.length > 1 ? "s" : ""}` : "Obrigatório"}
-                </span>
-              </div>
-              <div style={{ fontSize: 11.5, color: "var(--ink-soft)", marginBottom: 10, lineHeight: 1.4 }}>{cat.hint}</div>
-              <input type="file" multiple accept={cat.accept} onChange={(e) => addFiles(cat.key, e.target.files)} style={{ fontSize: 12, maxWidth: "100%" }} />
-              {has && (
-                <div className="stack gap-xs" style={{ marginTop: 10 }}>
-                  {list.map((chip) => (
-                    <div key={chip.id} className="row" style={{ justifyContent: "space-between", background: "#fff", border: "1px solid var(--rule)", borderRadius: 6, padding: "6px 9px", fontSize: 11.5, gap: 8 }}>
-                      <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{chip.name}</span>
-                      <span className="row gap-sm" style={{ flexShrink: 0 }}>
-                        <span className="mono text-soft">{fmtSize(chip.size)}</span>
-                        <button
-                          type="button"
-                          style={{ border: "none", background: "none", color: "var(--red-ink)", cursor: "pointer", fontWeight: 700, fontSize: 14, padding: 0 }}
-                          onClick={() => removeFile(cat.key, chip.id)}
-                          aria-label={`Remover ${chip.name}`}
-                        >
-                          ×
-                        </button>
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
+              <s.icon className="sidebar-nav-icon" />
+              {i + 1}. {s.label}
+              {i < STEPS.length - 1 && <span style={{ color: "var(--rule-strong)", marginLeft: 6 }}>›</span>}
+            </button>
           );
         })}
       </div>
 
-      <div className="row" style={{ justifyContent: "space-between", gap: 16 }}>
-        <div style={{ fontSize: 12.5, color: "var(--ink-soft)", maxWidth: "44ch" }}>
-          {complete ? "Tudo certo — pode cadastrar o empreendimento." : "Preencha os dados e envie ao menos um arquivo em cada categoria obrigatória."}
+      {step === 0 && (
+        <div className="stack gap-lg">
+          <div className="card">
+            <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 16 }}>Dados do empreendimento</div>
+            <div className="grid grid-2">
+              <div style={{ gridColumn: "1 / -1" }}>
+                <label className="label">Construtora</label>
+                <div
+                  className="row gap-sm"
+                  style={{ alignItems: "center", padding: "10px 12px", border: "1px solid var(--rule)", borderRadius: 8, background: "var(--paper)", color: "var(--ink-soft)" }}
+                >
+                  <Lock className="sidebar-nav-icon" style={{ width: 14, height: 14 }} />
+                  <span style={{ color: "var(--ink)", fontWeight: 600 }}>{construtoraNome}</span>
+                </div>
+                <div style={{ fontSize: 11.5, color: "var(--ink-soft)", marginTop: 6 }}>
+                  Definida pelo login — o empreendimento é sempre cadastrado na construtora logada.
+                </div>
+              </div>
+              <div style={{ gridColumn: "1 / -1" }}>
+                <label className="label">Nome do empreendimento *</label>
+                <input className="input" value={nome} onChange={(e) => setNome(e.target.value)} placeholder="Residencial Aurora" />
+              </div>
+              <div>
+                <label className="label">Prazo de personalização *</label>
+                <input className="input" type="date" value={prazo} onChange={(e) => setPrazo(e.target.value)} />
+              </div>
+              <div>
+                <label className="label">Nº de torres *</label>
+                <input className="input" type="number" min={1} value={torres} onChange={(e) => setTorres(e.target.value)} placeholder="2" />
+              </div>
+              <div>
+                <label className="label">Nº de unidades *</label>
+                <input className="input" type="number" min={1} value={unidades} onChange={(e) => setUnidades(e.target.value)} placeholder="300" />
+              </div>
+            </div>
+          </div>
+          <div className="row" style={{ justifyContent: "flex-end" }}>
+            <button type="button" className="btn btn--primary" disabled={!dadosPreenchidos} onClick={() => setStep(1)}>
+              Continuar
+            </button>
+          </div>
         </div>
-        <button type="button" className="btn btn--primary" disabled={!complete} onClick={handleSubmit}>
-          Cadastrar empreendimento
-        </button>
-      </div>
+      )}
+
+      {step === 1 && (
+        <div className="stack gap-lg">
+          <div className="row" style={{ justifyContent: "space-between" }}>
+            <div style={{ fontWeight: 700, fontSize: 14 }}>Arquivos do empreendimento</div>
+            <div className="mono text-soft" style={{ fontSize: 11 }}>{doneCount} de 4 categorias enviadas</div>
+          </div>
+          <div className="grid grid-2">
+            {META.map((cat) => {
+              const list = files[cat.key];
+              const has = list.length > 0;
+              return (
+                <div
+                  key={cat.key}
+                  style={{
+                    border: `2px dashed ${has ? "var(--green)" : "var(--rule-strong)"}`,
+                    borderRadius: 10,
+                    padding: 16,
+                    background: has ? "var(--green-bg)" : "var(--paper)",
+                  }}
+                >
+                  <div className="row" style={{ justifyContent: "space-between", marginBottom: 6 }}>
+                    <div style={{ fontWeight: 700, fontSize: 13 }}>
+                      {cat.label} <span style={{ color: "var(--red-ink)" }}>*</span>
+                    </div>
+                    <span className={has ? "badge badge--simples" : "badge badge--bloqueado"}>
+                      {has ? `✓ ${list.length} arquivo${list.length > 1 ? "s" : ""}` : "Obrigatório"}
+                    </span>
+                  </div>
+                  <div style={{ fontSize: 11.5, color: "var(--ink-soft)", marginBottom: 10, lineHeight: 1.4 }}>{cat.hint}</div>
+                  <input type="file" multiple accept={cat.accept} onChange={(e) => addFiles(cat.key, e.target.files)} style={{ fontSize: 12, maxWidth: "100%" }} />
+                  {has && (
+                    <div className="stack gap-xs" style={{ marginTop: 10 }}>
+                      {list.map((chip) => (
+                        <div key={chip.id} className="row" style={{ justifyContent: "space-between", background: "#fff", border: "1px solid var(--rule)", borderRadius: 6, padding: "6px 9px", fontSize: 11.5, gap: 8 }}>
+                          <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{chip.name}</span>
+                          <span className="row gap-sm" style={{ flexShrink: 0 }}>
+                            <span className="mono text-soft">{fmtSize(chip.size)}</span>
+                            <button
+                              type="button"
+                              style={{ border: "none", background: "none", color: "var(--red-ink)", cursor: "pointer", fontWeight: 700, fontSize: 14, padding: 0 }}
+                              onClick={() => removeFile(cat.key, chip.id)}
+                              aria-label={`Remover ${chip.name}`}
+                            >
+                              ×
+                            </button>
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+          <div className="row" style={{ justifyContent: "space-between" }}>
+            <button type="button" className="btn" onClick={() => setStep(0)}>Voltar</button>
+            <button type="button" className="btn btn--primary" disabled={!uploaded} onClick={() => setStep(2)}>
+              Continuar
+            </button>
+          </div>
+        </div>
+      )}
+
+      {step === 2 && (
+        <div className="stack gap-lg">
+          <div className="card">
+            <div style={{ fontSize: 12, fontWeight: 600, color: "var(--ink-soft)", textTransform: "uppercase", marginBottom: 10 }}>Resumo</div>
+            <div className="stack gap-sm">
+              <div className="row" style={{ justifyContent: "space-between" }}>
+                <span className="text-soft" style={{ fontSize: 13 }}>Construtora</span>
+                <span style={{ fontSize: 13, fontWeight: 600 }}>{construtoraNome}</span>
+              </div>
+              <div className="row" style={{ justifyContent: "space-between" }}>
+                <span className="text-soft" style={{ fontSize: 13 }}>Empreendimento</span>
+                <span style={{ fontSize: 13, fontWeight: 600 }}>{nome}</span>
+              </div>
+              <div className="row" style={{ justifyContent: "space-between" }}>
+                <span className="text-soft" style={{ fontSize: 13 }}>Prazo de personalização</span>
+                <span style={{ fontSize: 13, fontWeight: 600 }}>{prazo}</span>
+              </div>
+              <div className="row" style={{ justifyContent: "space-between" }}>
+                <span className="text-soft" style={{ fontSize: 13 }}>Torres / Unidades</span>
+                <span style={{ fontSize: 13, fontWeight: 600 }}>{torres} / {unidades}</span>
+              </div>
+              <div className="row" style={{ justifyContent: "space-between" }}>
+                <span className="text-soft" style={{ fontSize: 13 }}>Arquivos enviados</span>
+                <span style={{ fontSize: 13, fontWeight: 600 }}>{totalFiles} ({doneCount} de 4 categorias)</span>
+              </div>
+            </div>
+          </div>
+          <div className="row" style={{ justifyContent: "space-between" }}>
+            <button type="button" className="btn" onClick={() => setStep(1)}>Voltar</button>
+            <button type="button" className="btn btn--primary" onClick={handleConfirmar}>
+              Confirmar cadastro
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -21,12 +21,19 @@ export interface ICatalogoRepository {
   getAllowanceGroups(vinculoId: string): AllowanceGroup[];
 
   /** Authoring side — construtora manages a catalog directly by
-   * empreendimentoId, since it isn't browsing through a vínculo. */
+   * empreendimentoId, since it isn't browsing through a vínculo. Includes
+   * both empreendimentos with real vínculos (the demo units) and ones
+   * registered via registrarEmpreendimento (freshly cadastrados, no
+   * client/vínculo yet — still need somewhere to build their catalog). */
   listEmpreendimentosByConstrutora(construtoraId: string): { empreendimentoId: string; nome: string }[];
   getAmbientesByEmpreendimentoId(empreendimentoId: string): Ambiente[];
   getAllowanceGroupsByEmpreendimentoId(empreendimentoId: string): AllowanceGroup[];
   replaceAmbientes(empreendimentoId: string, ambientes: Ambiente[]): void;
   replaceAllowanceGroups(empreendimentoId: string, groups: AllowanceGroup[]): void;
+  /** Makes a freshly cadastrado empreendimento (no vínculo yet) show up in
+   * listEmpreendimentosByConstrutora / show up in Catálogo, ready to build
+   * on — otherwise a Cadastro just vanishes into a list nothing else reads. */
+  registrarEmpreendimento(empreendimentoId: string, construtoraId: string, nome: string): void;
 }
 
 export interface IMaterialCatalogoRepository {

@@ -232,6 +232,8 @@ export interface ArquivoCadastro {
 
 export interface CadastroEmpreendimentoInput {
   nome: string;
+  /** Locked to the logged-in construtora — never free text (see LoginConstrutoraPage). */
+  construtoraId: string;
   construtora: string;
   torres: number;
   unidades: number;

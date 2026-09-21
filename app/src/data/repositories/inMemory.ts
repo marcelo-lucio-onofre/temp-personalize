@@ -48,6 +48,11 @@ const empreendimentoPorVinculo: Record<string, typeof empreendimento> = {
 };
 
 export class InMemoryCatalogoRepository implements ICatalogoRepository {
+  // Empreendimentos registered via registrarEmpreendimento (fresh Cadastro,
+  // no vínculo/client yet) — merged into listEmpreendimentosByConstrutora
+  // alongside the vínculo-derived (demo) ones.
+  private cadastrados: { empreendimentoId: string; construtoraId: string; nome: string }[] = [];
+
   getEmpreendimento(vinculoId: string) {
     return empreendimentoPorVinculo[vinculoId];
   }
@@ -66,6 +71,11 @@ export class InMemoryCatalogoRepository implements ICatalogoRepository {
         seen.set(v.empreendimentoId, v.empreendimentoNome);
       }
     }
+    for (const c of this.cadastrados) {
+      if (c.construtoraId === construtoraId && !seen.has(c.empreendimentoId)) {
+        seen.set(c.empreendimentoId, c.nome);
+      }
+    }
     return [...seen.entries()].map(([empreendimentoId, nome]) => ({ empreendimentoId, nome }));
   }
   getAmbientesByEmpreendimentoId(empreendimentoId: string) {
@@ -79,6 +89,11 @@ export class InMemoryCatalogoRepository implements ICatalogoRepository {
   }
   replaceAllowanceGroups(empreendimentoId: string, groups: AllowanceGroup[]) {
     allowanceGroupsPorEmpreendimento[empreendimentoId] = groups;
+  }
+  registrarEmpreendimento(empreendimentoId: string, construtoraId: string, nome: string) {
+    this.cadastrados.push({ empreendimentoId, construtoraId, nome });
+    ambientesPorEmpreendimento[empreendimentoId] = [];
+    allowanceGroupsPorEmpreendimento[empreendimentoId] = [];
   }
 }
 

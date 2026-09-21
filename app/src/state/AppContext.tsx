@@ -87,7 +87,7 @@ type Action =
   | { type: "APROVAR_SOLICITACAO"; id: string }
   | { type: "RECUSAR_SOLICITACAO"; id: string }
   | { type: "REFRESH_SOLICITACOES" }
-  | { type: "CADASTRAR_EMPREENDIMENTO"; input: CadastroEmpreendimentoInput }
+  | { type: "REFRESH_CADASTROS" }
   | { type: "DADOS_ATUALIZADOS" };
 
 function buildInitialState(): AppState {
@@ -155,10 +155,8 @@ function reducer(state: AppState, action: Action): AppState {
     }
     case "REFRESH_SOLICITACOES":
       return { ...state, solicitacoes: [...repositories.solicitacoes.list()] };
-    case "CADASTRAR_EMPREENDIMENTO": {
-      repositories.cadastros.create(action.input);
+    case "REFRESH_CADASTROS":
       return { ...state, cadastros: [...repositories.cadastros.list()] };
-    }
     case "DADOS_ATUALIZADOS":
       return { ...state, dadosVersion: state.dadosVersion + 1 };
     default:
@@ -184,7 +182,7 @@ interface AppContextValue extends AppState {
   aprovarSolicitacao: (id: string) => void;
   recusarSolicitacao: (id: string) => void;
   criarSolicitacao: (input: NovaSolicitacaoInput) => Solicitacao;
-  cadastrarEmpreendimento: (input: CadastroEmpreendimentoInput) => void;
+  cadastrarEmpreendimento: (input: CadastroEmpreendimentoInput) => EmpreendimentoCadastrado;
   salvarCatalogo: (empreendimentoId: string, ambientes: Ambiente[], allowanceGroups: AllowanceGroup[]) => void;
   criarMaterial: (input: Omit<MaterialCatalogItem, "id">) => MaterialCatalogItem;
   atualizarMaterial: (id: string, patch: Partial<Omit<MaterialCatalogItem, "id" | "construtoraId">>) => void;
@@ -244,10 +242,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
     dispatch({ type: "REFRESH_SOLICITACOES" });
     return created;
   }, []);
-  const cadastrarEmpreendimento = useCallback(
-    (input: CadastroEmpreendimentoInput) => dispatch({ type: "CADASTRAR_EMPREENDIMENTO", input }),
-    [],
-  );
+  const cadastrarEmpreendimento = useCallback((input: CadastroEmpreendimentoInput) => {
+    const created = repositories.cadastros.create(input);
+    repositories.catalogo.registrarEmpreendimento(created.id, input.construtoraId, input.nome);
+    dispatch({ type: "REFRESH_CADASTROS" });
+    return created;
+  }, []);
   const salvarCatalogo = useCallback((empreendimentoId: string, ambientesNovos: Ambiente[], allowanceGroups: AllowanceGroup[]) => {
     repositories.catalogo.replaceAmbientes(empreendimentoId, ambientesNovos);
     repositories.catalogo.replaceAllowanceGroups(empreendimentoId, allowanceGroups);
