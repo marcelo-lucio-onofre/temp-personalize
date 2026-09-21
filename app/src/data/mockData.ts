@@ -46,7 +46,6 @@ export const empreendimento: Empreendimento = {
   comprador: "Marina Alves",
   cpf: "•••.•••.•••-89",
   totalUnidades: 300,
-  prazoPersonalizacao: "01/11/2026",
   valorImovel: 850000,
 };
 
@@ -62,7 +61,6 @@ export const empreendimentoVistaVerde: Empreendimento = {
   comprador: "Marina Alves",
   cpf: "•••.•••.•••-89",
   totalUnidades: 180,
-  prazoPersonalizacao: "15/12/2026",
   valorImovel: 720000,
 };
 
@@ -80,7 +78,6 @@ export const empreendimentoAllianceBoulevard501: Empreendimento = {
   comprador: "Marina Alves",
   cpf: "•••.•••.•••-89",
   totalUnidades: 220,
-  prazoPersonalizacao: "20/10/2026",
   valorImovel: 980000,
 };
 
@@ -92,7 +89,6 @@ export const empreendimentoAllianceBoulevard1502: Empreendimento = {
   comprador: "Marina Alves",
   cpf: "•••.•••.•••-89",
   totalUnidades: 220,
-  prazoPersonalizacao: "20/10/2026",
   valorImovel: 1050000,
 };
 
@@ -104,7 +100,6 @@ export const empreendimentoAllianceJardins: Empreendimento = {
   comprador: "Marina Alves",
   cpf: "•••.•••.•••-89",
   totalUnidades: 96,
-  prazoPersonalizacao: "05/02/2027",
   valorImovel: 690000,
 };
 

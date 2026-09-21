@@ -8,6 +8,7 @@ import type {
   Brand,
   CadastroEmpreendimentoInput,
   EmpreendimentoCadastrado,
+  Item,
   MaterialCatalogItem,
   Planta,
   Solicitacao,
@@ -80,6 +81,15 @@ export class InMemoryCatalogoRepository implements ICatalogoRepository {
       }
     }
     return [...seen.entries()].map(([empreendimentoId, nome]) => ({ empreendimentoId, nome }));
+  }
+  listTodosItensDoEmpreendimento(empreendimentoId: string): Item[] {
+    const plantas = plantasPorEmpreendimento[empreendimentoId] ?? [];
+    const itens: Item[] = [];
+    for (const p of plantas) {
+      const ambientes = ambientesPorPlanta[plantaKey(empreendimentoId, p.id)] ?? [];
+      for (const a of ambientes) itens.push(...a.itens);
+    }
+    return itens;
   }
   listPlantas(empreendimentoId: string) {
     return plantasPorEmpreendimento[empreendimentoId] ?? [];

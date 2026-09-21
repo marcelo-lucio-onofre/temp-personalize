@@ -127,7 +127,6 @@ export interface Empreendimento {
   comprador: string;
   cpf: string;
   totalUnidades: number;
-  prazoPersonalizacao: string;
   valorImovel: number;
 }
 
@@ -265,7 +264,6 @@ export interface CadastroEmpreendimentoInput {
   construtora: string;
   torres: number;
   unidades: number;
-  prazo: string;
   arquivos: Record<CategoriaArquivo, ArquivoCadastro[]>;
 }
 

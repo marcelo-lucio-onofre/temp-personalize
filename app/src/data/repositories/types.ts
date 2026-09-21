@@ -9,6 +9,7 @@ import type {
   DashboardData,
   Empreendimento,
   EmpreendimentoCadastrado,
+  Item,
   MaterialCatalogItem,
   Planta,
   Solicitacao,
@@ -29,6 +30,10 @@ export interface ICatalogoRepository {
    * registered via registrarEmpreendimento (freshly cadastrados, no
    * client/vínculo yet — still need somewhere to build their catalog). */
   listEmpreendimentosByConstrutora(construtoraId: string): { empreendimentoId: string; nome: string }[];
+  /** Todos os itens de todas as plantas do empreendimento — usado só pra
+   * derivar a janela de personalização (calcularJanelaPersonalizacao), não
+   * pra navegação normal (essa continua sempre por planta). */
+  listTodosItensDoEmpreendimento(empreendimentoId: string): Item[];
   listPlantas(empreendimentoId: string): Planta[];
   upsertPlanta(empreendimentoId: string, planta: Planta): void;
   removePlanta(empreendimentoId: string, plantaId: string): void;

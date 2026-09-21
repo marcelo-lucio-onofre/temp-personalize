@@ -55,6 +55,7 @@ Regra: `--green` é sempre um verde **desaturado** (chroma ~0.10, não 0.16+) �
 - `.badge--simples/tecnico/bloqueado` — cor é semântica (nível de aprovação), nunca segue `--brand`.
 - `.btn--primary` usa `var(--brand)` — herda automaticamente a cor certa (plantta ou construtora) por estar dentro do escopo de `--brand` setado no `ClientPortalLayout`/`SidebarShell`.
 - `Breadcrumb` (`components/Breadcrumb.tsx`) é a única forma de "onde estou" — não duplicar com eyebrow acima do H1.
+- `PrazoBadge`/`JanelaBadge` (`components/Badge.tsx`) — nunca campo de data solto num H1/subtítulo. Registro desabilitado (janela de personalização encerrada) numa listagem usa opacidade reduzida (`0.6`, mesmo valor de item bloqueado nivel 3) + borda esquerda vermelha fina — nunca remover o registro da lista, só destacar.
 
 ## 6. White-label — regra crítica
 

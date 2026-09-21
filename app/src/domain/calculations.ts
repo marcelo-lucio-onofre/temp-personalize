@@ -17,9 +17,9 @@ export interface ResumoUnidade {
  * credit/cost legs. */
 export const isRemocao = (s: Pick<Solicitacao, "para">): boolean => s.para === "Removido (crédito)";
 
-/** Parses the app's "DD/MM/YYYY" date strings (item.prazoInicio/prazoFim,
- * empreendimento prazoPersonalizacao) — never use `new Date(str)` on
- * these, it reads DD/MM as MM/DD in en-US locales. */
+/** Parses the app's "DD/MM/YYYY" date strings (item.prazoInicio/prazoFim)
+ * — never use `new Date(str)` on these, it reads DD/MM as MM/DD in en-US
+ * locales. */
 export function parseDataBR(data: string): Date {
   const [dia, mes, ano] = data.split("/").map(Number);
   return new Date(ano, mes - 1, dia);
@@ -54,6 +54,38 @@ export function statusPrazo(item: Pick<Item, "prazoInicio" | "prazoFim">, now = 
   if (item.prazoInicio && parseDataBR(item.prazoInicio).getTime() > hoje) return "nao_iniciado";
   if (item.prazoFim && parseDataBR(item.prazoFim).getTime() < hoje) return "encerrado";
   return "aberto";
+}
+
+export interface JanelaPersonalizacao {
+  /** Menor prazoInicio entre todos os itens do empreendimento (qualquer planta). */
+  inicio: string | null;
+  /** Maior prazoFim entre todos os itens do empreendimento (qualquer planta). */
+  fim: string | null;
+  status: "habilitado" | "habilitado_em_breve" | "desabilitado" | "sem_prazo";
+}
+
+/**
+ * O empreendimento não tem prazo de personalização próprio — é derivado do
+ * catálogo: início é a menor data de início entre todos os itens (de
+ * qualquer planta), fim é a maior data de fim. Assim que o primeiro item
+ * abre, o registro fica "habilitado"; depois que o último item fecha, vira
+ * "desabilitado". Usado na listagem de empreendimentos do cliente.
+ */
+export function calcularJanelaPersonalizacao(todosItens: Pick<Item, "prazoInicio" | "prazoFim">[], now = new Date()): JanelaPersonalizacao {
+  const inicios = todosItens.map((i) => i.prazoInicio).filter((d): d is string => Boolean(d));
+  const fins = todosItens.map((i) => i.prazoFim).filter((d): d is string => Boolean(d));
+  if (inicios.length === 0 && fins.length === 0) return { inicio: null, fim: null, status: "sem_prazo" };
+
+  const inicio = inicios.length ? inicios.reduce((min, d) => (parseDataBR(d).getTime() < parseDataBR(min).getTime() ? d : min)) : null;
+  const fim = fins.length ? fins.reduce((max, d) => (parseDataBR(d).getTime() > parseDataBR(max).getTime() ? d : max)) : null;
+
+  const hoje = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+  let status: JanelaPersonalizacao["status"];
+  if (inicio && parseDataBR(inicio).getTime() > hoje) status = "habilitado_em_breve";
+  else if (fim && parseDataBR(fim).getTime() < hoje) status = "desabilitado";
+  else status = "habilitado";
+
+  return { inicio, fim, status };
 }
 
 /**

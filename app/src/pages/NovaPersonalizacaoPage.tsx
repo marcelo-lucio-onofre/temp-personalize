@@ -2,9 +2,9 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Building2, LayoutGrid, Package, SlidersHorizontal, CheckCircle2 } from "lucide-react";
 import { Breadcrumb } from "../components/Breadcrumb";
-import { NivelBadge, PrazoBadge } from "../components/Badge";
+import { JanelaBadge, NivelBadge, PrazoBadge } from "../components/Badge";
 import { ConstrutoraGroupHeader } from "../components/ConstrutoraGroupHeader";
-import { avaliarOpcao, avaliarParametrico, fmtBRL, fmtSigned, saldoAllowanceGroup } from "../domain/calculations";
+import { avaliarOpcao, avaliarParametrico, calcularJanelaPersonalizacao, fmtBRL, fmtSigned, saldoAllowanceGroup } from "../domain/calculations";
 import { useApp } from "../state/AppContext";
 import type { Brand, Vinculo } from "../domain/types";
 
@@ -171,9 +171,15 @@ export function NovaPersonalizacaoPage() {
             <div key={construtoraId}>
               {!loginScopeConstrutoraId && <ConstrutoraGroupHeader nome={c.nome} brand={c.brand} />}
               <div className="stack gap-lg" style={{ paddingLeft: loginScopeConstrutoraId ? 0 : 40 }}>
-                {[...c.empreendimentos.entries()].map(([empId, emp]) => (
-                  <div key={empId}>
-                    <div style={{ fontSize: 14, fontWeight: 600, color: "var(--ink-soft)", marginBottom: 8 }}>{emp.nome}</div>
+                {[...c.empreendimentos.entries()].map(([empId, emp]) => {
+                  const itensEmp = catalogo.listTodosItensDoEmpreendimento(empId);
+                  const desabilitado = calcularJanelaPersonalizacao(itensEmp).status === "desabilitado";
+                  return (
+                  <div key={empId} style={{ opacity: desabilitado ? 0.6 : 1, borderLeft: desabilitado ? "3px solid var(--red-ink)" : "3px solid transparent", paddingLeft: 12 }}>
+                    <div className="row gap-sm" style={{ alignItems: "center", marginBottom: 8, flexWrap: "wrap" }}>
+                      <span style={{ fontSize: 14, fontWeight: 600, color: "var(--ink-soft)" }}>{emp.nome}</span>
+                      <JanelaBadge itens={itensEmp} />
+                    </div>
                     <div className="stack gap-sm">
                       {emp.unidades.map((v) => (
                         <button
@@ -191,7 +197,8 @@ export function NovaPersonalizacaoPage() {
                       ))}
                     </div>
                   </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
           ))}

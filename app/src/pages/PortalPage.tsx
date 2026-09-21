@@ -1,7 +1,7 @@
 import { Link, Navigate } from "react-router-dom";
 import { ClipboardList, ShoppingCart, Calculator } from "lucide-react";
 import { Breadcrumb } from "../components/Breadcrumb";
-import { NivelBadge } from "../components/Badge";
+import { JanelaBadge, NivelBadge } from "../components/Badge";
 import { fmtBRL, fmtSigned, qtdExtra, resumirAlteracoes } from "../domain/calculations";
 import { useApp } from "../state/AppContext";
 
@@ -18,9 +18,7 @@ export function PortalPage() {
       <Breadcrumb items={[{ label: "Minhas personalizações", to: "/personalizacoes" }, { label: "Portal" }]} />
       <div className="row" style={{ justifyContent: "space-between", alignItems: "flex-end", marginBottom: 4 }}>
         <h1 style={{ fontSize: 24, fontWeight: 700 }}>Meu apartamento</h1>
-        <div style={{ fontSize: 13, color: "var(--ink-soft)" }}>
-          Prazo: <strong>{empreendimento.prazoPersonalizacao}</strong>
-        </div>
+        <JanelaBadge itens={catalogo.listTodosItensDoEmpreendimento(activeVinculo.empreendimentoId)} />
       </div>
       <p style={{ fontSize: 14, color: "var(--ink-soft)", marginBottom: 20 }}>
         {empreendimento.nome}, {empreendimento.unidade}, {empreendimento.torre}

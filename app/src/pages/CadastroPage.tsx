@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Building2, FileStack, CheckCircle2, Layers, Lock, Package } from "lucide-react";
 import { Breadcrumb } from "../components/Breadcrumb";
+import { JanelaBadge } from "../components/Badge";
 import { CatalogoPlantaEditor, PlantasManager } from "../components/CatalogoAuthoring";
 import { useApp } from "../state/AppContext";
 import type { ArquivoCadastro, CategoriaArquivo } from "../domain/types";
@@ -56,7 +57,6 @@ export function CadastroPage() {
   const [nome, setNome] = useState("");
   const [torres, setTorres] = useState("");
   const [unidades, setUnidades] = useState("");
-  const [prazo, setPrazo] = useState("");
   const [empreendimentoIdCriado, setEmpreendimentoIdCriado] = useState<string | null>(null);
   const [plantaSelecionadaId, setPlantaSelecionadaId] = useState("");
   const [files, setFiles] = useState<Record<CategoriaArquivo, ArquivoCadastro[]>>({
@@ -77,7 +77,7 @@ export function CadastroPage() {
     setFiles((prev) => ({ ...prev, [key]: prev[key].filter((f) => f.id !== id) }));
   }
 
-  const dadosPreenchidos = Boolean(nome.trim() && torres && unidades && prazo);
+  const dadosPreenchidos = Boolean(nome.trim() && torres && unidades);
   const uploaded = META.every((m) => files[m.key].length > 0);
   const doneCount = META.filter((m) => files[m.key].length > 0).length;
   const totalFiles = META.reduce((n, m) => n + files[m.key].length, 0);
@@ -97,7 +97,6 @@ export function CadastroPage() {
         construtora: construtoraNome,
         torres: Number(torres),
         unidades: Number(unidades),
-        prazo,
         arquivos: files,
       });
       setEmpreendimentoIdCriado(created.id);
@@ -203,10 +202,6 @@ export function CadastroPage() {
                 <input className="input" value={nome} onChange={(e) => setNome(e.target.value)} placeholder="Residencial Aurora" disabled={Boolean(empreendimentoIdCriado)} />
               </div>
               <div>
-                <label className="label">Prazo de personalização *</label>
-                <input className="input" type="date" value={prazo} onChange={(e) => setPrazo(e.target.value)} disabled={Boolean(empreendimentoIdCriado)} />
-              </div>
-              <div>
                 <label className="label">Nº de torres *</label>
                 <input className="input" type="number" min={1} value={torres} onChange={(e) => setTorres(e.target.value)} placeholder="2" disabled={Boolean(empreendimentoIdCriado)} />
               </div>
@@ -214,6 +209,10 @@ export function CadastroPage() {
                 <label className="label">Nº de unidades *</label>
                 <input className="input" type="number" min={1} value={unidades} onChange={(e) => setUnidades(e.target.value)} placeholder="300" disabled={Boolean(empreendimentoIdCriado)} />
               </div>
+            </div>
+            <div style={{ fontSize: 11.5, color: "var(--ink-soft)", marginTop: 12, lineHeight: 1.5 }}>
+              Não existe "prazo de personalização" próprio do empreendimento — ele é calculado a partir do prazo de cada item no Catálogo
+              (menor início, maior fim entre todos os itens). Assim que o primeiro item abrir, o registro já fica habilitado.
             </div>
             {empreendimentoIdCriado && (
               <div style={{ fontSize: 12, color: "var(--green-ink)", marginTop: 12 }}>
@@ -347,16 +346,16 @@ export function CadastroPage() {
                 <span style={{ fontSize: 13, fontWeight: 600 }}>{nome}</span>
               </div>
               <div className="row" style={{ justifyContent: "space-between" }}>
-                <span className="text-soft" style={{ fontSize: 13 }}>Prazo de personalização</span>
-                <span style={{ fontSize: 13, fontWeight: 600 }}>{prazo}</span>
-              </div>
-              <div className="row" style={{ justifyContent: "space-between" }}>
                 <span className="text-soft" style={{ fontSize: 13 }}>Torres / Unidades</span>
                 <span style={{ fontSize: 13, fontWeight: 600 }}>{torres} / {unidades}</span>
               </div>
               <div className="row" style={{ justifyContent: "space-between" }}>
                 <span className="text-soft" style={{ fontSize: 13 }}>Plantas cadastradas</span>
                 <span style={{ fontSize: 13, fontWeight: 600 }}>{plantas.length}</span>
+              </div>
+              <div className="row" style={{ justifyContent: "space-between", alignItems: "center" }}>
+                <span className="text-soft" style={{ fontSize: 13 }}>Janela de personalização</span>
+                {empreendimentoIdCriado ? <JanelaBadge itens={catalogo.listTodosItensDoEmpreendimento(empreendimentoIdCriado)} /> : <span style={{ fontSize: 13 }}>—</span>}
               </div>
               <div className="row" style={{ justifyContent: "space-between" }}>
                 <span className="text-soft" style={{ fontSize: 13 }}>Arquivos enviados</span>

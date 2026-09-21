@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import { Plus, Search } from "lucide-react";
 import { Breadcrumb } from "../components/Breadcrumb";
-import { NivelBadge } from "../components/Badge";
+import { JanelaBadge, NivelBadge } from "../components/Badge";
 import { ConstrutoraGroupHeader } from "../components/ConstrutoraGroupHeader";
 import { fmtDataHora, formatSolicitacaoRef, isEditavel, statusLabel, tempoDecorrido } from "../domain/calculations";
 import type { Brand, Solicitacao, StatusSolicitacao, Vinculo } from "../domain/types";
@@ -75,7 +75,7 @@ function SolicitacaoCard({ s, vinculo }: { s: Solicitacao; vinculo: Vinculo }) {
  * holds a unit with.
  */
 export function PersonalizacoesPage() {
-  const { solicitacoes, vinculos, loginScopeConstrutoraId } = useApp();
+  const { solicitacoes, vinculos, catalogo, loginScopeConstrutoraId } = useApp();
   const [query, setQuery] = useState("");
   const [status, setStatus] = useState<StatusSolicitacao | "todos">("todos");
 
@@ -176,7 +176,10 @@ export function PersonalizacoesPage() {
             <div className="stack gap-lg" style={{ paddingLeft: loginScopeConstrutoraId ? 0 : 40 }}>
               {[...grupo.empreendimentos.entries()].map(([empId, emp]) => (
                 <div key={empId}>
-                  <div style={{ fontSize: 14, fontWeight: 600, color: "var(--ink-soft)", marginBottom: 8 }}>{emp.nome}</div>
+                  <div className="row gap-sm" style={{ alignItems: "center", marginBottom: 8, flexWrap: "wrap" }}>
+                    <span style={{ fontSize: 14, fontWeight: 600, color: "var(--ink-soft)" }}>{emp.nome}</span>
+                    <JanelaBadge itens={catalogo.listTodosItensDoEmpreendimento(empId)} />
+                  </div>
                   <div className="stack gap-sm">
                     {emp.itens.map((s) => (
                       <SolicitacaoCard key={s.id} s={s} vinculo={vinculos.find((v) => v.id === s.vinculoId)!} />
