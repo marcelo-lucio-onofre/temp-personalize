@@ -265,48 +265,77 @@ export function NovaPersonalizacaoPage() {
                 </div>
               )}
             </div>
-          ) : (
-            <div className="stack gap-sm">
-              {item.opcoes.map((opt) => {
-                const sel = opcaoId === opt.id;
-                const av = avaliarOpcao(item, opt);
-                return (
+          ) : (() => {
+            const chosenPreviamente = vinculoChoices[item.id];
+            const atualOpt = item.opcoes.find((o) => o.id === chosenPreviamente) ?? item.opcoes.find((o) => o.padrao);
+            const opcoesDeTroca = item.opcoes.filter((o) => o.id !== atualOpt?.id);
+            return (
+              <div className="stack gap-sm">
+                {atualOpt && (
                   <button
-                    key={opt.id}
                     type="button"
-                    className="card row"
+                    className="card"
                     style={{
-                      justifyContent: "space-between",
-                      alignItems: "center",
-                      cursor: "pointer",
                       textAlign: "left",
-                      border: sel ? "2px solid var(--brand)" : "2px solid var(--rule)",
-                      background: sel ? "var(--green-bg)" : "#fff",
+                      cursor: "pointer",
+                      border: opcaoId === atualOpt.id ? "2px solid var(--brand)" : "2px solid var(--rule-strong)",
+                      background: "var(--paper)",
                     }}
-                    onClick={() => setOpcaoId(opt.id)}
+                    onClick={() => setOpcaoId(atualOpt.id)}
                   >
-                    <div>
-                      <div style={{ fontWeight: 600, fontSize: 14 }}>{opt.nome}</div>
-                      <div className="mono text-soft" style={{ fontSize: 12 }}>{opt.remocao ? "R$ 0 (remoção)" : fmtBRL(opt.preco)}</div>
+                    <div style={{ fontSize: 11, fontWeight: 700, color: "var(--ink-soft)", textTransform: "uppercase", letterSpacing: ".03em", marginBottom: 6 }}>
+                      {chosenPreviamente ? "Em uso atualmente" : "Padrão do empreendimento"}
                     </div>
-                    {!opt.padrao && (
-                      <div style={{ textAlign: "right", flexShrink: 0 }}>
-                        <div
-                          className="mono"
-                          style={{ fontSize: 9.5, fontWeight: 700, textTransform: "uppercase", letterSpacing: ".03em", color: opt.remocao ? "var(--green-ink)" : "var(--red-ink)", marginBottom: 2 }}
-                        >
-                          {opt.remocao ? "Gera crédito" : "Custo adicional"}
-                        </div>
-                        <span className="mono" style={{ fontSize: 13, fontWeight: 700, color: opt.remocao ? "var(--green-ink)" : "var(--red-ink)" }}>
-                          {opt.remocao ? "+" + fmtBRL(av.diferenca) : fmtSigned(opt.preco - item.valorPadrao)}
-                        </span>
-                      </div>
-                    )}
+                    <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 2 }}>{atualOpt.nome}</div>
+                    <div className="mono text-soft" style={{ fontSize: 12 }}>
+                      {fmtBRL(atualOpt.preco)} {!chosenPreviamente && "(incluído no preço da unidade)"}
+                    </div>
                   </button>
-                );
-              })}
-            </div>
-          )}
+                )}
+                {opcoesDeTroca.length > 0 && (
+                  <>
+                    <div style={{ fontSize: 12, fontWeight: 600, color: "var(--ink-soft)", marginTop: 6 }}>Opções de troca</div>
+                    {opcoesDeTroca.map((opt) => {
+                      const sel = opcaoId === opt.id;
+                      const av = avaliarOpcao(item, opt);
+                      return (
+                        <button
+                          key={opt.id}
+                          type="button"
+                          className="card row"
+                          style={{
+                            justifyContent: "space-between",
+                            alignItems: "center",
+                            cursor: "pointer",
+                            textAlign: "left",
+                            border: sel ? "2px solid var(--brand)" : "2px solid var(--rule)",
+                            background: sel ? "var(--green-bg)" : "#fff",
+                          }}
+                          onClick={() => setOpcaoId(opt.id)}
+                        >
+                          <div>
+                            <div style={{ fontWeight: 600, fontSize: 14 }}>{opt.nome}</div>
+                            <div className="mono text-soft" style={{ fontSize: 12 }}>{opt.remocao ? "R$ 0 (remoção)" : fmtBRL(opt.preco)}</div>
+                          </div>
+                          <div style={{ textAlign: "right", flexShrink: 0 }}>
+                            <div
+                              className="mono"
+                              style={{ fontSize: 9.5, fontWeight: 700, textTransform: "uppercase", letterSpacing: ".03em", color: opt.remocao ? "var(--green-ink)" : "var(--red-ink)", marginBottom: 2 }}
+                            >
+                              {opt.remocao ? "Gera crédito" : "Custo adicional"}
+                            </div>
+                            <span className="mono" style={{ fontSize: 13, fontWeight: 700, color: opt.remocao ? "var(--green-ink)" : "var(--red-ink)" }}>
+                              {opt.remocao ? "+" + fmtBRL(av.diferenca) : fmtSigned(opt.preco - item.valorPadrao)}
+                            </span>
+                          </div>
+                        </button>
+                      );
+                    })}
+                  </>
+                )}
+              </div>
+            );
+          })()}
           {!isParametrico && (() => {
             const alreadySubmitted = Boolean(customSubmissions[item.id]);
             const canSubmitCustom =

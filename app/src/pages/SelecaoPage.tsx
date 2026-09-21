@@ -70,65 +70,67 @@ export function SelecaoPage() {
         )}
       </div>
 
-      <div className="card" style={{ background: "var(--paper)", marginBottom: 22 }}>
-        <div style={{ fontSize: 12, fontWeight: 600, color: "var(--ink-soft)", textTransform: "uppercase", marginBottom: 8 }}>
-          Padrão do empreendimento
-        </div>
-        <div style={{ fontSize: 16, fontWeight: 600, marginBottom: 4 }}>{item.padrao}</div>
-        <div className="mono" style={{ fontSize: 14, color: "var(--green-ink)" }}>
-          Valor: {fmtBRL(item.valorPadrao)} (incluído no preço da unidade)
-        </div>
-        <div style={{ fontSize: 13, color: "var(--ink-soft)", marginTop: 6 }}>
-          Ao trocar ou remover este item, {fmtBRL(item.valorPadrao)} entram como crédito no seu ledger.
-        </div>
-      </div>
-
-      <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 12 }}>Escolha uma opção</div>
-      <div className="stack gap-sm" style={{ marginBottom: 24 }}>
-        {item.opcoes.map((opt) => {
-          const sel = chosenId === opt.id;
-          const diff = opt.preco - item.valorPadrao;
-          const diffLabel = opt.padrao
-            ? null
-            : opt.remocao
-              ? "+" + fmtBRL(item.valorPadrao)
-              : diff !== 0
-                ? fmtSigned(diff)
-                : null;
-          const diffColor = opt.remocao || diff < 0 ? "var(--green-ink)" : "var(--red-ink)";
-          return (
-            <button
-              key={opt.id}
-              type="button"
-              className="card row"
-              style={{
-                justifyContent: "space-between",
-                alignItems: "center",
-                cursor: "pointer",
-                textAlign: "left",
-                border: sel ? "2px solid var(--brand)" : "2px solid var(--rule)",
-                background: sel ? "var(--green-bg)" : "#fff",
-              }}
-              onClick={() => chooseOption(item.id, opt.id)}
-            >
-              <div>
-                <div style={{ fontWeight: 600, fontSize: 14, marginBottom: 2 }}>{opt.nome}</div>
-                <div className="mono" style={{ fontSize: 13, color: "var(--ink-soft)" }}>
-                  {opt.remocao ? "R$ 0 (remoção)" : fmtBRL(opt.preco)}
+      {(() => {
+        const emUso = Boolean(choices[item.id]);
+        const atualOpt = item.opcoes.find((o) => o.id === chosenId);
+        const opcoesDeTroca = item.opcoes.filter((o) => o.id !== chosenId);
+        return (
+          <>
+            {atualOpt && (
+              <div className="card" style={{ background: "var(--paper)", marginBottom: 22 }}>
+                <div style={{ fontSize: 12, fontWeight: 600, color: "var(--ink-soft)", textTransform: "uppercase", marginBottom: 8 }}>
+                  {emUso ? "Em uso atualmente" : "Padrão do empreendimento"}
+                </div>
+                <div style={{ fontSize: 16, fontWeight: 600, marginBottom: 4 }}>{emUso ? atualOpt.nome : item.padrao}</div>
+                <div className="mono" style={{ fontSize: 14, color: "var(--green-ink)" }}>
+                  Valor: {fmtBRL(atualOpt.remocao ? item.valorPadrao : atualOpt.preco)} {!emUso && "(incluído no preço da unidade)"}
+                </div>
+                <div style={{ fontSize: 13, color: "var(--ink-soft)", marginTop: 6 }}>
+                  Ao trocar ou remover este item, {fmtBRL(item.valorPadrao)} entram como crédito no seu ledger.
                 </div>
               </div>
-              <div className="text-center">
-                {diffLabel && (
-                  <div className="mono" style={{ fontSize: 14, fontWeight: 700, color: diffColor }}>
-                    {diffLabel}
-                  </div>
-                )}
-                {opt.padrao && <div style={{ fontSize: 12, color: "var(--ink-soft)" }}>incluído</div>}
-              </div>
-            </button>
-          );
-        })}
-      </div>
+            )}
+
+            <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 12 }}>Opções de troca</div>
+            <div className="stack gap-sm" style={{ marginBottom: 24 }}>
+              {opcoesDeTroca.map((opt) => {
+                const sel = chosenId === opt.id;
+                const diff = opt.preco - item.valorPadrao;
+                const diffLabel = opt.remocao ? "+" + fmtBRL(item.valorPadrao) : diff !== 0 ? fmtSigned(diff) : null;
+                const diffColor = opt.remocao || diff < 0 ? "var(--green-ink)" : "var(--red-ink)";
+                return (
+                  <button
+                    key={opt.id}
+                    type="button"
+                    className="card row"
+                    style={{
+                      justifyContent: "space-between",
+                      alignItems: "center",
+                      cursor: "pointer",
+                      textAlign: "left",
+                      border: sel ? "2px solid var(--brand)" : "2px solid var(--rule)",
+                      background: sel ? "var(--green-bg)" : "#fff",
+                    }}
+                    onClick={() => chooseOption(item.id, opt.id)}
+                  >
+                    <div>
+                      <div style={{ fontWeight: 600, fontSize: 14, marginBottom: 2 }}>{opt.nome}</div>
+                      <div className="mono" style={{ fontSize: 13, color: "var(--ink-soft)" }}>
+                        {opt.remocao ? "R$ 0 (remoção)" : fmtBRL(opt.preco)}
+                      </div>
+                    </div>
+                    {diffLabel && (
+                      <div className="mono" style={{ fontSize: 14, fontWeight: 700, color: diffColor }}>
+                        {diffLabel}
+                      </div>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+          </>
+        );
+      })()}
 
       <div className="card" style={{ borderStyle: "dashed", marginBottom: 24 }}>
         {!showCustomForm ? (
