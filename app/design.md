@@ -56,6 +56,7 @@ Regra: `--green` é sempre um verde **desaturado** (chroma ~0.10, não 0.16+) �
 - `.btn--primary` usa `var(--brand)` — herda automaticamente a cor certa (plantta ou construtora) por estar dentro do escopo de `--brand` setado no `ClientPortalLayout`/`SidebarShell`.
 - `Breadcrumb` (`components/Breadcrumb.tsx`) é a única forma de "onde estou" — não duplicar com eyebrow acima do H1.
 - `PrazoBadge`/`JanelaBadge` (`components/Badge.tsx`) — nunca campo de data solto num H1/subtítulo. Registro desabilitado (janela de personalização encerrada) numa listagem usa opacidade reduzida (`0.6`, mesmo valor de item bloqueado nivel 3) + borda esquerda vermelha fina — nunca remover o registro da lista, só destacar.
+- Consistência de dado em campo de taxonomia (`domain/catalogoReferencia.ts`) — três níveis, não um só: **enum fechado** (`<select>`) pra campo de relatório que não pode fragmentar (Categoria de material); **texto com sugestão normalizada** (`SugestaoInput`, datalist nativo + snap de grafia no blur via `normalizarContraLista`) pra campo que precisa continuar aberto mas não pode virar "Portobello"/"portobello" duas linhas (Marca, Ambiente); **texto livre puro** só quando o campo é genuinamente de baixo reaproveitamento (Modelo, SKU). Nunca usar `<input>` solto onde já existe um conjunto de valores conhecidos pra sugerir.
 
 ## 6. White-label — regra crítica
 

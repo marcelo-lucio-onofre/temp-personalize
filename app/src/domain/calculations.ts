@@ -328,3 +328,14 @@ export function resumirAlteracoes(
 
   return { linhas, totalCredito, totalDebito, saldo: totalCredito - totalDebito };
 }
+
+/** Snaps free-text input to an existing option's casing when it matches
+ * case-insensitively (e.g. "portobello" -> "Portobello"), so the same
+ * marca/ambiente doesn't fork into multiple spellings in reports. Returns
+ * the trimmed input unchanged when nothing matches — a genuinely new entry. */
+export function normalizarContraLista(valor: string, conhecidos: readonly string[]): string {
+  const v = valor.trim();
+  if (!v) return v;
+  const match = conhecidos.find((c) => c.toLowerCase() === v.toLowerCase());
+  return match ?? v;
+}

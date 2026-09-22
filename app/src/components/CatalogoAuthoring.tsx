@@ -1,11 +1,29 @@
 import { useState } from "react";
 import { Plus, Trash2 } from "lucide-react";
 import { NivelBadge } from "./Badge";
+import { SugestaoInput } from "./SugestaoInput";
 import { deInputDate, fmtBRL, paraInputDate } from "../domain/calculations";
+import { AMBIENTES_SUGERIDOS, CATEGORIAS_MATERIAL, MARCAS_SUGERIDAS } from "../domain/catalogoReferencia";
 import type { AllowanceGroup, Ambiente, Item, MaterialCatalogItem, NivelAprovacao, Opcao } from "../domain/types";
 import { useApp } from "../state/AppContext";
 
 export const gerarId = (prefixo: string) => `${prefixo}-${Date.now()}-${Math.round(Math.random() * 10000)}`;
+
+/** Combina o que já está em uso (prioridade — mantém a grafia real do
+ * construtora) com a lista de sugestão, sem duplicar por caixa/espaço. */
+function dedupeCi(...listas: readonly (readonly string[])[]): string[] {
+  const vistos = new Set<string>();
+  const out: string[] = [];
+  for (const lista of listas) {
+    for (const v of lista) {
+      const t = v.trim();
+      if (!t || vistos.has(t.toLowerCase())) continue;
+      vistos.add(t.toLowerCase());
+      out.push(t);
+    }
+  }
+  return out;
+}
 
 const NOVO_MATERIAL: Omit<MaterialCatalogItem, "id" | "construtoraId"> = {
   categoria: "", marca: "", modelo: "", sku: "", fornecedor: "", precoCliente: 0, custoConstrutora: 0, leadTimeDias: 0, imagemUrl: null,
@@ -21,6 +39,7 @@ const NOVO_MATERIAL: Omit<MaterialCatalogItem, "id" | "construtoraId"> = {
 export function BibliotecaMateriais({ construtoraId }: { construtoraId: string }) {
   const { catalogoMateriais, criarMaterial, atualizarMaterial, removerMaterial } = useApp();
   const materiais = catalogoMateriais.list(construtoraId);
+  const marcasConhecidas = dedupeCi(materiais.map((m) => m.marca), MARCAS_SUGERIDAS);
 
   return (
     <div className="card">
@@ -42,11 +61,16 @@ export function BibliotecaMateriais({ construtoraId }: { construtoraId: string }
             <div className="grid grid-2" style={{ marginBottom: 8, gap: 8 }}>
               <div>
                 <label className="label">Categoria</label>
-                <input className="input" value={m.categoria} onChange={(e) => atualizarMaterial(m.id, { categoria: e.target.value })} placeholder="Piso" />
+                <select className="input" value={m.categoria} onChange={(e) => atualizarMaterial(m.id, { categoria: e.target.value })}>
+                  <option value="">Selecione...</option>
+                  {CATEGORIAS_MATERIAL.map((c) => (
+                    <option key={c} value={c}>{c}</option>
+                  ))}
+                </select>
               </div>
               <div>
                 <label className="label">Marca</label>
-                <input className="input" value={m.marca} onChange={(e) => atualizarMaterial(m.id, { marca: e.target.value })} placeholder="Portobello" />
+                <SugestaoInput value={m.marca} options={marcasConhecidas} onChange={(v) => atualizarMaterial(m.id, { marca: v })} placeholder="Portobello" />
               </div>
               <div>
                 <label className="label">Modelo</label>
@@ -437,10 +461,16 @@ export function CatalogoPlantaEditor({ empreendimentoId, plantaId, construtoraId
       <div className="stack gap-lg">
         {ambientes.map((amb) => {
           const gruposDoAmbiente = grupos.filter((g) => g.ambienteId === amb.id);
+          const ambientesConhecidos = dedupeCi(ambientes.map((a) => a.nome), AMBIENTES_SUGERIDOS);
           return (
             <div key={amb.id} className="card">
               <div className="row gap-sm" style={{ justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
-                <input className="input" style={{ maxWidth: 260, fontWeight: 700 }} value={amb.nome} onChange={(e) => updateAmbiente(amb.id, { nome: e.target.value })} />
+                <SugestaoInput
+                  style={{ maxWidth: 260, fontWeight: 700 }}
+                  value={amb.nome}
+                  options={ambientesConhecidos}
+                  onChange={(v) => updateAmbiente(amb.id, { nome: v })}
+                />
                 <button type="button" className="btn btn--sm" onClick={() => removeAmbiente(amb.id)}>
                   <Trash2 className="sidebar-nav-icon" style={{ width: 14, height: 14 }} /> Remover ambiente
                 </button>
