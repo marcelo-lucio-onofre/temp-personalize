@@ -12,6 +12,7 @@ import type {
   Fornecedor,
   Marca,
   MaterialCatalogItem,
+  Pessoa,
   Planta,
   Role,
   Solicitacao,
@@ -205,11 +206,15 @@ interface AppContextValue extends AppState {
   atualizarFornecedor: (id: string, patch: Partial<Omit<Fornecedor, "id" | "construtoraId">>) => void;
   removerFornecedor: (id: string) => void;
   salvarUnidade: (unidade: UnidadeAssociada) => void;
+  criarPessoa: (input: Omit<Pessoa, "id">) => Pessoa;
+  atualizarPessoa: (id: string, patch: Partial<Omit<Pessoa, "id" | "construtoraId">>) => void;
+  removerPessoa: (id: string) => void;
   catalogo: typeof repositories.catalogo;
   catalogoMateriais: typeof repositories.materiais;
   catalogoCategorias: typeof repositories.categorias;
   catalogoMarcas: typeof repositories.marcas;
   unidadesRepo: typeof repositories.unidades;
+  pessoasRepo: typeof repositories.pessoas;
   catalogoFornecedores: typeof repositories.fornecedores;
   brandRepo: typeof repositories.brand;
   dashboard: typeof repositories.dashboard;
@@ -343,6 +348,19 @@ export function AppProvider({ children }: { children: ReactNode }) {
     repositories.unidades.upsert(unidade);
     dispatch({ type: "DADOS_ATUALIZADOS" });
   }, []);
+  const criarPessoa = useCallback((input: Omit<Pessoa, "id">) => {
+    const created = repositories.pessoas.create(input);
+    dispatch({ type: "DADOS_ATUALIZADOS" });
+    return created;
+  }, []);
+  const atualizarPessoa = useCallback((id: string, patch: Partial<Omit<Pessoa, "id" | "construtoraId">>) => {
+    repositories.pessoas.update(id, patch);
+    dispatch({ type: "DADOS_ATUALIZADOS" });
+  }, []);
+  const removerPessoa = useCallback((id: string) => {
+    repositories.pessoas.remove(id);
+    dispatch({ type: "DADOS_ATUALIZADOS" });
+  }, []);
 
   const activeVinculo = state.vinculos.find((v) => v.id === state.activeVinculoId);
   // Brand comes from how the session logged in (loginScopeConstrutoraId),
@@ -391,12 +409,16 @@ export function AppProvider({ children }: { children: ReactNode }) {
       atualizarFornecedor,
       removerFornecedor,
       salvarUnidade,
+      criarPessoa,
+      atualizarPessoa,
+      removerPessoa,
       catalogo: repositories.catalogo,
       catalogoMateriais: repositories.materiais,
       catalogoCategorias: repositories.categorias,
       catalogoMarcas: repositories.marcas,
       catalogoFornecedores: repositories.fornecedores,
       unidadesRepo: repositories.unidades,
+      pessoasRepo: repositories.pessoas,
       brandRepo: repositories.brand,
       dashboard: repositories.dashboard,
     }),
@@ -435,6 +457,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
       atualizarFornecedor,
       removerFornecedor,
       salvarUnidade,
+      criarPessoa,
+      atualizarPessoa,
+      removerPessoa,
     ],
   );
 

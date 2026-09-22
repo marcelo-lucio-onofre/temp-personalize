@@ -14,6 +14,7 @@ import type {
   Item,
   Marca,
   MaterialCatalogItem,
+  Pessoa,
   Planta,
   Solicitacao,
   StatusSolicitacao,
@@ -76,6 +77,13 @@ export interface IFornecedorRepository {
   list(construtoraId: string): Fornecedor[];
   create(input: Omit<Fornecedor, "id">): Fornecedor;
   update(id: string, patch: Partial<Omit<Fornecedor, "id" | "construtoraId">>): Fornecedor | undefined;
+  remove(id: string): void;
+}
+
+export interface IPessoaRepository {
+  list(construtoraId: string): Pessoa[];
+  create(input: Omit<Pessoa, "id">): Pessoa;
+  update(id: string, patch: Partial<Omit<Pessoa, "id" | "construtoraId">>): Pessoa | undefined;
   remove(id: string): void;
 }
 

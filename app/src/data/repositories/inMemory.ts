@@ -13,6 +13,7 @@ import type {
   Item,
   Marca,
   MaterialCatalogItem,
+  Pessoa,
   Planta,
   Solicitacao,
   StatusSolicitacao,
@@ -33,6 +34,7 @@ import {
   initialBrand,
   marcasIniciais,
   materialCatalogInicial,
+  pessoasIniciais,
   plantasPorEmpreendimento,
   solicitacoesIniciais,
   vinculos,
@@ -46,6 +48,7 @@ import type {
   IFornecedorRepository,
   IMarcaRepository,
   IMaterialCatalogoRepository,
+  IPessoaRepository,
   ISolicitacaoRepository,
   IUnidadeRepository,
   IVinculoRepository,
@@ -176,6 +179,9 @@ export function makeMarcaRepository(): IMarcaRepository {
 }
 export function makeFornecedorRepository(): IFornecedorRepository {
   return makeCrudRepo<Fornecedor>(fornecedoresIniciais, "forn");
+}
+export function makePessoaRepository(): IPessoaRepository {
+  return makeCrudRepo<Pessoa>(pessoasIniciais, "pessoa");
 }
 
 export class InMemoryUnidadeRepository implements IUnidadeRepository {
@@ -315,6 +321,7 @@ export const repositories = {
   categorias: makeCategoriaRepository(),
   marcas: makeMarcaRepository(),
   fornecedores: makeFornecedorRepository(),
+  pessoas: makePessoaRepository(),
   unidades: new InMemoryUnidadeRepository(),
   vinculos: new InMemoryVinculoRepository(),
   brand: new InMemoryBrandRepository(),

@@ -344,6 +344,51 @@ export interface ArquivoCadastro {
   size: number;
 }
 
+export type TipoPapel =
+  | "Arquiteto"
+  | "Engenheiro"
+  | "Técnico"
+  | "Designer"
+  | "Projetista"
+  | "Consultor"
+  | "Cliente"
+  | "Responsável pela construtora"
+  | "Outro";
+
+export type StatusRegistroProfissional = "Ativo" | "Inativo";
+
+export type CategoriaArquivoPessoa = "documentoProfissional" | "carteiraRegistro" | "certificados" | "artRrt" | "contratos" | "projetosDocumentosTecnicos";
+
+/**
+ * Pessoa/Organização — cadastro único pra qualquer humano com quem a
+ * construtora lida (arquiteto, engenheiro, técnico, cliente...), em vez de
+ * cadastros paralelos por tipo. A mesma pessoa pode ter vários papéis ao
+ * mesmo tempo (`papeis`); campos de registro profissional (conselho/nº/UF)
+ * ficam vazios quando não fazem sentido pro papel (ex.: um Cliente puro).
+ * Não tem relação com o login mock do cliente (Vinculo) — é só cadastro/
+ * ficha, não autenticação.
+ */
+export interface Pessoa {
+  id: string;
+  construtoraId: string;
+  papeis: TipoPapel[];
+  nome: string;
+  cpf: string;
+  email: string;
+  telefone: string;
+  empresa: string;
+  cargoEspecialidade: string;
+  conselho: string;
+  numeroRegistro: string;
+  ufRegistro: string;
+  statusRegistro: StatusRegistroProfissional;
+  endereco: string;
+  estadoCivil: string;
+  canalContatoPreferencial: string;
+  observacoes: string;
+  arquivos: Record<CategoriaArquivoPessoa, ArquivoCadastro[]>;
+}
+
 export type TipoEmpreendimento = "Residencial" | "Comercial" | "Misto" | "Loteamento";
 export type StatusComercialEmpreendimento = "Planejamento" | "Lançamento" | "Em obras" | "Entregue";
 

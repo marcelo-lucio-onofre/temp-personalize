@@ -302,9 +302,10 @@ const META_ARQUIVOS_PLANTA: { key: CategoriaArquivoPlanta; label: string; accept
 ];
 
 /** Linha compacta de upload — uma por categoria, sem drop-zone grande
- * (a planta já tem muito campo; 10 categorias em caixa tracejada ficaria
- * gigante). Mostra só contagem + limpar, não chip por arquivo. */
-function UploadPlantaRow({ label, accept, arquivos, onAdd, onClear }: { label: string; accept: string; arquivos: { id: string; name: string; size: number }[]; onAdd: (list: FileList | null) => void; onClear: () => void }) {
+ * (registro com muito campo — Planta, Pessoa — 6-10 categorias em caixa
+ * tracejada ficaria gigante). Mostra só contagem + limpar, não chip por
+ * arquivo. Compartilhado entre Planta e Pessoa, não uma cópia por tela. */
+export function UploadCompactRow({ label, accept, arquivos, onAdd, onClear }: { label: string; accept: string; arquivos: { id: string; name: string; size: number }[]; onAdd: (list: FileList | null) => void; onClear: () => void }) {
   const has = arquivos.length > 0;
   return (
     <div className="row gap-sm" style={{ alignItems: "center", justifyContent: "space-between", padding: "6px 0", borderBottom: "1px solid var(--rule)", flexWrap: "wrap" }}>
@@ -484,7 +485,7 @@ export function PlantasManager({ empreendimentoId, plantaSelecionadaId, onSeleci
               <div style={{ fontSize: 12, fontWeight: 600, color: "var(--ink-soft)", marginBottom: 4 }}>Uploads</div>
               <div style={{ marginBottom: 14 }}>
                 {META_ARQUIVOS_PLANTA.map((m) => (
-                  <UploadPlantaRow
+                  <UploadCompactRow
                     key={m.key}
                     label={m.label}
                     accept={m.accept}

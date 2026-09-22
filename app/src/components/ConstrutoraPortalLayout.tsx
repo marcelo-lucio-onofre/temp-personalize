@@ -1,6 +1,6 @@
 import { NavLink, Navigate, Outlet } from "react-router-dom";
 import type { ComponentType } from "react";
-import { BarChart3, Building2, Package, Palette, Settings2, LayoutDashboard } from "lucide-react";
+import { BarChart3, Building2, Package, Palette, Settings2, LayoutDashboard, Users } from "lucide-react";
 import { SidebarShell } from "./SidebarShell";
 import { planttaBrand } from "../data/mockData";
 import { useApp } from "../state/AppContext";
@@ -29,6 +29,7 @@ const configuracao: NavItem[] = [
     ],
   },
   { to: "/cadastro", label: "Cadastro", icon: Building2 },
+  { to: "/pessoas", label: "Pessoas", icon: Users },
   { to: "/marca", label: "Marca", icon: Palette },
 ];
 

@@ -10,6 +10,7 @@ import type {
   Fornecedor,
   Marca,
   MaterialCatalogItem,
+  Pessoa,
   Planta,
   Solicitacao,
   Vinculo,
@@ -564,6 +565,19 @@ export const fornecedoresIniciais: Fornecedor[] = [
   { id: "forn-005", construtoraId: "00003", razaoSocial: "Portobello Distribuidora SP Ltda", nomeFantasia: "Portobello Distribuidora SP", cnpjCpf: "12.345.678/0001-90", responsavel: "Renata Souza", telefone: "(11) 3345-2200", whatsapp: "(11) 98811-2200", email: "comercial@portobellosp.com.br", cep: "04571-000", endereco: "Av. Eng. Luís Carlos Berrini, 1200", cidade: "São Paulo", uf: "SP" },
   { id: "forn-006", construtoraId: "00003", razaoSocial: "Silestone Brasil Comércio Ltda", nomeFantasia: "Silestone Brasil", cnpjCpf: "56.789.012/0001-34", responsavel: "Camila Teixeira", telefone: "(11) 3777-9900", whatsapp: "(11) 98855-9900", email: "vendas@silestonebrasil.com.br", cep: "06454-000", endereco: "Al. Tocantins, 350", cidade: "Barueri", uf: "SP" },
   { id: "forn-007", construtoraId: "00002", razaoSocial: "Portobello Distribuidora SP Ltda", nomeFantasia: "Portobello Distribuidora SP", cnpjCpf: "12.345.678/0001-90", responsavel: "Renata Souza", telefone: "(11) 3345-2200", whatsapp: "(11) 98811-2200", email: "comercial@portobellosp.com.br", cep: "04571-000", endereco: "Av. Eng. Luís Carlos Berrini, 1200", cidade: "São Paulo", uf: "SP" },
+];
+
+const ARQUIVOS_PESSOA_VAZIOS: Pessoa["arquivos"] = {
+  documentoProfissional: [], carteiraRegistro: [], certificados: [], artRrt: [], contratos: [], projetosDocumentosTecnicos: [],
+};
+
+// Pessoa/Papel — cadastro único pra qualquer humano com quem a construtora
+// lida (arquiteto/engenheiro/técnico/cliente...), não cadastros paralelos
+// por tipo (ver domain/types.ts Pessoa).
+export const pessoasIniciais: Pessoa[] = [
+  { id: "pessoa-001", construtoraId: "00001", papeis: ["Arquiteto", "Responsável pela construtora"], nome: "Fernanda Ribeiro", cpf: "111.222.333-44", email: "fernanda.ribeiro@arquitetura.com.br", telefone: "(11) 3222-1000", empresa: "Ribeiro Arquitetura", cargoEspecialidade: "Arquiteta responsável", conselho: "CAU", numeroRegistro: "A123456-7", ufRegistro: "SP", statusRegistro: "Ativo", endereco: "", estadoCivil: "", canalContatoPreferencial: "E-mail", observacoes: "", arquivos: ARQUIVOS_PESSOA_VAZIOS },
+  { id: "pessoa-002", construtoraId: "00001", papeis: ["Engenheiro"], nome: "Carlos Eduardo Matos", cpf: "222.333.444-55", email: "carlos.matos@engenharia.com.br", telefone: "(11) 3222-2000", empresa: "Prado Engenharia", cargoEspecialidade: "Engenheiro civil — gerente de obra", conselho: "CREA", numeroRegistro: "5401234", ufRegistro: "SP", statusRegistro: "Ativo", endereco: "", estadoCivil: "", canalContatoPreferencial: "WhatsApp", observacoes: "", arquivos: ARQUIVOS_PESSOA_VAZIOS },
+  { id: "pessoa-003", construtoraId: "00003", papeis: ["Cliente"], nome: "Marina Alves", cpf: "333.444.555-66", email: "marina.alves@email.com", telefone: "(11) 98765-4321", empresa: "", cargoEspecialidade: "", conselho: "", numeroRegistro: "", ufRegistro: "", statusRegistro: "Ativo", endereco: "Alameda Santos, 800, São Paulo/SP", estadoCivil: "Casada", canalContatoPreferencial: "WhatsApp", observacoes: "", arquivos: ARQUIVOS_PESSOA_VAZIOS },
 ];
 
 // Biblioteca de materiais reutilizável por construtora — identidade do

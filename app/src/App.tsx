@@ -16,6 +16,7 @@ import { MarcaPage } from "./pages/MarcaPage";
 import { MarcasPage } from "./pages/MarcasPage";
 import { MateriaisPage } from "./pages/MateriaisPage";
 import { MinhaUnidadePage } from "./pages/MinhaUnidadePage";
+import { PessoasPage } from "./pages/PessoasPage";
 import { NovaPersonalizacaoPage } from "./pages/NovaPersonalizacaoPage";
 import { PainelPage } from "./pages/PainelPage";
 import { PersonalizacaoDetalhePage } from "./pages/PersonalizacaoDetalhePage";
@@ -66,6 +67,7 @@ export default function App() {
         <Route path="/catalogo/marcas" element={<MarcasPage />} />
         <Route path="/catalogo/fornecedores" element={<FornecedoresPage />} />
         <Route path="/cadastro" element={<CadastroPage />} />
+        <Route path="/pessoas" element={<PessoasPage />} />
         <Route path="/marca" element={<MarcaPage />} />
         <Route path="/painel" element={<PainelPage />} />
         <Route path="/aprovacao/:id" element={<AprovacaoPage />} />
