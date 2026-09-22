@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
 import { Plus, Trash2 } from "lucide-react";
 import { NivelBadge } from "./Badge";
 import { SugestaoInput } from "./SugestaoInput";
@@ -24,89 +23,6 @@ function dedupeCi(...listas: readonly (readonly string[])[]): string[] {
     }
   }
   return out;
-}
-
-/**
- * Biblioteca de materiais do construtora — identidade do produto
- * (categoria/marca/modelo/SKU), reutilizável entre todos os
- * empreendimentos dele em vez de digitar de novo em cada item. Preço e
- * prazo não moram aqui — variam por item/negociação, ficam em
- * Opcao.preco/custoConstrutora no momento do anexo (ver ItemRow). Usada
- * tanto em MateriaisPage quanto no wizard de Cadastro — mesmo componente,
- * um só lugar reutilizado, não uma cópia paralela.
- */
-export function BibliotecaMateriais({ construtoraId }: { construtoraId: string }) {
-  const { catalogoMateriais, catalogoCategorias, catalogoMarcas, criarMaterial, atualizarMaterial, removerMaterial } = useApp();
-  const materiais = catalogoMateriais.list(construtoraId);
-  const categorias = catalogoCategorias.list(construtoraId);
-  const marcas = catalogoMarcas.list(construtoraId);
-  const semPreRequisito = categorias.length === 0 || marcas.length === 0;
-
-  return (
-    <div className="card">
-      <div className="row" style={{ justifyContent: "space-between", alignItems: "center", marginBottom: 4 }}>
-        <div style={{ fontWeight: 700, fontSize: 15 }}>Biblioteca de materiais</div>
-        <button
-          type="button"
-          className="btn btn--sm"
-          disabled={semPreRequisito}
-          onClick={() => criarMaterial({ construtoraId, categoriaId: categorias[0].id, marcaId: marcas[0].id, modelo: "", sku: "", imagemUrl: null })}
-        >
-          <Plus className="sidebar-nav-icon" /> Novo material
-        </button>
-      </div>
-      <div className="text-soft" style={{ fontSize: 12.5, marginBottom: 16 }}>
-        Cadastre categoria, marca e modelo uma vez — depois anexe a quantas opções de item quiser, nos ambientes. Preço e prazo entram por item, no momento do anexo.
-      </div>
-
-      {semPreRequisito && (
-        <div className="text-soft" style={{ fontSize: 13, marginBottom: 12 }}>
-          Cadastre pelo menos uma <Link to="/catalogo/categorias">categoria</Link> e uma <Link to="/catalogo/marcas">marca</Link> antes de criar material.
-        </div>
-      )}
-      {!semPreRequisito && materiais.length === 0 && <div className="text-soft" style={{ fontSize: 13 }}>Nenhum material cadastrado ainda.</div>}
-
-      <div className="stack gap-sm">
-        {materiais.map((m) => (
-          <div key={m.id} style={{ border: "1px solid var(--rule)", borderRadius: 8, padding: 12, background: "var(--paper)" }}>
-            <div className="grid grid-2" style={{ marginBottom: 8, gap: 8 }}>
-              <div>
-                <label className="label">Categoria</label>
-                <select className="input" value={m.categoriaId} onChange={(e) => atualizarMaterial(m.id, { categoriaId: e.target.value })}>
-                  {categorias.map((c) => (
-                    <option key={c.id} value={c.id}>{c.nome}</option>
-                  ))}
-                </select>
-              </div>
-              <div>
-                <label className="label">Marca</label>
-                <select className="input" value={m.marcaId} onChange={(e) => atualizarMaterial(m.id, { marcaId: e.target.value })}>
-                  {marcas.map((mm) => (
-                    <option key={mm.id} value={mm.id}>{mm.nome}</option>
-                  ))}
-                </select>
-              </div>
-              <div>
-                <label className="label">Modelo</label>
-                <input className="input" value={m.modelo} onChange={(e) => atualizarMaterial(m.id, { modelo: e.target.value })} placeholder="Premium 80×80" />
-              </div>
-              <div>
-                <label className="label">SKU</label>
-                <input className="input" value={m.sku} onChange={(e) => atualizarMaterial(m.id, { sku: e.target.value })} placeholder="PTB-PREM-8080" />
-              </div>
-            </div>
-            <button
-              type="button"
-              style={{ border: "none", background: "none", color: "var(--red-ink)", cursor: "pointer", fontSize: 12, fontWeight: 600, padding: 0 }}
-              onClick={() => removerMaterial(m.id)}
-            >
-              <Trash2 className="sidebar-nav-icon" style={{ width: 13, height: 13, marginRight: 4 }} /> Remover material
-            </button>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
 }
 
 function OpcaoRow({ opcao, onChange, onRemove }: { opcao: Opcao; onChange: (patch: Partial<Opcao>) => void; onRemove: () => void }) {

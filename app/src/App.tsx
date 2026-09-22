@@ -8,7 +8,9 @@ import { CarrinhoPage } from "./pages/CarrinhoPage";
 import { CatalogoPage } from "./pages/CatalogoPage";
 import { CategoriasPage } from "./pages/CategoriasPage";
 import { DashboardPage } from "./pages/DashboardPage";
+import { EmpreendimentosPage } from "./pages/EmpreendimentosPage";
 import { FornecedoresPage } from "./pages/FornecedoresPage";
+import { FornecedorFormPage } from "./pages/FornecedorFormPage";
 import { LandingPage } from "./pages/LandingPage";
 import { LoginClientePage } from "./pages/LoginClientePage";
 import { LoginConstrutoraPage } from "./pages/LoginConstrutoraPage";
@@ -17,6 +19,7 @@ import { MarcasPage } from "./pages/MarcasPage";
 import { MateriaisPage } from "./pages/MateriaisPage";
 import { MinhaUnidadePage } from "./pages/MinhaUnidadePage";
 import { PessoasPage } from "./pages/PessoasPage";
+import { PessoaFormPage } from "./pages/PessoaFormPage";
 import { NovaPersonalizacaoPage } from "./pages/NovaPersonalizacaoPage";
 import { PainelPage } from "./pages/PainelPage";
 import { PersonalizacaoDetalhePage } from "./pages/PersonalizacaoDetalhePage";
@@ -66,8 +69,14 @@ export default function App() {
         <Route path="/catalogo/categorias" element={<CategoriasPage />} />
         <Route path="/catalogo/marcas" element={<MarcasPage />} />
         <Route path="/catalogo/fornecedores" element={<FornecedoresPage />} />
-        <Route path="/cadastro" element={<CadastroPage />} />
+        <Route path="/catalogo/fornecedores/novo" element={<FornecedorFormPage />} />
+        <Route path="/catalogo/fornecedores/:id" element={<FornecedorFormPage />} />
+        <Route path="/cadastro" element={<EmpreendimentosPage />} />
+        <Route path="/cadastro/novo" element={<CadastroPage />} />
+        <Route path="/cadastro/:id" element={<CadastroPage />} />
         <Route path="/pessoas" element={<PessoasPage />} />
+        <Route path="/pessoas/novo" element={<PessoaFormPage />} />
+        <Route path="/pessoas/:id" element={<PessoaFormPage />} />
         <Route path="/marca" element={<MarcaPage />} />
         <Route path="/painel" element={<PainelPage />} />
         <Route path="/aprovacao/:id" element={<AprovacaoPage />} />

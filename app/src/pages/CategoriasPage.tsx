@@ -1,28 +1,26 @@
-import { Breadcrumb } from "../components/Breadcrumb";
-import { SimpleNomeCrud } from "../components/SimpleNomeCrud";
+import { SimpleCadastroPage } from "../components/SimpleCadastroPage";
 import { useApp } from "../state/AppContext";
+import { categoriaEmUso } from "../domain/usage";
 
 export function CategoriasPage() {
-  const { construtoraLogadaId, catalogoCategorias, criarCategoria, atualizarCategoria, removerCategoria } = useApp();
+  const { construtoraLogadaId, catalogoCategorias, catalogoMateriais, criarCategoria, atualizarCategoria, removerCategoria } = useApp();
   const construtoraId = construtoraLogadaId ?? "";
   const categorias = catalogoCategorias.list(construtoraId);
+  const materiais = catalogoMateriais.list(construtoraId);
 
   return (
-    <div className="container">
-      <Breadcrumb items={[{ label: "Painel", to: "/painel" }, { label: "Catálogo", to: "/catalogo" }, { label: "Categorias" }]} />
-      <h1 style={{ fontSize: 24, fontWeight: 700, marginBottom: 8 }}>Categorias de material</h1>
-      <p style={{ fontSize: 14, color: "var(--ink-soft)", marginBottom: 24, maxWidth: "70ch", lineHeight: 1.5 }}>
-        Taxonomia fechada usada no cadastro de Materiais — evita "Piso" e "piso" virando duas linhas diferentes em relatório.
-      </p>
-      <SimpleNomeCrud
-        titulo="Categorias"
-        descricao="Uma por linha de acabamento — Piso, Bancada, Louças e Metais, Revestimento..."
-        itens={categorias}
-        onCriar={() => criarCategoria({ construtoraId, nome: "Nova categoria" })}
-        onAtualizar={(id, nome) => atualizarCategoria(id, { nome })}
-        onRemover={removerCategoria}
-        placeholder="Piso"
-      />
-    </div>
+    <SimpleCadastroPage
+      breadcrumb={[{ label: "Painel", to: "/painel" }, { label: "Catálogo", to: "/catalogo" }, { label: "Categorias" }]}
+      titulo="Categorias de material"
+      descricao="Taxonomia fechada usada no cadastro de Materiais — evita 'Piso' e 'piso' virando duas linhas diferentes em relatório."
+      itemLabel="categoria"
+      placeholder="Piso"
+      itens={categorias}
+      emUso={(id) => categoriaEmUso(id, materiais)}
+      emUsoMsg={(nome) => `"${nome}" está em uso por materiais cadastrados — remova o vínculo antes de excluir.`}
+      onCriar={(nome) => criarCategoria({ construtoraId, nome })}
+      onAtualizar={(id, nome) => atualizarCategoria(id, { nome })}
+      onRemover={removerCategoria}
+    />
   );
 }

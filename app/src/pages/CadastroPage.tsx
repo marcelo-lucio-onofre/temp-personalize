@@ -1,7 +1,7 @@
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import { Building2, FileStack, CheckCircle2, Layers, Lock, Package, Plus, Trash2 } from "lucide-react";
-import { Breadcrumb } from "../components/Breadcrumb";
+import { PageHeader } from "../components/PageHeader";
 import { JanelaBadge } from "../components/Badge";
 import { CatalogoPlantaEditor, PlantasManager, UnidadesHeatmap } from "../components/CatalogoAuthoring";
 import { useApp } from "../state/AppContext";
@@ -134,29 +134,35 @@ function fmtSize(bytes: number): string {
  * no fim só anexa os arquivos, que é a única coisa ainda pendente.
  */
 export function CadastroPage() {
-  const { vinculos, construtoraLogadaId, cadastrarEmpreendimento, atualizarArquivosCadastro, catalogo } = useApp();
+  const { id } = useParams<{ id: string }>();
+  const { vinculos, construtoraLogadaId, cadastros, cadastrarEmpreendimento, atualizarArquivosCadastro, catalogo } = useApp();
   const navigate = useNavigate();
+
+  /** Retomando um cadastro existente (`/cadastro/:id`, vindo da listagem) —
+   * "Dados" já foi preenchido e trava (ver `locked` abaixo), só falta
+   * plantas/catálogo/arquivos. `/cadastro/novo` não tem :id, fluxo em branco. */
+  const existente = id ? cadastros.find((c) => c.id === id) : undefined;
 
   const construtoraNome = vinculos.find((v) => v.construtoraId === construtoraLogadaId)?.construtoraNome ?? "Construtora";
 
-  const [step, setStep] = useState(0);
-  const [nome, setNome] = useState("");
-  const [codigoInterno, setCodigoInterno] = useState("");
-  const [tipo, setTipo] = useState<TipoEmpreendimento>("Residencial");
-  const [endereco, setEndereco] = useState("");
-  const [cidade, setCidade] = useState("");
-  const [uf, setUf] = useState("");
-  const [cep, setCep] = useState("");
-  const [torres, setTorres] = useState<Torre[]>([]);
-  const [lancamento, setLancamento] = useState<string | null>(null);
-  const [previsaoEntrega, setPrevisaoEntrega] = useState<string | null>(null);
-  const [statusComercial, setStatusComercial] = useState<StatusComercialEmpreendimento>("Planejamento");
-  const [responsavelConstrutora, setResponsavelConstrutora] = useState("");
-  const [gerenteObra, setGerenteObra] = useState("");
-  const [regrasPersonalizacao, setRegrasPersonalizacao] = useState("");
-  const [empreendimentoIdCriado, setEmpreendimentoIdCriado] = useState<string | null>(null);
+  const [step, setStep] = useState(existente ? 1 : 0);
+  const [nome, setNome] = useState(existente?.nome ?? "");
+  const [codigoInterno, setCodigoInterno] = useState(existente?.codigoInterno ?? "");
+  const [tipo, setTipo] = useState<TipoEmpreendimento>(existente?.tipo ?? "Residencial");
+  const [endereco, setEndereco] = useState(existente?.endereco ?? "");
+  const [cidade, setCidade] = useState(existente?.cidade ?? "");
+  const [uf, setUf] = useState(existente?.uf ?? "");
+  const [cep, setCep] = useState(existente?.cep ?? "");
+  const [torres, setTorres] = useState<Torre[]>(existente?.torres ?? []);
+  const [lancamento, setLancamento] = useState<string | null>(existente?.lancamento ?? null);
+  const [previsaoEntrega, setPrevisaoEntrega] = useState<string | null>(existente?.previsaoEntrega ?? null);
+  const [statusComercial, setStatusComercial] = useState<StatusComercialEmpreendimento>(existente?.statusComercial ?? "Planejamento");
+  const [responsavelConstrutora, setResponsavelConstrutora] = useState(existente?.responsavelConstrutora ?? "");
+  const [gerenteObra, setGerenteObra] = useState(existente?.gerenteObra ?? "");
+  const [regrasPersonalizacao, setRegrasPersonalizacao] = useState(existente?.regrasPersonalizacao ?? "");
+  const [empreendimentoIdCriado, setEmpreendimentoIdCriado] = useState<string | null>(existente?.id ?? null);
   const [plantaSelecionadaId, setPlantaSelecionadaId] = useState("");
-  const [files, setFiles] = useState<Record<CategoriaArquivo, ArquivoCadastro[]>>(ARQUIVOS_VAZIOS);
+  const [files, setFiles] = useState<Record<CategoriaArquivo, ArquivoCadastro[]>>(existente?.arquivos ?? ARQUIVOS_VAZIOS);
   const [finalizado, setFinalizado] = useState(false);
 
   function addFiles(key: CategoriaArquivo, list: FileList | null) {
@@ -246,11 +252,12 @@ export function CadastroPage() {
 
   return (
     <div className="container">
-      <Breadcrumb items={[{ label: "Painel", to: "/painel" }, { label: "Cadastro" }]} />
-      <h1 style={{ fontSize: 24, fontWeight: 700, marginBottom: 8 }}>Cadastrar empreendimento</h1>
-      <p style={{ fontSize: 14, color: "var(--ink-soft)", marginBottom: 24, maxWidth: "70ch", lineHeight: 1.5 }}>
-        Empreendimento → plantas e unidades → catálogo (ambientes, itens, especificações e opções) → arquivos — em {construtoraNome}.
-      </p>
+      <PageHeader
+        breadcrumb={[{ label: "Painel", to: "/painel" }, { label: "Cadastro", to: "/cadastro" }, { label: existente ? nome || "Continuar" : "Novo empreendimento" }]}
+        backTo="/cadastro"
+        title={existente ? `Continuar cadastro — ${nome}` : "Cadastrar empreendimento"}
+        description={`Empreendimento → plantas e unidades → catálogo (ambientes, itens, especificações e opções) → arquivos — em ${construtoraNome}.`}
+      />
 
       <div className="row gap-sm" style={{ marginBottom: 28, flexWrap: "wrap" }}>
         {STEPS.map((s, i) => {

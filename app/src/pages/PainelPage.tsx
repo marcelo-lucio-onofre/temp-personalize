@@ -45,7 +45,7 @@ export function PainelPage() {
           <p style={{ fontSize: 14, color: "var(--ink-soft)" }}>{construtoraNome}</p>
         </div>
         <div className="row gap-sm">
-          <Link to="/cadastro" className="btn btn--sm">+ Cadastrar empreendimento</Link>
+          <Link to="/cadastro/novo" className="btn btn--sm">+ Cadastrar empreendimento</Link>
           <Link to="/marca" className="btn btn--sm">Marca do portal</Link>
         </div>
       </div>

@@ -1,19 +1,226 @@
-import { Breadcrumb } from "../components/Breadcrumb";
-import { BibliotecaMateriais } from "../components/CatalogoAuthoring";
+import { useState } from "react";
+import { Link } from "react-router-dom";
+import { Pencil, Plus, Trash2 } from "lucide-react";
+import { PageHeader } from "../components/PageHeader";
+import { DataTable } from "../components/DataTable";
+import { FilterBar, textMatch } from "../components/FilterBar";
+import { Modal } from "../components/Modal";
+import { ConfirmDialog } from "../components/ConfirmDialog";
+import { FormField } from "../components/FormField";
+import { useToast } from "../components/Toast";
 import { useApp } from "../state/AppContext";
+import { materiaisEmUsoIds } from "../domain/usage";
+import { required } from "../domain/validation";
+import type { MaterialCatalogItem } from "../domain/types";
+
+interface Draft {
+  id?: string;
+  categoriaId: string;
+  marcaId: string;
+  modelo: string;
+  sku: string;
+  errors: Partial<Record<"categoriaId" | "marcaId" | "modelo", string>>;
+}
 
 export function MateriaisPage() {
-  const { construtoraLogadaId } = useApp();
+  const { construtoraLogadaId, catalogo, catalogoMateriais, catalogoCategorias, catalogoMarcas, criarMaterial, atualizarMaterial, removerMaterial } = useApp();
+  const toast = useToast();
   const construtoraId = construtoraLogadaId ?? "";
+  const materiais = catalogoMateriais.list(construtoraId);
+  const categorias = catalogoCategorias.list(construtoraId);
+  const marcas = catalogoMarcas.list(construtoraId);
+  const semPreRequisito = categorias.length === 0 || marcas.length === 0;
+  const emUsoIds = materiaisEmUsoIds(catalogo, construtoraId);
+
+  const [query, setQuery] = useState("");
+  const [categoriaFiltro, setCategoriaFiltro] = useState("");
+  const [marcaFiltro, setMarcaFiltro] = useState("");
+  const [modal, setModal] = useState<Draft | null>(null);
+  const [excluindo, setExcluindo] = useState<MaterialCatalogItem | null>(null);
+
+  const categoriaNome = (id: string) => categorias.find((c) => c.id === id)?.nome ?? "?";
+  const marcaNome = (id: string) => marcas.find((m) => m.id === id)?.nome ?? "?";
+
+  const filtrados = materiais.filter(
+    (m) =>
+      textMatch(query, m.modelo, m.sku) &&
+      (!categoriaFiltro || m.categoriaId === categoriaFiltro) &&
+      (!marcaFiltro || m.marcaId === marcaFiltro),
+  );
+
+  function abrirCriar() {
+    setModal({ categoriaId: categorias[0]?.id ?? "", marcaId: marcas[0]?.id ?? "", modelo: "", sku: "", errors: {} });
+  }
+  function abrirEditar(m: MaterialCatalogItem) {
+    setModal({ id: m.id, categoriaId: m.categoriaId, marcaId: m.marcaId, modelo: m.modelo, sku: m.sku, errors: {} });
+  }
+
+  function validar(d: Draft): Draft["errors"] {
+    return {
+      categoriaId: required()(d.categoriaId),
+      marcaId: required()(d.marcaId),
+      modelo: required()(d.modelo),
+    };
+  }
+
+  function salvar() {
+    if (!modal) return;
+    const errors = validar(modal);
+    if (Object.values(errors).some(Boolean)) {
+      setModal({ ...modal, errors });
+      return;
+    }
+    const payload = { categoriaId: modal.categoriaId, marcaId: modal.marcaId, modelo: modal.modelo.trim(), sku: modal.sku.trim() };
+    if (modal.id) {
+      atualizarMaterial(modal.id, payload);
+      toast.success("Material atualizado.");
+    } else {
+      criarMaterial({ construtoraId, ...payload, imagemUrl: null });
+      toast.success("Material criado.");
+    }
+    setModal(null);
+  }
+
+  function confirmarExclusao() {
+    if (!excluindo) return;
+    removerMaterial(excluindo.id);
+    toast.success("Material excluído.");
+    setExcluindo(null);
+  }
 
   return (
     <div className="container">
-      <Breadcrumb items={[{ label: "Painel", to: "/painel" }, { label: "Catálogo", to: "/catalogo" }, { label: "Materiais" }]} />
-      <h1 style={{ fontSize: 24, fontWeight: 700, marginBottom: 8 }}>Materiais</h1>
-      <p style={{ fontSize: 14, color: "var(--ink-soft)", marginBottom: 24, maxWidth: "70ch", lineHeight: 1.5 }}>
-        Identidade do produto — categoria, marca, modelo, SKU. Preço e prazo entram por item, no momento em que o material é anexado a uma opção.
-      </p>
-      <BibliotecaMateriais construtoraId={construtoraId} />
+      <PageHeader
+        breadcrumb={[{ label: "Painel", to: "/painel" }, { label: "Catálogo", to: "/catalogo" }, { label: "Materiais" }]}
+        title="Materiais"
+        description="Identidade do produto — categoria, marca, modelo, SKU. Preço e prazo entram por item, no momento em que o material é anexado a uma opção."
+        action={
+          <button type="button" className="btn btn--primary btn--sm" disabled={semPreRequisito} onClick={abrirCriar}>
+            <Plus className="sidebar-nav-icon" /> Novo material
+          </button>
+        }
+      />
+
+      {semPreRequisito && (
+        <div className="card text-soft" style={{ fontSize: 13, marginBottom: 16 }}>
+          Cadastre pelo menos uma <Link to="/catalogo/categorias">categoria</Link> e uma <Link to="/catalogo/marcas">marca</Link> antes de criar material.
+        </div>
+      )}
+
+      {!semPreRequisito && (
+        <FilterBar value={query} onChange={setQuery} placeholder="Buscar modelo ou SKU..." suggestions={materiais.map((m) => m.modelo)}>
+          <select className="input" style={{ maxWidth: 200 }} value={categoriaFiltro} onChange={(e) => setCategoriaFiltro(e.target.value)}>
+            <option value="">Toda categoria</option>
+            {categorias.map((c) => (
+              <option key={c.id} value={c.id}>{c.nome}</option>
+            ))}
+          </select>
+          <select className="input" style={{ maxWidth: 200 }} value={marcaFiltro} onChange={(e) => setMarcaFiltro(e.target.value)}>
+            <option value="">Toda marca</option>
+            {marcas.map((m) => (
+              <option key={m.id} value={m.id}>{m.nome}</option>
+            ))}
+          </select>
+        </FilterBar>
+      )}
+
+      {!semPreRequisito && (
+        <DataTable
+          columns={[
+            { key: "categoria", header: "Categoria", render: (m) => categoriaNome(m.categoriaId) },
+            { key: "marca", header: "Marca", render: (m) => marcaNome(m.marcaId) },
+            { key: "modelo", header: "Modelo", render: (m) => m.modelo },
+            { key: "sku", header: "SKU", mono: true, render: (m) => m.sku || "—" },
+            {
+              key: "uso",
+              header: "Uso",
+              width: "110px",
+              render: (m) => (emUsoIds.has(m.id) ? <span className="badge badge--neutro">Em uso</span> : <span className="text-soft">—</span>),
+            },
+          ]}
+          rows={filtrados}
+          rowKey={(m) => m.id}
+          emptyMessage={materiais.length === 0 ? "Nenhum material cadastrado ainda." : "Nenhum resultado pra esse filtro."}
+          actions={(m) => {
+            const bloqueado = emUsoIds.has(m.id);
+            return (
+              <>
+                <button type="button" className="table-icon-btn" onClick={() => abrirEditar(m)} aria-label={`Editar ${m.modelo}`}>
+                  <Pencil size={14} />
+                </button>
+                <button
+                  type="button"
+                  className="table-icon-btn table-icon-btn--danger"
+                  disabled={bloqueado}
+                  title={bloqueado ? "Anexado a uma opção de item — remova o anexo antes de excluir." : undefined}
+                  onClick={() => setExcluindo(m)}
+                  aria-label={`Excluir ${m.modelo}`}
+                >
+                  <Trash2 size={14} />
+                </button>
+              </>
+            );
+          }}
+        />
+      )}
+
+      <Modal open={modal !== null} onClose={() => setModal(null)} title={modal?.id ? "Editar material" : "Novo material"}>
+        {modal && (
+          <form onSubmit={(e) => { e.preventDefault(); salvar(); }} className="stack gap-sm">
+            <FormField label="Categoria" htmlFor="mat-categoria" required error={modal.errors.categoriaId}>
+              <select
+                id="mat-categoria"
+                className={modal.errors.categoriaId ? "input input--invalid" : "input"}
+                value={modal.categoriaId}
+                onChange={(e) => setModal({ ...modal, categoriaId: e.target.value, errors: { ...modal.errors, categoriaId: undefined } })}
+              >
+                {categorias.map((c) => (
+                  <option key={c.id} value={c.id}>{c.nome}</option>
+                ))}
+              </select>
+            </FormField>
+            <FormField label="Marca" htmlFor="mat-marca" required error={modal.errors.marcaId}>
+              <select
+                id="mat-marca"
+                className={modal.errors.marcaId ? "input input--invalid" : "input"}
+                value={modal.marcaId}
+                onChange={(e) => setModal({ ...modal, marcaId: e.target.value, errors: { ...modal.errors, marcaId: undefined } })}
+              >
+                {marcas.map((m) => (
+                  <option key={m.id} value={m.id}>{m.nome}</option>
+                ))}
+              </select>
+            </FormField>
+            <FormField label="Modelo" htmlFor="mat-modelo" required error={modal.errors.modelo}>
+              <input
+                id="mat-modelo"
+                className={modal.errors.modelo ? "input input--invalid" : "input"}
+                value={modal.modelo}
+                placeholder="Premium 80×80"
+                onChange={(e) => setModal({ ...modal, modelo: e.target.value, errors: { ...modal.errors, modelo: undefined } })}
+                onBlur={() => setModal((m) => (m ? { ...m, errors: { ...m.errors, modelo: required()(m.modelo) } } : m))}
+              />
+            </FormField>
+            <FormField label="SKU" htmlFor="mat-sku">
+              <input id="mat-sku" className="input" value={modal.sku} placeholder="PTB-PREM-8080" onChange={(e) => setModal({ ...modal, sku: e.target.value })} />
+            </FormField>
+            <div className="row gap-sm" style={{ justifyContent: "flex-end", marginTop: 10 }}>
+              <button type="button" className="btn btn--sm" onClick={() => setModal(null)}>Cancelar</button>
+              <button type="submit" className="btn btn--primary btn--sm">Salvar</button>
+            </div>
+          </form>
+        )}
+      </Modal>
+
+      {excluindo && (
+        <ConfirmDialog
+          open
+          onClose={() => setExcluindo(null)}
+          onConfirm={confirmarExclusao}
+          title="Excluir material"
+          description={`Excluir "${excluindo.modelo}"? Essa ação não pode ser desfeita.`}
+        />
+      )}
     </div>
   );
 }
