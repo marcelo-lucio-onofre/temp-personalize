@@ -1,6 +1,6 @@
 // Pure calculation functions — no React, no I/O. Shared by Portal, Carrinho
 // and Selecao pages so the ledger math has exactly one implementation.
-import type { AllowanceGroup, Ambiente, Item, NivelAprovacao, Opcao, Solicitacao, StatusSolicitacao, Vinculo } from "./types";
+import type { AllowanceGroup, Ambiente, Item, NivelAprovacao, Opcao, Solicitacao, StatusSolicitacao, Torre, Vinculo } from "./types";
 
 export interface ResumoUnidade {
   valorImovel: number;
@@ -333,6 +333,13 @@ export function resumirAlteracoes(
  * case-insensitively (e.g. "portobello" -> "Portobello"), so the same
  * marca/ambiente doesn't fork into multiple spellings in reports. Returns
  * the trimmed input unchanged when nothing matches — a genuinely new entry. */
+/** Total de unidades do empreendimento é sempre a soma pavimentos ×
+ * unidades/pavimento de cada torre — nunca um número digitado à parte,
+ * que dessincroniza assim que uma torre muda. */
+export function totalUnidadesTorres(torres: Pick<Torre, "pavimentos" | "unidadesPorPavimento">[]): number {
+  return torres.reduce((sum, t) => sum + t.pavimentos * t.unidadesPorPavimento, 0);
+}
+
 export function normalizarContraLista(valor: string, conhecidos: readonly string[]): string {
   const v = valor.trim();
   if (!v) return v;

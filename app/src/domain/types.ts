@@ -282,7 +282,16 @@ export interface DashboardData {
   porNivel: { simples: number; tecnico: number; proibido: number };
 }
 
-export type CategoriaArquivo = "imagens" | "dwg" | "plantas" | "memorial";
+export type CategoriaArquivo =
+  | "logo"
+  | "imagens"
+  | "memorialGeral"
+  | "manualProprietario"
+  | "projetos"
+  | "documentosTecnicos"
+  | "plantasGerais"
+  | "tabelaUnidades"
+  | "materialComercial";
 
 export interface ArquivoCadastro {
   id: string;
@@ -290,13 +299,38 @@ export interface ArquivoCadastro {
   size: number;
 }
 
+export type TipoEmpreendimento = "Residencial" | "Comercial" | "Misto" | "Loteamento";
+export type StatusComercialEmpreendimento = "Planejamento" | "Lançamento" | "Em obras" | "Entregue";
+
+/** Uma torre/bloco do empreendimento — pavimentos e unidades por pavimento
+ * ficam por torre porque nem sempre são iguais entre torres do mesmo
+ * empreendimento. O total de unidades é sempre derivado daqui
+ * (ver domain/calculations.totalUnidadesTorres), nunca digitado à parte. */
+export interface Torre {
+  id: string;
+  nome: string;
+  pavimentos: number;
+  unidadesPorPavimento: number;
+}
+
 export interface CadastroEmpreendimentoInput {
   nome: string;
+  codigoInterno: string;
   /** Locked to the logged-in construtora — never free text (see LoginConstrutoraPage). */
   construtoraId: string;
   construtora: string;
-  torres: number;
-  unidades: number;
+  tipo: TipoEmpreendimento;
+  endereco: string;
+  cidade: string;
+  uf: string;
+  cep: string;
+  torres: Torre[];
+  lancamento: string | null;
+  previsaoEntrega: string | null;
+  statusComercial: StatusComercialEmpreendimento;
+  responsavelConstrutora: string;
+  gerenteObra: string;
+  regrasPersonalizacao: string;
   arquivos: Record<CategoriaArquivo, ArquivoCadastro[]>;
 }
 

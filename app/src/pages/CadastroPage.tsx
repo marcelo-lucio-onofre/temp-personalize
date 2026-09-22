@@ -1,11 +1,12 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Building2, FileStack, CheckCircle2, Layers, Lock, Package } from "lucide-react";
+import { Building2, FileStack, CheckCircle2, Layers, Lock, Package, Plus, Trash2 } from "lucide-react";
 import { Breadcrumb } from "../components/Breadcrumb";
 import { JanelaBadge } from "../components/Badge";
 import { CatalogoPlantaEditor, PlantasManager } from "../components/CatalogoAuthoring";
 import { useApp } from "../state/AppContext";
-import type { ArquivoCadastro, CategoriaArquivo } from "../domain/types";
+import { deInputDate, paraInputDate, totalUnidadesTorres } from "../domain/calculations";
+import type { ArquivoCadastro, CategoriaArquivo, StatusComercialEmpreendimento, TipoEmpreendimento, Torre } from "../domain/types";
 
 interface CategoriaMeta {
   key: CategoriaArquivo;
@@ -15,11 +16,96 @@ interface CategoriaMeta {
 }
 
 const META: CategoriaMeta[] = [
-  { key: "imagens", label: "Imagens", accept: "image/*", hint: "Fachada, perspectivas e fotos da obra." },
-  { key: "dwg", label: "Arquivos DWG", accept: ".dwg,.dxf", hint: "Plantas técnicas em formato CAD para importar cotas." },
-  { key: "plantas", label: "Plantas em PDF", accept: ".pdf", hint: "Plantas baixas e cortes para conferência visual." },
-  { key: "memorial", label: "Memorial descritivo", accept: ".pdf,.doc,.docx", hint: "Especificação de acabamentos e materiais padrão." },
+  { key: "logo", label: "Logo do empreendimento", accept: "image/*", hint: "Marca do empreendimento — capa, e-mails, material comercial." },
+  { key: "imagens", label: "Imagens / renderizações", accept: "image/*", hint: "Fachada, perspectivas e fotos da obra." },
+  { key: "memorialGeral", label: "Memorial descritivo geral", accept: ".pdf,.doc,.docx", hint: "Especificação de acabamentos e materiais padrão do empreendimento." },
+  { key: "manualProprietario", label: "Manual do proprietário", accept: ".pdf,.doc,.docx", hint: "Entregue ao comprador na chave — uso e manutenção da unidade." },
+  { key: "projetos", label: "Projetos", accept: ".dwg,.dxf,.pdf", hint: "Projetos técnicos completos (arquitetônico, estrutural, instalações)." },
+  { key: "documentosTecnicos", label: "Documentos técnicos", accept: ".pdf,.doc,.docx", hint: "Laudos, ARTs/RRTs, licenças e demais documentos técnicos." },
+  { key: "plantasGerais", label: "Plantas gerais", accept: ".pdf", hint: "Plantas baixas e cortes gerais do empreendimento." },
+  { key: "tabelaUnidades", label: "Tabela de unidades", accept: ".pdf,.xls,.xlsx,.csv", hint: "Planilha ou PDF com a relação de unidades e valores." },
+  { key: "materialComercial", label: "Material comercial", accept: "image/*,.pdf", hint: "Folder, book de vendas e demais peças comerciais." },
 ];
+
+const ARQUIVOS_VAZIOS: Record<CategoriaArquivo, ArquivoCadastro[]> = {
+  logo: [], imagens: [], memorialGeral: [], manualProprietario: [], projetos: [], documentosTecnicos: [], plantasGerais: [], tabelaUnidades: [], materialComercial: [],
+};
+
+const TIPOS: TipoEmpreendimento[] = ["Residencial", "Comercial", "Misto", "Loteamento"];
+const STATUS_COMERCIAL: StatusComercialEmpreendimento[] = ["Planejamento", "Lançamento", "Em obras", "Entregue"];
+
+const gerarIdTorre = () => `torre-${Date.now()}-${Math.round(Math.random() * 10000)}`;
+
+/** Torres do empreendimento — pavimentos e unidades por pavimento ficam
+ * por torre (nem sempre são iguais entre torres), total de unidades é
+ * sempre derivado, nunca digitado à parte. */
+function TorresManager({ torres, onChange, disabled }: { torres: Torre[]; onChange: (torres: Torre[]) => void; disabled: boolean }) {
+  function addTorre() {
+    onChange([...torres, { id: gerarIdTorre(), nome: `Torre ${String.fromCharCode(65 + torres.length)}`, pavimentos: 1, unidadesPorPavimento: 1 }]);
+  }
+  function updateTorre(id: string, patch: Partial<Torre>) {
+    onChange(torres.map((t) => (t.id === id ? { ...t, ...patch } : t)));
+  }
+  function removeTorre(id: string) {
+    onChange(torres.filter((t) => t.id !== id));
+  }
+
+  return (
+    <div>
+      <div className="row" style={{ justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
+        <label className="label" style={{ margin: 0 }}>Torres / blocos *</label>
+        {!disabled && (
+          <button type="button" className="btn btn--sm" onClick={addTorre}>
+            <Plus className="sidebar-nav-icon" /> Torre
+          </button>
+        )}
+      </div>
+      {torres.length === 0 && <div className="text-soft" style={{ fontSize: 12.5, marginBottom: 8 }}>Nenhuma torre ainda — adicione ao menos uma.</div>}
+      <div className="stack gap-sm">
+        {torres.map((t) => (
+          <div key={t.id} className="row gap-sm" style={{ alignItems: "center", border: "1px solid var(--rule)", borderRadius: 8, padding: "8px 10px", background: "var(--paper)", flexWrap: "wrap" }}>
+            <input className="input" style={{ flex: "1 1 140px" }} value={t.nome} disabled={disabled} onChange={(e) => updateTorre(t.id, { nome: e.target.value })} placeholder="Torre A" />
+            <div style={{ flex: "0 1 130px" }}>
+              <input
+                className="input"
+                type="number"
+                min={1}
+                disabled={disabled}
+                value={t.pavimentos}
+                onChange={(e) => updateTorre(t.id, { pavimentos: Math.max(1, Number(e.target.value)) })}
+                placeholder="Pavimentos"
+              />
+            </div>
+            <span className="text-soft" style={{ fontSize: 12 }}>pavimentos ×</span>
+            <div style={{ flex: "0 1 150px" }}>
+              <input
+                className="input"
+                type="number"
+                min={1}
+                disabled={disabled}
+                value={t.unidadesPorPavimento}
+                onChange={(e) => updateTorre(t.id, { unidadesPorPavimento: Math.max(1, Number(e.target.value)) })}
+                placeholder="Unidades/pavimento"
+              />
+            </div>
+            <span className="text-soft" style={{ fontSize: 12 }}>unid./pavimento</span>
+            <span className="mono" style={{ fontSize: 12, fontWeight: 600, marginLeft: "auto" }}>= {t.pavimentos * t.unidadesPorPavimento} unidades</span>
+            {!disabled && (
+              <button type="button" style={{ border: "none", background: "none", color: "var(--red-ink)", cursor: "pointer", padding: 4 }} onClick={() => removeTorre(t.id)} aria-label="Remover torre">
+                <Trash2 className="sidebar-nav-icon" style={{ width: 14, height: 14 }} />
+              </button>
+            )}
+          </div>
+        ))}
+      </div>
+      {torres.length > 0 && (
+        <div style={{ fontSize: 12.5, color: "var(--ink-soft)", marginTop: 8 }}>
+          Total do empreendimento: <strong className="mono" style={{ color: "var(--ink)" }}>{totalUnidadesTorres(torres)} unidades</strong> em {torres.length} torre{torres.length === 1 ? "" : "s"}.
+        </div>
+      )}
+    </div>
+  );
+}
 
 const STEPS = [
   { label: "Empreendimento", icon: Building2 },
@@ -55,16 +141,22 @@ export function CadastroPage() {
 
   const [step, setStep] = useState(0);
   const [nome, setNome] = useState("");
-  const [torres, setTorres] = useState("");
-  const [unidades, setUnidades] = useState("");
+  const [codigoInterno, setCodigoInterno] = useState("");
+  const [tipo, setTipo] = useState<TipoEmpreendimento>("Residencial");
+  const [endereco, setEndereco] = useState("");
+  const [cidade, setCidade] = useState("");
+  const [uf, setUf] = useState("");
+  const [cep, setCep] = useState("");
+  const [torres, setTorres] = useState<Torre[]>([]);
+  const [lancamento, setLancamento] = useState<string | null>(null);
+  const [previsaoEntrega, setPrevisaoEntrega] = useState<string | null>(null);
+  const [statusComercial, setStatusComercial] = useState<StatusComercialEmpreendimento>("Planejamento");
+  const [responsavelConstrutora, setResponsavelConstrutora] = useState("");
+  const [gerenteObra, setGerenteObra] = useState("");
+  const [regrasPersonalizacao, setRegrasPersonalizacao] = useState("");
   const [empreendimentoIdCriado, setEmpreendimentoIdCriado] = useState<string | null>(null);
   const [plantaSelecionadaId, setPlantaSelecionadaId] = useState("");
-  const [files, setFiles] = useState<Record<CategoriaArquivo, ArquivoCadastro[]>>({
-    imagens: [],
-    dwg: [],
-    plantas: [],
-    memorial: [],
-  });
+  const [files, setFiles] = useState<Record<CategoriaArquivo, ArquivoCadastro[]>>(ARQUIVOS_VAZIOS);
   const [finalizado, setFinalizado] = useState(false);
 
   function addFiles(key: CategoriaArquivo, list: FileList | null) {
@@ -77,8 +169,8 @@ export function CadastroPage() {
     setFiles((prev) => ({ ...prev, [key]: prev[key].filter((f) => f.id !== id) }));
   }
 
-  const dadosPreenchidos = Boolean(nome.trim() && torres && unidades);
-  const uploaded = META.every((m) => files[m.key].length > 0);
+  const locked = Boolean(empreendimentoIdCriado);
+  const dadosPreenchidos = Boolean(nome.trim() && torres.length > 0 && torres.every((t) => t.pavimentos > 0 && t.unidadesPorPavimento > 0));
   const doneCount = META.filter((m) => files[m.key].length > 0).length;
   const totalFiles = META.reduce((n, m) => n + files[m.key].length, 0);
   const plantas = empreendimentoIdCriado ? catalogo.listPlantas(empreendimentoIdCriado) : [];
@@ -93,10 +185,21 @@ export function CadastroPage() {
     if (!empreendimentoIdCriado) {
       const created = cadastrarEmpreendimento({
         nome,
+        codigoInterno,
         construtoraId: construtoraLogadaId,
         construtora: construtoraNome,
-        torres: Number(torres),
-        unidades: Number(unidades),
+        tipo,
+        endereco,
+        cidade,
+        uf,
+        cep,
+        torres,
+        lancamento,
+        previsaoEntrega,
+        statusComercial,
+        responsavelConstrutora,
+        gerenteObra,
+        regrasPersonalizacao,
         arquivos: files,
       });
       setEmpreendimentoIdCriado(created.id);
@@ -180,42 +283,133 @@ export function CadastroPage() {
       </div>
 
       {step === 0 && (
-        <div className="container--narrow stack gap-lg" style={{ padding: 0 }}>
+        <div className="stack gap-lg">
           <div className="card">
-            <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 16 }}>Dados do empreendimento</div>
-            <div className="grid grid-2">
-              <div style={{ gridColumn: "1 / -1" }}>
-                <label className="label">Construtora</label>
-                <div
-                  className="row gap-sm"
-                  style={{ alignItems: "center", padding: "10px 12px", border: "1px solid var(--rule)", borderRadius: 8, background: "var(--paper)", color: "var(--ink-soft)" }}
-                >
-                  <Lock className="sidebar-nav-icon" style={{ width: 14, height: 14 }} />
-                  <span style={{ color: "var(--ink)", fontWeight: 600 }}>{construtoraNome}</span>
-                </div>
-                <div style={{ fontSize: 11.5, color: "var(--ink-soft)", marginTop: 6 }}>
-                  Definida pelo login — o empreendimento é sempre cadastrado na construtora logada.
-                </div>
-              </div>
+            <div style={{ fontSize: 12, fontWeight: 600, color: "var(--ink-soft)", marginBottom: 4 }}>Identificação</div>
+            <div className="grid grid-2" style={{ gap: 8, marginBottom: 16 }}>
               <div style={{ gridColumn: "1 / -1" }}>
                 <label className="label">Nome do empreendimento *</label>
-                <input className="input" value={nome} onChange={(e) => setNome(e.target.value)} placeholder="Residencial Aurora" disabled={Boolean(empreendimentoIdCriado)} />
+                <input className="input" value={nome} onChange={(e) => setNome(e.target.value)} placeholder="Residencial Aurora" disabled={locked} />
               </div>
               <div>
-                <label className="label">Nº de torres *</label>
-                <input className="input" type="number" min={1} value={torres} onChange={(e) => setTorres(e.target.value)} placeholder="2" disabled={Boolean(empreendimentoIdCriado)} />
+                <label className="label">Código interno</label>
+                <input className="input" value={codigoInterno} onChange={(e) => setCodigoInterno(e.target.value)} placeholder="EMP-AURORA-01" disabled={locked} />
+              </div>
+            </div>
+
+            <div style={{ fontSize: 12, fontWeight: 600, color: "var(--ink-soft)", marginBottom: 4 }}>Empresa</div>
+            <div style={{ marginBottom: 16 }}>
+              <label className="label">Construtora/incorporadora responsável</label>
+              <div
+                className="row gap-sm"
+                style={{ alignItems: "center", padding: "10px 12px", border: "1px solid var(--rule)", borderRadius: 8, background: "var(--paper)", color: "var(--ink-soft)" }}
+              >
+                <Lock className="sidebar-nav-icon" style={{ width: 14, height: 14 }} />
+                <span style={{ color: "var(--ink)", fontWeight: 600 }}>{construtoraNome}</span>
+              </div>
+              <div style={{ fontSize: 11.5, color: "var(--ink-soft)", marginTop: 6 }}>
+                Definida pelo login — o empreendimento é sempre cadastrado na construtora logada.
+              </div>
+            </div>
+
+            <div style={{ fontSize: 12, fontWeight: 600, color: "var(--ink-soft)", marginBottom: 4 }}>Localização</div>
+            <div className="grid grid-2" style={{ gap: 8, marginBottom: 16 }}>
+              <div style={{ gridColumn: "1 / -1" }}>
+                <label className="label">Endereço</label>
+                <input className="input" value={endereco} onChange={(e) => setEndereco(e.target.value)} placeholder="Rua, número" disabled={locked} />
               </div>
               <div>
-                <label className="label">Nº de unidades *</label>
-                <input className="input" type="number" min={1} value={unidades} onChange={(e) => setUnidades(e.target.value)} placeholder="300" disabled={Boolean(empreendimentoIdCriado)} />
+                <label className="label">Cidade</label>
+                <input className="input" value={cidade} onChange={(e) => setCidade(e.target.value)} placeholder="São Paulo" disabled={locked} />
+              </div>
+              <div>
+                <label className="label">UF</label>
+                <input className="input" value={uf} maxLength={2} onChange={(e) => setUf(e.target.value.toUpperCase())} placeholder="SP" disabled={locked} />
+              </div>
+              <div>
+                <label className="label">CEP</label>
+                <input className="input" value={cep} onChange={(e) => setCep(e.target.value)} placeholder="00000-000" disabled={locked} />
               </div>
             </div>
-            <div style={{ fontSize: 11.5, color: "var(--ink-soft)", marginTop: 12, lineHeight: 1.5 }}>
-              Não existe "prazo de personalização" próprio do empreendimento — ele é calculado a partir do prazo de cada item no Catálogo
-              (menor início, maior fim entre todos os itens). Assim que o primeiro item abrir, o registro já fica habilitado.
+
+            <div style={{ fontSize: 12, fontWeight: 600, color: "var(--ink-soft)", marginBottom: 4 }}>Características</div>
+            <div style={{ marginBottom: 8 }}>
+              <label className="label">Tipo do empreendimento</label>
+              <select className="input" style={{ maxWidth: 260 }} value={tipo} onChange={(e) => setTipo(e.target.value as TipoEmpreendimento)} disabled={locked}>
+                {TIPOS.map((t) => (
+                  <option key={t} value={t}>{t}</option>
+                ))}
+              </select>
             </div>
-            {empreendimentoIdCriado && (
-              <div style={{ fontSize: 12, color: "var(--green-ink)", marginTop: 12 }}>
+            <div style={{ marginBottom: 16 }}>
+              <TorresManager torres={torres} onChange={setTorres} disabled={locked} />
+            </div>
+
+            <div style={{ fontSize: 12, fontWeight: 600, color: "var(--ink-soft)", marginBottom: 4 }}>Comercial</div>
+            <div className="grid grid-2" style={{ gap: 8, marginBottom: 16 }}>
+              <div>
+                <label className="label">Lançamento</label>
+                <input
+                  className="input"
+                  type="date"
+                  disabled={locked}
+                  value={lancamento ? paraInputDate(lancamento) : ""}
+                  onChange={(e) => setLancamento(e.target.value ? deInputDate(e.target.value) : null)}
+                />
+              </div>
+              <div>
+                <label className="label">Previsão de entrega</label>
+                <input
+                  className="input"
+                  type="date"
+                  disabled={locked}
+                  value={previsaoEntrega ? paraInputDate(previsaoEntrega) : ""}
+                  onChange={(e) => setPrevisaoEntrega(e.target.value ? deInputDate(e.target.value) : null)}
+                />
+              </div>
+              <div>
+                <label className="label">Status</label>
+                <select className="input" value={statusComercial} onChange={(e) => setStatusComercial(e.target.value as StatusComercialEmpreendimento)} disabled={locked}>
+                  {STATUS_COMERCIAL.map((s) => (
+                    <option key={s} value={s}>{s}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            <div style={{ fontSize: 12, fontWeight: 600, color: "var(--ink-soft)", marginBottom: 4 }}>Responsáveis</div>
+            <div className="grid grid-2" style={{ gap: 8, marginBottom: 16 }}>
+              <div>
+                <label className="label">Responsável da construtora</label>
+                <input className="input" value={responsavelConstrutora} onChange={(e) => setResponsavelConstrutora(e.target.value)} placeholder="Nome" disabled={locked} />
+              </div>
+              <div>
+                <label className="label">Gerente da obra</label>
+                <input className="input" value={gerenteObra} onChange={(e) => setGerenteObra(e.target.value)} placeholder="Nome" disabled={locked} />
+              </div>
+            </div>
+
+            <div style={{ fontSize: 12, fontWeight: 600, color: "var(--ink-soft)", marginBottom: 4 }}>Personalização</div>
+            <div>
+              <label className="label">Regras de personalização</label>
+              <textarea
+                className="input"
+                rows={3}
+                style={{ resize: "vertical", fontFamily: "inherit" }}
+                value={regrasPersonalizacao}
+                onChange={(e) => setRegrasPersonalizacao(e.target.value)}
+                placeholder="Ex.: alterações estruturais vetadas, prazo mínimo de 15 dias entre escolha e execução..."
+                disabled={locked}
+              />
+              <div style={{ fontSize: 11.5, color: "var(--ink-soft)", marginTop: 6, lineHeight: 1.5 }}>
+                Não existe "prazo de personalização" próprio do empreendimento — a janela (início/fim) é calculada a partir do prazo de
+                cada item no Catálogo (menor início, maior fim entre todos os itens). Assim que o primeiro item abrir, o registro já
+                fica habilitado. Este campo é só pra regras em texto (o que pode/não pode), não datas.
+              </div>
+            </div>
+
+            {locked && (
+              <div style={{ fontSize: 12, color: "var(--green-ink)", marginTop: 16 }}>
                 ✓ Empreendimento criado — dados básicos ficam travados a partir daqui; o resto ainda pode ser ajustado no Catálogo depois.
               </div>
             )}
@@ -273,7 +467,7 @@ export function CadastroPage() {
         <div className="container--narrow stack gap-lg" style={{ padding: 0 }}>
           <div className="row" style={{ justifyContent: "space-between" }}>
             <div style={{ fontWeight: 700, fontSize: 14 }}>Arquivos do empreendimento</div>
-            <div className="mono text-soft" style={{ fontSize: 11 }}>{doneCount} de 4 categorias enviadas</div>
+            <div className="mono text-soft" style={{ fontSize: 11 }}>{doneCount} de {META.length} categorias enviadas</div>
           </div>
           <div className="grid grid-2">
             {META.map((cat) => {
@@ -290,11 +484,9 @@ export function CadastroPage() {
                   }}
                 >
                   <div className="row" style={{ justifyContent: "space-between", marginBottom: 6 }}>
-                    <div style={{ fontWeight: 700, fontSize: 13 }}>
-                      {cat.label} <span style={{ color: "var(--red-ink)" }}>*</span>
-                    </div>
-                    <span className={has ? "badge badge--simples" : "badge badge--bloqueado"}>
-                      {has ? `✓ ${list.length} arquivo${list.length > 1 ? "s" : ""}` : "Obrigatório"}
+                    <div style={{ fontWeight: 700, fontSize: 13 }}>{cat.label}</div>
+                    <span className={has ? "badge badge--simples" : "badge badge--tecnico"}>
+                      {has ? `✓ ${list.length} arquivo${list.length > 1 ? "s" : ""}` : "Opcional"}
                     </span>
                   </div>
                   <div style={{ fontSize: 11.5, color: "var(--ink-soft)", marginBottom: 10, lineHeight: 1.4 }}>{cat.hint}</div>
@@ -325,7 +517,7 @@ export function CadastroPage() {
           </div>
           <div className="row" style={{ justifyContent: "space-between" }}>
             <button type="button" className="btn" onClick={() => setStep(2)}>Voltar</button>
-            <button type="button" className="btn btn--primary" disabled={!uploaded} onClick={() => setStep(4)}>
+            <button type="button" className="btn btn--primary" onClick={() => setStep(4)}>
               Continuar
             </button>
           </div>
@@ -346,8 +538,20 @@ export function CadastroPage() {
                 <span style={{ fontSize: 13, fontWeight: 600 }}>{nome}</span>
               </div>
               <div className="row" style={{ justifyContent: "space-between" }}>
+                <span className="text-soft" style={{ fontSize: 13 }}>Tipo</span>
+                <span style={{ fontSize: 13, fontWeight: 600 }}>{tipo}</span>
+              </div>
+              <div className="row" style={{ justifyContent: "space-between" }}>
+                <span className="text-soft" style={{ fontSize: 13 }}>Localização</span>
+                <span style={{ fontSize: 13, fontWeight: 600 }}>{cidade && uf ? `${cidade}/${uf}` : "—"}</span>
+              </div>
+              <div className="row" style={{ justifyContent: "space-between" }}>
                 <span className="text-soft" style={{ fontSize: 13 }}>Torres / Unidades</span>
-                <span style={{ fontSize: 13, fontWeight: 600 }}>{torres} / {unidades}</span>
+                <span style={{ fontSize: 13, fontWeight: 600 }}>{torres.length} / {totalUnidadesTorres(torres)}</span>
+              </div>
+              <div className="row" style={{ justifyContent: "space-between" }}>
+                <span className="text-soft" style={{ fontSize: 13 }}>Status comercial</span>
+                <span style={{ fontSize: 13, fontWeight: 600 }}>{statusComercial}</span>
               </div>
               <div className="row" style={{ justifyContent: "space-between" }}>
                 <span className="text-soft" style={{ fontSize: 13 }}>Plantas cadastradas</span>
@@ -359,7 +563,7 @@ export function CadastroPage() {
               </div>
               <div className="row" style={{ justifyContent: "space-between" }}>
                 <span className="text-soft" style={{ fontSize: 13 }}>Arquivos enviados</span>
-                <span style={{ fontSize: 13, fontWeight: 600 }}>{totalFiles} ({doneCount} de 4 categorias)</span>
+                <span style={{ fontSize: 13, fontWeight: 600 }}>{totalFiles} ({doneCount} de {META.length} categorias)</span>
               </div>
             </div>
           </div>
