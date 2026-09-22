@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Breadcrumb } from "../components/Breadcrumb";
-import { BibliotecaMateriais, CatalogoPlantaEditor, PlantasManager } from "../components/CatalogoAuthoring";
+import { BibliotecaMateriais, CatalogoPlantaEditor } from "../components/CatalogoAuthoring";
 import { useApp } from "../state/AppContext";
 
 /**
@@ -47,17 +47,24 @@ export function CatalogoPage() {
             ))}
           </select>
         </div>
+        {plantas.length > 0 && (
+          <div style={{ minWidth: 220 }}>
+            <label className="label">Planta</label>
+            <select className="input" value={plantaId} onChange={(e) => setPlantaIdSelecionada(e.target.value)}>
+              {plantas.map((p) => (
+                <option key={p.id} value={p.id}>{p.nome}</option>
+              ))}
+            </select>
+          </div>
+        )}
       </div>
 
       <div className="stack gap-lg">
         <BibliotecaMateriais construtoraId={construtoraId} />
-        {empreendimentoId && (
-          <PlantasManager
-            key={empreendimentoId}
-            empreendimentoId={empreendimentoId}
-            plantaSelecionadaId={plantaId}
-            onSelecionar={setPlantaIdSelecionada}
-          />
+        {empreendimentoId && plantas.length === 0 && (
+          <div className="card text-soft" style={{ fontSize: 13 }}>
+            Este empreendimento ainda não tem planta cadastrada — cadastre em "Cadastro" antes de montar o catálogo.
+          </div>
         )}
         {empreendimentoId && plantaId && (
           <CatalogoPlantaEditor key={`${empreendimentoId}:${plantaId}`} empreendimentoId={empreendimentoId} plantaId={plantaId} construtoraId={construtoraId} />
