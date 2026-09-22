@@ -6,10 +6,13 @@ import type {
   Ambiente,
   Brand,
   CadastroEmpreendimentoInput,
+  Categoria,
   DashboardData,
   Empreendimento,
   EmpreendimentoCadastrado,
+  Fornecedor,
   Item,
+  Marca,
   MaterialCatalogItem,
   Planta,
   Solicitacao,
@@ -51,6 +54,27 @@ export interface IMaterialCatalogoRepository {
   list(construtoraId: string): MaterialCatalogItem[];
   create(input: Omit<MaterialCatalogItem, "id">): MaterialCatalogItem;
   update(id: string, patch: Partial<Omit<MaterialCatalogItem, "id" | "construtoraId">>): MaterialCatalogItem | undefined;
+  remove(id: string): void;
+}
+
+export interface ICategoriaRepository {
+  list(construtoraId: string): Categoria[];
+  create(input: Omit<Categoria, "id">): Categoria;
+  update(id: string, patch: Partial<Omit<Categoria, "id" | "construtoraId">>): Categoria | undefined;
+  remove(id: string): void;
+}
+
+export interface IMarcaRepository {
+  list(construtoraId: string): Marca[];
+  create(input: Omit<Marca, "id">): Marca;
+  update(id: string, patch: Partial<Omit<Marca, "id" | "construtoraId">>): Marca | undefined;
+  remove(id: string): void;
+}
+
+export interface IFornecedorRepository {
+  list(construtoraId: string): Fornecedor[];
+  create(input: Omit<Fornecedor, "id">): Fornecedor;
+  update(id: string, patch: Partial<Omit<Fornecedor, "id" | "construtoraId">>): Fornecedor | undefined;
   remove(id: string): void;
 }
 

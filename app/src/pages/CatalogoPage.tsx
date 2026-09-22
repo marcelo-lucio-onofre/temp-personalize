@@ -1,15 +1,17 @@
 import { useState } from "react";
 import { Breadcrumb } from "../components/Breadcrumb";
-import { BibliotecaMateriais, CatalogoPlantaEditor } from "../components/CatalogoAuthoring";
+import { CatalogoPlantaEditor } from "../components/CatalogoAuthoring";
 import { useApp } from "../state/AppContext";
 
 /**
- * Autoria de catálogo — a tela que faltava para a construtora efetivamente
- * "montar o catálogo e as regras" (ver design.md / benchmark). Um
- * empreendimento raramente tem uma planta só (dezenas/centenas/milhares de
- * unidades com layouts diferentes convivem no mesmo prédio), então a
- * seleção é Empreendimento → Planta antes de editar ambientes/itens —
- * cada planta tem seu próprio catálogo, independente das outras.
+ * Autoria de catálogo — Ambientes e itens de cada planta. Materiais,
+ * Categorias, Marcas e Fornecedores viraram cadastros próprios (sub-níveis
+ * de menu em /catalogo/materiais, /categorias, /marcas, /fornecedores),
+ * não moram mais nesta home. Um empreendimento raramente tem uma planta só
+ * (dezenas/centenas/milhares de unidades com layouts diferentes convivem
+ * no mesmo prédio), então a seleção é Empreendimento → Planta antes de
+ * editar ambientes/itens — cada planta tem seu próprio catálogo,
+ * independente das outras.
  */
 export function CatalogoPage() {
   const { vinculos, catalogo, construtoraLogadaId } = useApp();
@@ -31,7 +33,7 @@ export function CatalogoPage() {
       <Breadcrumb items={[{ label: "Painel", to: "/painel" }, { label: "Catálogo" }]} />
       <h1 style={{ fontSize: 24, fontWeight: 700, marginBottom: 8 }}>Catálogo — {construtoraNome}</h1>
       <p style={{ fontSize: 14, color: "var(--ink-soft)", marginBottom: 24, maxWidth: "70ch", lineHeight: 1.5 }}>
-        O que o cliente vê no portal de personalização vem daqui — ambientes, itens, opções, preços e verbas de cada planta, além da biblioteca de materiais reutilizável.
+        O que o cliente vê no portal de personalização vem daqui — ambientes, itens, opções, preços e verbas de cada planta.
       </p>
 
       <div className="row gap-sm" style={{ marginBottom: 24, flexWrap: "wrap" }}>
@@ -60,7 +62,6 @@ export function CatalogoPage() {
       </div>
 
       <div className="stack gap-lg">
-        <BibliotecaMateriais construtoraId={construtoraId} />
         {empreendimentoId && plantas.length === 0 && (
           <div className="card text-soft" style={{ fontSize: 13 }}>
             Este empreendimento ainda não tem planta cadastrada — cadastre em "Cadastro" antes de montar o catálogo.

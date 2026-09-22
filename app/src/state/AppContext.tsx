@@ -7,7 +7,10 @@ import type {
   Ambiente,
   Brand,
   CadastroEmpreendimentoInput,
+  Categoria,
   EmpreendimentoCadastrado,
+  Fornecedor,
+  Marca,
   MaterialCatalogItem,
   Planta,
   Role,
@@ -191,8 +194,20 @@ interface AppContextValue extends AppState {
   criarMaterial: (input: Omit<MaterialCatalogItem, "id">) => MaterialCatalogItem;
   atualizarMaterial: (id: string, patch: Partial<Omit<MaterialCatalogItem, "id" | "construtoraId">>) => void;
   removerMaterial: (id: string) => void;
+  criarCategoria: (input: Omit<Categoria, "id">) => Categoria;
+  atualizarCategoria: (id: string, patch: Partial<Omit<Categoria, "id" | "construtoraId">>) => void;
+  removerCategoria: (id: string) => void;
+  criarMarca: (input: Omit<Marca, "id">) => Marca;
+  atualizarMarca: (id: string, patch: Partial<Omit<Marca, "id" | "construtoraId">>) => void;
+  removerMarca: (id: string) => void;
+  criarFornecedor: (input: Omit<Fornecedor, "id">) => Fornecedor;
+  atualizarFornecedor: (id: string, patch: Partial<Omit<Fornecedor, "id" | "construtoraId">>) => void;
+  removerFornecedor: (id: string) => void;
   catalogo: typeof repositories.catalogo;
   catalogoMateriais: typeof repositories.materiais;
+  catalogoCategorias: typeof repositories.categorias;
+  catalogoMarcas: typeof repositories.marcas;
+  catalogoFornecedores: typeof repositories.fornecedores;
   brandRepo: typeof repositories.brand;
   dashboard: typeof repositories.dashboard;
 }
@@ -282,6 +297,45 @@ export function AppProvider({ children }: { children: ReactNode }) {
     repositories.materiais.remove(id);
     dispatch({ type: "DADOS_ATUALIZADOS" });
   }, []);
+  const criarCategoria = useCallback((input: Omit<Categoria, "id">) => {
+    const created = repositories.categorias.create(input);
+    dispatch({ type: "DADOS_ATUALIZADOS" });
+    return created;
+  }, []);
+  const atualizarCategoria = useCallback((id: string, patch: Partial<Omit<Categoria, "id" | "construtoraId">>) => {
+    repositories.categorias.update(id, patch);
+    dispatch({ type: "DADOS_ATUALIZADOS" });
+  }, []);
+  const removerCategoria = useCallback((id: string) => {
+    repositories.categorias.remove(id);
+    dispatch({ type: "DADOS_ATUALIZADOS" });
+  }, []);
+  const criarMarca = useCallback((input: Omit<Marca, "id">) => {
+    const created = repositories.marcas.create(input);
+    dispatch({ type: "DADOS_ATUALIZADOS" });
+    return created;
+  }, []);
+  const atualizarMarca = useCallback((id: string, patch: Partial<Omit<Marca, "id" | "construtoraId">>) => {
+    repositories.marcas.update(id, patch);
+    dispatch({ type: "DADOS_ATUALIZADOS" });
+  }, []);
+  const removerMarca = useCallback((id: string) => {
+    repositories.marcas.remove(id);
+    dispatch({ type: "DADOS_ATUALIZADOS" });
+  }, []);
+  const criarFornecedor = useCallback((input: Omit<Fornecedor, "id">) => {
+    const created = repositories.fornecedores.create(input);
+    dispatch({ type: "DADOS_ATUALIZADOS" });
+    return created;
+  }, []);
+  const atualizarFornecedor = useCallback((id: string, patch: Partial<Omit<Fornecedor, "id" | "construtoraId">>) => {
+    repositories.fornecedores.update(id, patch);
+    dispatch({ type: "DADOS_ATUALIZADOS" });
+  }, []);
+  const removerFornecedor = useCallback((id: string) => {
+    repositories.fornecedores.remove(id);
+    dispatch({ type: "DADOS_ATUALIZADOS" });
+  }, []);
 
   const activeVinculo = state.vinculos.find((v) => v.id === state.activeVinculoId);
   // Brand comes from how the session logged in (loginScopeConstrutoraId),
@@ -320,8 +374,20 @@ export function AppProvider({ children }: { children: ReactNode }) {
       criarMaterial,
       atualizarMaterial,
       removerMaterial,
+      criarCategoria,
+      atualizarCategoria,
+      removerCategoria,
+      criarMarca,
+      atualizarMarca,
+      removerMarca,
+      criarFornecedor,
+      atualizarFornecedor,
+      removerFornecedor,
       catalogo: repositories.catalogo,
       catalogoMateriais: repositories.materiais,
+      catalogoCategorias: repositories.categorias,
+      catalogoMarcas: repositories.marcas,
+      catalogoFornecedores: repositories.fornecedores,
       brandRepo: repositories.brand,
       dashboard: repositories.dashboard,
     }),
@@ -350,6 +416,15 @@ export function AppProvider({ children }: { children: ReactNode }) {
       criarMaterial,
       atualizarMaterial,
       removerMaterial,
+      criarCategoria,
+      atualizarCategoria,
+      removerCategoria,
+      criarMarca,
+      atualizarMarca,
+      removerMarca,
+      criarFornecedor,
+      atualizarFornecedor,
+      removerFornecedor,
     ],
   );
 

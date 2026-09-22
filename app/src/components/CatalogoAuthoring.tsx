@@ -1,9 +1,10 @@
 import { useState } from "react";
+import { Link } from "react-router-dom";
 import { Plus, Trash2 } from "lucide-react";
 import { NivelBadge } from "./Badge";
 import { SugestaoInput } from "./SugestaoInput";
-import { deInputDate, fmtBRL, paraInputDate } from "../domain/calculations";
-import { AMBIENTES_SUGERIDOS, CATEGORIAS_MATERIAL, MARCAS_SUGERIDAS } from "../domain/catalogoReferencia";
+import { deInputDate, paraInputDate } from "../domain/calculations";
+import { AMBIENTES_SUGERIDOS } from "../domain/catalogoReferencia";
 import type { AllowanceGroup, Ambiente, Item, MaterialCatalogItem, NivelAprovacao, Opcao } from "../domain/types";
 import { useApp } from "../state/AppContext";
 
@@ -25,35 +26,45 @@ function dedupeCi(...listas: readonly (readonly string[])[]): string[] {
   return out;
 }
 
-const NOVO_MATERIAL: Omit<MaterialCatalogItem, "id" | "construtoraId"> = {
-  categoria: "", marca: "", modelo: "", sku: "", fornecedor: "", precoCliente: 0, custoConstrutora: 0, leadTimeDias: 0, imagemUrl: null,
-};
-
 /**
- * Biblioteca de materiais do construtora — reutilizável entre todos os
- * empreendimentos dele, em vez de digitar marca/SKU/preço de novo em cada
- * item (é o próprio ponto do MATERIAL_CATALOG do benchmark). Usada tanto
- * em CatalogoPage quanto no wizard de Cadastro — mesmo componente, um só
- * lugar reutilizado, não uma cópia paralela.
+ * Biblioteca de materiais do construtora — identidade do produto
+ * (categoria/marca/modelo/SKU), reutilizável entre todos os
+ * empreendimentos dele em vez de digitar de novo em cada item. Preço e
+ * prazo não moram aqui — variam por item/negociação, ficam em
+ * Opcao.preco/custoConstrutora no momento do anexo (ver ItemRow). Usada
+ * tanto em MateriaisPage quanto no wizard de Cadastro — mesmo componente,
+ * um só lugar reutilizado, não uma cópia paralela.
  */
 export function BibliotecaMateriais({ construtoraId }: { construtoraId: string }) {
-  const { catalogoMateriais, criarMaterial, atualizarMaterial, removerMaterial } = useApp();
+  const { catalogoMateriais, catalogoCategorias, catalogoMarcas, criarMaterial, atualizarMaterial, removerMaterial } = useApp();
   const materiais = catalogoMateriais.list(construtoraId);
-  const marcasConhecidas = dedupeCi(materiais.map((m) => m.marca), MARCAS_SUGERIDAS);
+  const categorias = catalogoCategorias.list(construtoraId);
+  const marcas = catalogoMarcas.list(construtoraId);
+  const semPreRequisito = categorias.length === 0 || marcas.length === 0;
 
   return (
     <div className="card">
       <div className="row" style={{ justifyContent: "space-between", alignItems: "center", marginBottom: 4 }}>
         <div style={{ fontWeight: 700, fontSize: 15 }}>Biblioteca de materiais</div>
-        <button type="button" className="btn btn--sm" onClick={() => criarMaterial({ ...NOVO_MATERIAL, construtoraId })}>
+        <button
+          type="button"
+          className="btn btn--sm"
+          disabled={semPreRequisito}
+          onClick={() => criarMaterial({ construtoraId, categoriaId: categorias[0].id, marcaId: marcas[0].id, modelo: "", sku: "", imagemUrl: null })}
+        >
           <Plus className="sidebar-nav-icon" /> Novo material
         </button>
       </div>
       <div className="text-soft" style={{ fontSize: 12.5, marginBottom: 16 }}>
-        Cadastre marca, SKU e preço uma vez — depois anexe a quantas opções de item quiser, nos ambientes abaixo.
+        Cadastre categoria, marca e modelo uma vez — depois anexe a quantas opções de item quiser, nos ambientes. Preço e prazo entram por item, no momento do anexo.
       </div>
 
-      {materiais.length === 0 && <div className="text-soft" style={{ fontSize: 13 }}>Nenhum material cadastrado ainda.</div>}
+      {semPreRequisito && (
+        <div className="text-soft" style={{ fontSize: 13, marginBottom: 12 }}>
+          Cadastre pelo menos uma <Link to="/catalogo/categorias">categoria</Link> e uma <Link to="/catalogo/marcas">marca</Link> antes de criar material.
+        </div>
+      )}
+      {!semPreRequisito && materiais.length === 0 && <div className="text-soft" style={{ fontSize: 13 }}>Nenhum material cadastrado ainda.</div>}
 
       <div className="stack gap-sm">
         {materiais.map((m) => (
@@ -61,16 +72,19 @@ export function BibliotecaMateriais({ construtoraId }: { construtoraId: string }
             <div className="grid grid-2" style={{ marginBottom: 8, gap: 8 }}>
               <div>
                 <label className="label">Categoria</label>
-                <select className="input" value={m.categoria} onChange={(e) => atualizarMaterial(m.id, { categoria: e.target.value })}>
-                  <option value="">Selecione...</option>
-                  {CATEGORIAS_MATERIAL.map((c) => (
-                    <option key={c} value={c}>{c}</option>
+                <select className="input" value={m.categoriaId} onChange={(e) => atualizarMaterial(m.id, { categoriaId: e.target.value })}>
+                  {categorias.map((c) => (
+                    <option key={c.id} value={c.id}>{c.nome}</option>
                   ))}
                 </select>
               </div>
               <div>
                 <label className="label">Marca</label>
-                <SugestaoInput value={m.marca} options={marcasConhecidas} onChange={(v) => atualizarMaterial(m.id, { marca: v })} placeholder="Portobello" />
+                <select className="input" value={m.marcaId} onChange={(e) => atualizarMaterial(m.id, { marcaId: e.target.value })}>
+                  {marcas.map((mm) => (
+                    <option key={mm.id} value={mm.id}>{mm.nome}</option>
+                  ))}
+                </select>
               </div>
               <div>
                 <label className="label">Modelo</label>
@@ -79,22 +93,6 @@ export function BibliotecaMateriais({ construtoraId }: { construtoraId: string }
               <div>
                 <label className="label">SKU</label>
                 <input className="input" value={m.sku} onChange={(e) => atualizarMaterial(m.id, { sku: e.target.value })} placeholder="PTB-PREM-8080" />
-              </div>
-              <div>
-                <label className="label">Fornecedor</label>
-                <input className="input" value={m.fornecedor} onChange={(e) => atualizarMaterial(m.id, { fornecedor: e.target.value })} placeholder="Distribuidora ABC" />
-              </div>
-              <div>
-                <label className="label">Lead time (dias)</label>
-                <input className="input" type="number" min={0} value={m.leadTimeDias} onChange={(e) => atualizarMaterial(m.id, { leadTimeDias: Number(e.target.value) })} />
-              </div>
-              <div>
-                <label className="label">Preço cliente (R$)</label>
-                <input className="input" type="number" min={0} value={m.precoCliente} onChange={(e) => atualizarMaterial(m.id, { precoCliente: Number(e.target.value) })} />
-              </div>
-              <div>
-                <label className="label">Custo construtora (R$)</label>
-                <input className="input" type="number" min={0} value={m.custoConstrutora} onChange={(e) => atualizarMaterial(m.id, { custoConstrutora: Number(e.target.value) })} />
               </div>
             </div>
             <button
@@ -136,10 +134,15 @@ function OpcaoRow({ opcao, onChange, onRemove }: { opcao: Opcao; onChange: (patc
   );
 }
 
+/** Material + nome da marca já resolvido — CatalogoPlantaEditor monta essa
+ * junção uma vez (categoriaId/marcaId são só chave de referência, a UI
+ * precisa do nome). */
+export type MaterialResolvido = MaterialCatalogItem & { marcaNome: string; categoriaNome: string };
+
 interface ItemRowProps {
   item: Item;
   grupos: AllowanceGroup[];
-  materiais: MaterialCatalogItem[];
+  materiais: MaterialResolvido[];
   onChange: (patch: Partial<Item>) => void;
   onRemove: () => void;
   onOpcoesChange: (updater: (opcoes: Opcao[]) => Opcao[]) => void;
@@ -154,7 +157,7 @@ function ItemRow({ item, grupos, materiais, onChange, onRemove, onOpcoesChange, 
     if (!material) return;
     onOpcoesChange((opcoes) => [
       ...opcoes,
-      { id: gerarId("op"), nome: `${material.marca} ${material.modelo}`, preco: material.precoCliente, custoConstrutora: material.custoConstrutora, materialCatalogItemId: material.id },
+      { id: gerarId("op"), nome: `${material.marcaNome} ${material.modelo}`, preco: 0, materialCatalogItemId: material.id },
     ]);
     setMaterialParaAnexar("");
   }
@@ -267,7 +270,7 @@ function ItemRow({ item, grupos, materiais, onChange, onRemove, onOpcoesChange, 
                 <select className="input" style={{ width: 200 }} value={materialParaAnexar} onChange={(e) => setMaterialParaAnexar(e.target.value)}>
                   <option value="">Anexar da biblioteca...</option>
                   {materiais.map((m) => (
-                    <option key={m.id} value={m.id}>{m.marca} {m.modelo} — {fmtBRL(m.precoCliente)}</option>
+                    <option key={m.id} value={m.id}>{m.categoriaNome} · {m.marcaNome} {m.modelo}</option>
                   ))}
                 </select>
                 <button type="button" className="btn btn--sm" disabled={!materialParaAnexar} onClick={anexarOpcaoDaBiblioteca}>Anexar</button>
@@ -371,11 +374,17 @@ interface EditorProps {
  * saved catalog instead of leaking edits across plantas/empreendimentos.
  * Usado tanto em CatalogoPage quanto no wizard de Cadastro. */
 export function CatalogoPlantaEditor({ empreendimentoId, plantaId, construtoraId }: EditorProps) {
-  const { catalogo, catalogoMateriais, salvarCatalogo } = useApp();
+  const { catalogo, catalogoMateriais, catalogoCategorias, catalogoMarcas, salvarCatalogo } = useApp();
   const [ambientes, setAmbientes] = useState<Ambiente[]>(() => catalogo.getAmbientesByPlanta(empreendimentoId, plantaId));
   const [grupos, setGrupos] = useState<AllowanceGroup[]>(() => catalogo.getAllowanceGroupsByPlanta(empreendimentoId, plantaId));
   const [dirty, setDirty] = useState(false);
-  const materiais = catalogoMateriais.list(construtoraId);
+  const categorias = catalogoCategorias.list(construtoraId);
+  const marcas = catalogoMarcas.list(construtoraId);
+  const materiais: MaterialResolvido[] = catalogoMateriais.list(construtoraId).map((m) => ({
+    ...m,
+    categoriaNome: categorias.find((c) => c.id === m.categoriaId)?.nome ?? "?",
+    marcaNome: marcas.find((mm) => mm.id === m.marcaId)?.nome ?? "?",
+  }));
 
   function mutarAmbientes(updater: (prev: Ambiente[]) => Ambiente[]) {
     setAmbientes(updater);

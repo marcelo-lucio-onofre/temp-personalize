@@ -1,26 +1,51 @@
 import { NavLink, Navigate, Outlet } from "react-router-dom";
+import type { ComponentType } from "react";
 import { BarChart3, Building2, Package, Palette, Settings2, LayoutDashboard } from "lucide-react";
 import { SidebarShell } from "./SidebarShell";
 import { planttaBrand } from "../data/mockData";
 import { useApp } from "../state/AppContext";
 
-const operacao = [
+interface NavItem {
+  to: string;
+  label: string;
+  icon: ComponentType<{ className?: string }>;
+  children?: { to: string; label: string }[];
+}
+
+const operacao: NavItem[] = [
   { to: "/painel", label: "Painel", icon: LayoutDashboard },
   { to: "/dashboard", label: "Dashboard", icon: BarChart3 },
 ];
-const configuracao = [
-  { to: "/catalogo", label: "Catálogo", icon: Package },
+const configuracao: NavItem[] = [
+  {
+    to: "/catalogo",
+    label: "Catálogo",
+    icon: Package,
+    children: [
+      { to: "/catalogo/materiais", label: "Materiais" },
+      { to: "/catalogo/categorias", label: "Categorias" },
+      { to: "/catalogo/marcas", label: "Marcas" },
+      { to: "/catalogo/fornecedores", label: "Fornecedores" },
+    ],
+  },
   { to: "/cadastro", label: "Cadastro", icon: Building2 },
   { to: "/marca", label: "Marca", icon: Palette },
 ];
 
-function NavGroup({ items }: { items: typeof operacao }) {
+function NavGroup({ items }: { items: NavItem[] }) {
   return (
     <nav className="stack" style={{ gap: 2 }}>
       {items.map((item) => (
-        <NavLink key={item.to} to={item.to} className={({ isActive }) => "sidebar-nav-btn" + (isActive ? " active" : "")}>
-          <item.icon className="sidebar-nav-icon" /> {item.label}
-        </NavLink>
+        <div key={item.to}>
+          <NavLink to={item.to} end className={({ isActive }) => "sidebar-nav-btn" + (isActive ? " active" : "")}>
+            <item.icon className="sidebar-nav-icon" /> {item.label}
+          </NavLink>
+          {item.children?.map((child) => (
+            <NavLink key={child.to} to={child.to} className={({ isActive }) => "sidebar-nav-btn sidebar-nav-btn--sub" + (isActive ? " active" : "")}>
+              {child.label}
+            </NavLink>
+          ))}
+        </div>
       ))}
     </nav>
   );

@@ -6,11 +6,15 @@ import { CadastroPage } from "./pages/CadastroPage";
 import { CalculadoraPage } from "./pages/CalculadoraPage";
 import { CarrinhoPage } from "./pages/CarrinhoPage";
 import { CatalogoPage } from "./pages/CatalogoPage";
+import { CategoriasPage } from "./pages/CategoriasPage";
 import { DashboardPage } from "./pages/DashboardPage";
+import { FornecedoresPage } from "./pages/FornecedoresPage";
 import { LandingPage } from "./pages/LandingPage";
 import { LoginClientePage } from "./pages/LoginClientePage";
 import { LoginConstrutoraPage } from "./pages/LoginConstrutoraPage";
 import { MarcaPage } from "./pages/MarcaPage";
+import { MarcasPage } from "./pages/MarcasPage";
+import { MateriaisPage } from "./pages/MateriaisPage";
 import { MinhaUnidadePage } from "./pages/MinhaUnidadePage";
 import { NovaPersonalizacaoPage } from "./pages/NovaPersonalizacaoPage";
 import { PainelPage } from "./pages/PainelPage";
@@ -57,6 +61,10 @@ export default function App() {
       {/* Construtora back-office — always plantta-branded. */}
       <Route element={<ConstrutoraPortalLayout />}>
         <Route path="/catalogo" element={<CatalogoPage />} />
+        <Route path="/catalogo/materiais" element={<MateriaisPage />} />
+        <Route path="/catalogo/categorias" element={<CategoriasPage />} />
+        <Route path="/catalogo/marcas" element={<MarcasPage />} />
+        <Route path="/catalogo/fornecedores" element={<FornecedoresPage />} />
         <Route path="/cadastro" element={<CadastroPage />} />
         <Route path="/marca" element={<MarcaPage />} />
         <Route path="/painel" element={<PainelPage />} />

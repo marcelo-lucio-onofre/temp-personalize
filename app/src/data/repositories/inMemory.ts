@@ -7,8 +7,11 @@ import type {
   Ambiente,
   Brand,
   CadastroEmpreendimentoInput,
+  Categoria,
   EmpreendimentoCadastrado,
+  Fornecedor,
   Item,
+  Marca,
   MaterialCatalogItem,
   Planta,
   Solicitacao,
@@ -18,13 +21,16 @@ import { plantaKey } from "../../domain/calculations";
 import {
   allowanceGroupsPorPlanta,
   ambientesPorPlanta,
+  categoriasIniciais,
   dashboardData,
   empreendimento,
   empreendimentoAllianceBoulevard501,
   empreendimentoAllianceBoulevard1502,
   empreendimentoAllianceJardins,
   empreendimentoVistaVerde,
+  fornecedoresIniciais,
   initialBrand,
+  marcasIniciais,
   materialCatalogInicial,
   plantasPorEmpreendimento,
   solicitacoesIniciais,
@@ -33,13 +39,42 @@ import {
 import type {
   IBrandRepository,
   ICatalogoRepository,
+  ICategoriaRepository,
   IDashboardRepository,
   IEmpreendimentoCadastroRepository,
+  IFornecedorRepository,
+  IMarcaRepository,
   IMaterialCatalogoRepository,
   ISolicitacaoRepository,
   IVinculoRepository,
   NovaSolicitacaoInput,
 } from "./types";
+
+/** Fábrica de CRUD in-memory idêntico pra Categoria/Marca/Fornecedor/
+ * Material — mesma forma (list/create/update/remove por construtoraId),
+ * evita três classes copiadas. */
+function makeCrudRepo<T extends { id: string; construtoraId: string }>(seed: T[], idPrefix: string) {
+  let items: T[] = seed.map((i) => ({ ...i }));
+  return {
+    list(construtoraId: string): T[] {
+      return items.filter((i) => i.construtoraId === construtoraId);
+    },
+    create(input: Omit<T, "id">): T {
+      const created = { ...input, id: `${idPrefix}-${Date.now()}-${Math.round(Math.random() * 1000)}` } as T;
+      items.push(created);
+      return created;
+    },
+    update(id: string, patch: Partial<Omit<T, "id" | "construtoraId">>): T | undefined {
+      const found = items.find((i) => i.id === id);
+      if (!found) return undefined;
+      Object.assign(found, patch);
+      return { ...found };
+    },
+    remove(id: string) {
+      items = items.filter((i) => i.id !== id);
+    },
+  };
+}
 
 // Unit-specific denormalized view (unidade/torre/comprador differ even
 // within the same empreendimento) — kept keyed by vínculo, as before.
@@ -128,29 +163,17 @@ export class InMemoryCatalogoRepository implements ICatalogoRepository {
   }
 }
 
-export class InMemoryMaterialCatalogoRepository implements IMaterialCatalogoRepository {
-  private items: MaterialCatalogItem[] = materialCatalogInicial.map((m) => ({ ...m }));
-
-  list(construtoraId: string) {
-    return this.items.filter((m) => m.construtoraId === construtoraId);
-  }
-
-  create(input: Omit<MaterialCatalogItem, "id">): MaterialCatalogItem {
-    const created: MaterialCatalogItem = { ...input, id: `mc-${Date.now()}-${Math.round(Math.random() * 1000)}` };
-    this.items.push(created);
-    return created;
-  }
-
-  update(id: string, patch: Partial<Omit<MaterialCatalogItem, "id" | "construtoraId">>) {
-    const found = this.items.find((m) => m.id === id);
-    if (!found) return undefined;
-    Object.assign(found, patch);
-    return { ...found };
-  }
-
-  remove(id: string) {
-    this.items = this.items.filter((m) => m.id !== id);
-  }
+export function makeMaterialCatalogoRepository(): IMaterialCatalogoRepository {
+  return makeCrudRepo<MaterialCatalogItem>(materialCatalogInicial, "mc");
+}
+export function makeCategoriaRepository(): ICategoriaRepository {
+  return makeCrudRepo<Categoria>(categoriasIniciais, "cat");
+}
+export function makeMarcaRepository(): IMarcaRepository {
+  return makeCrudRepo<Marca>(marcasIniciais, "marca");
+}
+export function makeFornecedorRepository(): IFornecedorRepository {
+  return makeCrudRepo<Fornecedor>(fornecedoresIniciais, "forn");
 }
 
 export class InMemoryVinculoRepository implements IVinculoRepository {
@@ -272,7 +295,10 @@ export class InMemoryDashboardRepository implements IDashboardRepository {
 // shared across the whole app via context (see state/AppProvider.tsx).
 export const repositories = {
   catalogo: new InMemoryCatalogoRepository(),
-  materiais: new InMemoryMaterialCatalogoRepository(),
+  materiais: makeMaterialCatalogoRepository(),
+  categorias: makeCategoriaRepository(),
+  marcas: makeMarcaRepository(),
+  fornecedores: makeFornecedorRepository(),
   vinculos: new InMemoryVinculoRepository(),
   brand: new InMemoryBrandRepository(),
   solicitacoes: new InMemorySolicitacaoRepository(),

@@ -67,22 +67,55 @@ export interface Ambiente {
   itens: Item[];
 }
 
+/** Categoria de material — taxonomia própria do construtora, não texto
+ * livre (evita "Piso" e "piso" virando duas linhas em relatório). */
+export interface Categoria {
+  id: string;
+  construtoraId: string;
+  nome: string;
+}
+
+/** Marca — mesmo raciocínio de Categoria, entidade própria em vez de
+ * campo de texto solto. */
+export interface Marca {
+  id: string;
+  construtoraId: string;
+  nome: string;
+}
+
+/** Fornecedor — quem entrega o material, cadastro próprio (não é
+ * característica do material em si). */
+export interface Fornecedor {
+  id: string;
+  construtoraId: string;
+  razaoSocial: string;
+  nomeFantasia: string;
+  cnpjCpf: string;
+  responsavel: string;
+  telefone: string;
+  whatsapp: string;
+  email: string;
+  cep: string;
+  endereco: string;
+  cidade: string;
+  uf: string;
+}
+
 /**
- * Reusable material — one row a construtora maintains once and attaches to
- * as many item options as it wants, instead of re-typing brand/SKU/price
- * per item. Scoped to a construtora (shared across all its empreendimentos).
+ * Reusable material — identidade do produto (categoria/marca/modelo), não
+ * preço/prazo/fornecedor: isso varia por item e por negociação, já é
+ * resolvido em Opcao.preco/custoConstrutora quando o material é anexado a
+ * um item. Construtora cadastra uma vez e reaproveita em quantos itens
+ * quiser, em vez de digitar categoria/marca/modelo de novo. Escopado por
+ * construtora (compartilhado entre todos os seus empreendimentos).
  */
 export interface MaterialCatalogItem {
   id: string;
   construtoraId: string;
-  categoria: string;
-  marca: string;
+  categoriaId: string;
+  marcaId: string;
   modelo: string;
   sku: string;
-  fornecedor: string;
-  precoCliente: number;
-  custoConstrutora: number;
-  leadTimeDias: number;
   imagemUrl: string | null;
 }
 

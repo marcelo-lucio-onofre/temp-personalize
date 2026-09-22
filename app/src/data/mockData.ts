@@ -4,14 +4,18 @@ import type {
   AllowanceGroup,
   Ambiente,
   Brand,
+  Categoria,
   DashboardData,
   Empreendimento,
+  Fornecedor,
+  Marca,
   MaterialCatalogItem,
   Planta,
   Solicitacao,
   Vinculo,
 } from "../domain/types";
 import { plantaKey } from "../domain/calculations";
+import { CATEGORIAS_MATERIAL, MARCAS_SUGERIDAS } from "../domain/catalogoReferencia";
 
 // Plain-data deep clone (Ambiente/Item/Opcao are all JSON-safe: no
 // functions/Dates) — used so each empreendimento gets its own independent
@@ -525,20 +529,53 @@ export const allowanceGroupsPorPlanta: Record<string, AllowanceGroup[]> = {
   [plantaKey("00004", "planta-unica")]: [],
 };
 
-// Biblioteca de materiais reutilizável por construtora — o que a autoria de
-// catálogo (CatalogoPage) anexa às opções de item em vez de digitar marca/
-// SKU/preço de novo em cada item.
+// Taxonomia de Categoria/Marca — antes lista fixa global, agora CRUD
+// próprio por construtora (telas em /catalogo/categorias, /catalogo/marcas).
+// Semeada a partir da mesma referência (domain/catalogoReferencia.ts) pra
+// cada construtora começar com a mesma base, editável dali em diante.
+const CONSTRUTORA_IDS = ["00001", "00002", "00003"];
+
+export const categoriasIniciais: Categoria[] = CONSTRUTORA_IDS.flatMap((construtoraId) =>
+  CATEGORIAS_MATERIAL.map((nome, i) => ({ id: `cat-${construtoraId}-${i}`, construtoraId, nome })),
+);
+export const marcasIniciais: Marca[] = CONSTRUTORA_IDS.flatMap((construtoraId) =>
+  MARCAS_SUGERIDAS.map((nome, i) => ({ id: `marca-${construtoraId}-${i}`, construtoraId, nome })),
+);
+
+function categoriaId(construtoraId: string, nome: string): string {
+  return categoriasIniciais.find((c) => c.construtoraId === construtoraId && c.nome === nome)!.id;
+}
+function marcaId(construtoraId: string, nome: string): string {
+  return marcasIniciais.find((m) => m.construtoraId === construtoraId && m.nome === nome)!.id;
+}
+
+// Fornecedor — cadastro próprio (razão social/CNPJ/contato/endereço), não
+// mais um texto solto dentro do material.
+export const fornecedoresIniciais: Fornecedor[] = [
+  { id: "forn-001", construtoraId: "00001", razaoSocial: "Portobello Distribuidora SP Ltda", nomeFantasia: "Portobello Distribuidora SP", cnpjCpf: "12.345.678/0001-90", responsavel: "Renata Souza", telefone: "(11) 3345-2200", whatsapp: "(11) 98811-2200", email: "comercial@portobellosp.com.br", cep: "04571-000", endereco: "Av. Eng. Luís Carlos Berrini, 1200", cidade: "São Paulo", uf: "SP" },
+  { id: "forn-002", construtoraId: "00001", razaoSocial: "Cosentino Brasil Ltda", nomeFantasia: "Cosentino Brasil", cnpjCpf: "23.456.789/0001-01", responsavel: "Marcos Lima", telefone: "(11) 4002-1122", whatsapp: "(11) 98822-1122", email: "vendas@cosentinobrasil.com.br", cep: "06455-000", endereco: "Al. Rio Negro, 500", cidade: "Barueri", uf: "SP" },
+  { id: "forn-003", construtoraId: "00001", razaoSocial: "Docol SP Comércio Ltda", nomeFantasia: "Docol SP", cnpjCpf: "34.567.890/0001-12", responsavel: "Juliana Prado", telefone: "(11) 3311-4455", whatsapp: "(11) 98833-4455", email: "atendimento@docolsp.com.br", cep: "01311-000", endereco: "Av. Paulista, 2200", cidade: "São Paulo", uf: "SP" },
+  { id: "forn-004", construtoraId: "00001", razaoSocial: "Tramontina Distribuidora Ltda", nomeFantasia: "Tramontina Distribuidora", cnpjCpf: "45.678.901/0001-23", responsavel: "Eduardo Nascimento", telefone: "(11) 3999-7788", whatsapp: "(11) 98844-7788", email: "vendas@tramontinadist.com.br", cep: "05001-000", endereco: "R. Turiassu, 800", cidade: "São Paulo", uf: "SP" },
+  { id: "forn-005", construtoraId: "00003", razaoSocial: "Portobello Distribuidora SP Ltda", nomeFantasia: "Portobello Distribuidora SP", cnpjCpf: "12.345.678/0001-90", responsavel: "Renata Souza", telefone: "(11) 3345-2200", whatsapp: "(11) 98811-2200", email: "comercial@portobellosp.com.br", cep: "04571-000", endereco: "Av. Eng. Luís Carlos Berrini, 1200", cidade: "São Paulo", uf: "SP" },
+  { id: "forn-006", construtoraId: "00003", razaoSocial: "Silestone Brasil Comércio Ltda", nomeFantasia: "Silestone Brasil", cnpjCpf: "56.789.012/0001-34", responsavel: "Camila Teixeira", telefone: "(11) 3777-9900", whatsapp: "(11) 98855-9900", email: "vendas@silestonebrasil.com.br", cep: "06454-000", endereco: "Al. Tocantins, 350", cidade: "Barueri", uf: "SP" },
+  { id: "forn-007", construtoraId: "00002", razaoSocial: "Portobello Distribuidora SP Ltda", nomeFantasia: "Portobello Distribuidora SP", cnpjCpf: "12.345.678/0001-90", responsavel: "Renata Souza", telefone: "(11) 3345-2200", whatsapp: "(11) 98811-2200", email: "comercial@portobellosp.com.br", cep: "04571-000", endereco: "Av. Eng. Luís Carlos Berrini, 1200", cidade: "São Paulo", uf: "SP" },
+];
+
+// Biblioteca de materiais reutilizável por construtora — identidade do
+// produto (categoria/marca/modelo/SKU), sem preço/prazo: isso é resolvido
+// por item quando o material é anexado a uma opção (Opcao.preco/
+// custoConstrutora), já que preço varia por negociação e por item.
 export const materialCatalogInicial: MaterialCatalogItem[] = [
-  { id: "mc-001", construtoraId: "00001", categoria: "Piso", marca: "Portobello", modelo: "Premium 80×80", sku: "PTB-PREM-8080", fornecedor: "Portobello Distribuidora SP", precoCliente: 8500, custoConstrutora: 6200, leadTimeDias: 15, imagemUrl: null },
-  { id: "mc-002", construtoraId: "00001", categoria: "Bancada", marca: "Dekton", modelo: "Sirius", sku: "DKT-SIRIUS", fornecedor: "Cosentino Brasil", precoCliente: 6100, custoConstrutora: 4550, leadTimeDias: 30, imagemUrl: null },
-  { id: "mc-003", construtoraId: "00001", categoria: "Louças e Metais", marca: "Docol", modelo: "Benefit Black", sku: "DOC-BEN-BLK", fornecedor: "Docol SP", precoCliente: 3400, custoConstrutora: 2380, leadTimeDias: 20, imagemUrl: null },
-  { id: "mc-004", construtoraId: "00001", categoria: "Cuba", marca: "Tramontina", modelo: "Morgana Dupla + Gourmet", sku: "TRAM-MORG-DP", fornecedor: "Tramontina Distribuidora", precoCliente: 1750, custoConstrutora: 1190, leadTimeDias: 10, imagemUrl: null },
-  { id: "mc-005", construtoraId: "00003", categoria: "Piso", marca: "Portobello", modelo: "Marmorizado Extra", sku: "PTB-MARM-EX", fornecedor: "Portobello Distribuidora SP", precoCliente: 9800, custoConstrutora: 7100, leadTimeDias: 18, imagemUrl: null },
-  { id: "mc-006", construtoraId: "00003", categoria: "Revestimento", marca: "Portobello", modelo: "Off-White Grande Formato", sku: "PTB-OFFW-GF", fornecedor: "Portobello Distribuidora SP", precoCliente: 3600, custoConstrutora: 2520, leadTimeDias: 15, imagemUrl: null },
-  { id: "mc-007", construtoraId: "00003", categoria: "Bancada", marca: "Quartzo", modelo: "Branco Ibiza", sku: "QRTZ-IBIZA", fornecedor: "Silestone Brasil", precoCliente: 4900, custoConstrutora: 3430, leadTimeDias: 25, imagemUrl: null },
-  { id: "mc-008", construtoraId: "00003", categoria: "Louças e Metais", marca: "Docol", modelo: "Benefit Black", sku: "DOC-BEN-BLK", fornecedor: "Docol SP", precoCliente: 3400, custoConstrutora: 2380, leadTimeDias: 20, imagemUrl: null },
-  { id: "mc-009", construtoraId: "00002", categoria: "Piso", marca: "Portobello", modelo: "Marmorizado Extra", sku: "PTB-MARM-EX", fornecedor: "Portobello Distribuidora SP", precoCliente: 9800, custoConstrutora: 7100, leadTimeDias: 18, imagemUrl: null },
-  { id: "mc-010", construtoraId: "00002", categoria: "Bancada", marca: "Dekton", modelo: "Sirius", sku: "DKT-SIRIUS", fornecedor: "Cosentino Brasil", precoCliente: 6100, custoConstrutora: 4550, leadTimeDias: 30, imagemUrl: null },
+  { id: "mc-001", construtoraId: "00001", categoriaId: categoriaId("00001", "Piso"), marcaId: marcaId("00001", "Portobello"), modelo: "Premium 80×80", sku: "PTB-PREM-8080", imagemUrl: null },
+  { id: "mc-002", construtoraId: "00001", categoriaId: categoriaId("00001", "Bancada"), marcaId: marcaId("00001", "Dekton"), modelo: "Sirius", sku: "DKT-SIRIUS", imagemUrl: null },
+  { id: "mc-003", construtoraId: "00001", categoriaId: categoriaId("00001", "Louças e Metais"), marcaId: marcaId("00001", "Docol"), modelo: "Benefit Black", sku: "DOC-BEN-BLK", imagemUrl: null },
+  { id: "mc-004", construtoraId: "00001", categoriaId: categoriaId("00001", "Cuba"), marcaId: marcaId("00001", "Tramontina"), modelo: "Morgana Dupla + Gourmet", sku: "TRAM-MORG-DP", imagemUrl: null },
+  { id: "mc-005", construtoraId: "00003", categoriaId: categoriaId("00003", "Piso"), marcaId: marcaId("00003", "Portobello"), modelo: "Marmorizado Extra", sku: "PTB-MARM-EX", imagemUrl: null },
+  { id: "mc-006", construtoraId: "00003", categoriaId: categoriaId("00003", "Revestimento"), marcaId: marcaId("00003", "Portobello"), modelo: "Off-White Grande Formato", sku: "PTB-OFFW-GF", imagemUrl: null },
+  { id: "mc-007", construtoraId: "00003", categoriaId: categoriaId("00003", "Bancada"), marcaId: marcaId("00003", "Silestone"), modelo: "Branco Ibiza", sku: "QRTZ-IBIZA", imagemUrl: null },
+  { id: "mc-008", construtoraId: "00003", categoriaId: categoriaId("00003", "Louças e Metais"), marcaId: marcaId("00003", "Docol"), modelo: "Benefit Black", sku: "DOC-BEN-BLK", imagemUrl: null },
+  { id: "mc-009", construtoraId: "00002", categoriaId: categoriaId("00002", "Piso"), marcaId: marcaId("00002", "Portobello"), modelo: "Marmorizado Extra", sku: "PTB-MARM-EX", imagemUrl: null },
+  { id: "mc-010", construtoraId: "00002", categoriaId: categoriaId("00002", "Bancada"), marcaId: marcaId("00002", "Dekton"), modelo: "Sirius", sku: "DKT-SIRIUS", imagemUrl: null },
 ];
 
 export const solicitacoesIniciais: Solicitacao[] = [
