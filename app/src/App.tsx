@@ -5,7 +5,6 @@ import { AprovacaoPage } from "./pages/AprovacaoPage";
 import { CadastroPage } from "./pages/CadastroPage";
 import { CalculadoraPage } from "./pages/CalculadoraPage";
 import { CarrinhoPage } from "./pages/CarrinhoPage";
-import { CatalogoPage } from "./pages/CatalogoPage";
 import { CategoriasPage } from "./pages/CategoriasPage";
 import { DashboardPage } from "./pages/DashboardPage";
 import { EmpreendimentosPage } from "./pages/EmpreendimentosPage";
@@ -64,7 +63,6 @@ export default function App() {
 
       {/* Construtora back-office — always plantta-branded. */}
       <Route element={<ConstrutoraPortalLayout />}>
-        <Route path="/catalogo" element={<CatalogoPage />} />
         <Route path="/catalogo/materiais" element={<MateriaisPage />} />
         <Route path="/catalogo/categorias" element={<CategoriasPage />} />
         <Route path="/catalogo/marcas" element={<MarcasPage />} />

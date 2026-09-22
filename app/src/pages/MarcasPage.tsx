@@ -10,7 +10,7 @@ export function MarcasPage() {
 
   return (
     <SimpleCadastroPage
-      breadcrumb={[{ label: "Painel", to: "/painel" }, { label: "Catálogo", to: "/catalogo" }, { label: "Marcas" }]}
+      breadcrumb={[{ label: "Painel", to: "/painel" }, { label: "Catálogo" }, { label: "Marcas" }]}
       titulo="Marcas"
       descricao="Usada no cadastro de Materiais — evita 'Portobello' e 'portobello' virando duas linhas diferentes em relatório."
       itemLabel="marca"

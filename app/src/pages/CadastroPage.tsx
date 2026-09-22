@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
-import { Building2, FileStack, CheckCircle2, Layers, Lock, Package, Plus, Trash2 } from "lucide-react";
+import { Building, Building2, FileStack, CheckCircle2, Grid3x3, Layers, Lock, Package, Plus, Trash2 } from "lucide-react";
 import { PageHeader } from "../components/PageHeader";
 import { JanelaBadge } from "../components/Badge";
 import { CatalogoPlantaEditor, PlantasManager, UnidadesHeatmap } from "../components/CatalogoAuthoring";
@@ -109,7 +109,9 @@ function TorresManager({ torres, onChange, disabled }: { torres: Torre[]; onChan
 
 const STEPS = [
   { label: "Empreendimento", icon: Building2 },
-  { label: "Plantas e unidades", icon: Layers },
+  { label: "Torres", icon: Building },
+  { label: "Plantas", icon: Layers },
+  { label: "Associação", icon: Grid3x3 },
   { label: "Catálogo", icon: Package },
   { label: "Arquivos", icon: FileStack },
   { label: "Revisão", icon: CheckCircle2 },
@@ -122,30 +124,32 @@ function fmtSize(bytes: number): string {
 
 /**
  * Cadastro de empreendimento — segue a hierarquia completa (ver design.md):
- * Empreendimento → Unidade (Plantas, e quais números de unidade seguem
- * cada uma) → Ambiente → Item → Especificação → Quantidade → Custo →
- * Opções (essas cinco últimas são o passo "Catálogo", reaproveitando o
- * mesmo editor de CatalogoPage — não uma cópia paralela).
+ * Empreendimento → Torres → Plantas (tipologias) → Associação (unidade →
+ * planta/comprador) → Catálogo (ambientes/itens/opções, mesmo editor
+ * reaproveitado no passo "Catálogo") → Arquivos → Revisão.
  *
- * O empreendimento é criado logo após o passo 1 (dados básicos) — não só
- * no fim — porque os passos de Plantas/Catálogo precisam de um
- * empreendimentoId real pra gravar contra. Os passos seguintes salvam ao
- * vivo no repositório (mesmo padrão de CatalogoPage); "Confirmar cadastro"
- * no fim só anexa os arquivos, que é a única coisa ainda pendente.
+ * O empreendimento só é criado de verdade (repositório) ao sair do passo
+ * "Torres" — não antes — porque Empreendimento+Torres formam um bloco só
+ * que trava junto (mudar torre depois que unidades/heatmap já existem
+ * dessincroniza a numeração). Os dois primeiros passos vivem só em estado
+ * local até lá. Os passos seguintes (Plantas/Associação/Catálogo) salvam
+ * ao vivo no repositório assim que o empreendimento existe; "Confirmar
+ * cadastro" no fim só anexa os arquivos, que é a única coisa ainda pendente.
  */
 export function CadastroPage() {
   const { id } = useParams<{ id: string }>();
-  const { vinculos, construtoraLogadaId, cadastros, cadastrarEmpreendimento, atualizarArquivosCadastro, catalogo } = useApp();
+  const { vinculos, construtoraLogadaId, cadastros, cadastrarEmpreendimento, atualizarArquivosCadastro, catalogo, unidadesRepo } = useApp();
   const navigate = useNavigate();
 
   /** Retomando um cadastro existente (`/cadastro/:id`, vindo da listagem) —
-   * "Dados" já foi preenchido e trava (ver `locked` abaixo), só falta
-   * plantas/catálogo/arquivos. `/cadastro/novo` não tem :id, fluxo em branco. */
+   * Empreendimento+Torres já foram preenchidos e travam (ver `locked`
+   * abaixo), só falta plantas/associação/catálogo/arquivos. `/cadastro/novo`
+   * não tem :id, fluxo em branco. */
   const existente = id ? cadastros.find((c) => c.id === id) : undefined;
 
   const construtoraNome = vinculos.find((v) => v.construtoraId === construtoraLogadaId)?.construtoraNome ?? "Construtora";
 
-  const [step, setStep] = useState(existente ? 1 : 0);
+  const [step, setStep] = useState(existente ? 2 : 0);
   const [nome, setNome] = useState(existente?.nome ?? "");
   const [codigoInterno, setCodigoInterno] = useState(existente?.codigoInterno ?? "");
   const [tipo, setTipo] = useState<TipoEmpreendimento>(existente?.tipo ?? "Residencial");
@@ -176,18 +180,20 @@ export function CadastroPage() {
   }
 
   const locked = Boolean(empreendimentoIdCriado);
-  const dadosPreenchidos = Boolean(nome.trim() && torres.length > 0 && torres.every((t) => t.pavimentos > 0 && t.unidadesPorPavimento > 0));
+  const nomePreenchido = Boolean(nome.trim());
+  const torresPreenchidas = torres.length > 0 && torres.every((t) => t.pavimentos > 0 && t.unidadesPorPavimento > 0);
   const doneCount = META.filter((m) => files[m.key].length > 0).length;
   const totalFiles = META.reduce((n, m) => n + files[m.key].length, 0);
   const plantas = empreendimentoIdCriado ? catalogo.listPlantas(empreendimentoIdCriado) : [];
   const plantaId = plantas.some((p) => p.id === plantaSelecionadaId) ? plantaSelecionadaId : (plantas[0]?.id ?? "");
+  const unidadesComPlanta = empreendimentoIdCriado ? unidadesRepo.listByEmpreendimento(empreendimentoIdCriado).filter((u) => u.plantaId).length : 0;
 
   function irPara(i: number) {
     if (i < step) setStep(i);
   }
 
-  function handleContinuarDados() {
-    if (!construtoraLogadaId || !dadosPreenchidos) return;
+  function handleCriarEmpreendimento() {
+    if (!construtoraLogadaId || !nomePreenchido || !torresPreenchidas) return;
     if (!empreendimentoIdCriado) {
       const created = cadastrarEmpreendimento({
         nome,
@@ -210,7 +216,7 @@ export function CadastroPage() {
       });
       setEmpreendimentoIdCriado(created.id);
     }
-    setStep(1);
+    setStep(2);
   }
 
   function handleConfirmar() {
@@ -243,7 +249,7 @@ export function CadastroPage() {
           {nome} foi criado com {plantas.length} planta{plantas.length === 1 ? "" : "s"} e {totalFiles} arquivos para {construtoraNome}.
         </p>
         <div className="row gap-sm" style={{ justifyContent: "center" }}>
-          <Link to="/catalogo" className="btn btn--primary">Ir para o catálogo</Link>
+          <Link to="/cadastro" className="btn btn--primary">Ver empreendimentos</Link>
           <button type="button" className="btn" onClick={() => navigate("/painel")}>Ir para o painel</button>
         </div>
       </div>
@@ -253,7 +259,7 @@ export function CadastroPage() {
   return (
     <div className="container">
       <PageHeader
-        breadcrumb={[{ label: "Painel", to: "/painel" }, { label: "Cadastro", to: "/cadastro" }, { label: existente ? nome || "Continuar" : "Novo empreendimento" }]}
+        breadcrumb={[{ label: "Painel", to: "/painel" }, { label: "Empreendimentos", to: "/cadastro" }, { label: existente ? nome || "Continuar" : "Novo empreendimento" }]}
         backTo="/cadastro"
         title={existente ? `Continuar cadastro — ${nome}` : "Cadastrar empreendimento"}
         description={`Empreendimento → plantas e unidades → catálogo (ambientes, itens, especificações e opções) → arquivos — em ${construtoraNome}.`}
@@ -340,7 +346,7 @@ export function CadastroPage() {
             </div>
 
             <div style={{ fontSize: 12, fontWeight: 600, color: "var(--ink-soft)", marginBottom: 4 }}>Características</div>
-            <div style={{ marginBottom: 8 }}>
+            <div>
               <label className="label">Tipo do empreendimento</label>
               <select className="input" style={{ maxWidth: 260 }} value={tipo} onChange={(e) => setTipo(e.target.value as TipoEmpreendimento)} disabled={locked}>
                 {TIPOS.map((t) => (
@@ -348,11 +354,8 @@ export function CadastroPage() {
                 ))}
               </select>
             </div>
-            <div style={{ marginBottom: 16 }}>
-              <TorresManager torres={torres} onChange={setTorres} disabled={locked} />
-            </div>
 
-            <div style={{ fontSize: 12, fontWeight: 600, color: "var(--ink-soft)", marginBottom: 4 }}>Comercial</div>
+            <div style={{ fontSize: 12, fontWeight: 600, color: "var(--ink-soft)", margin: "16px 0 4px" }}>Comercial</div>
             <div className="grid grid-2" style={{ gap: 8, marginBottom: 16 }}>
               <div>
                 <label className="label">Lançamento</label>
@@ -414,28 +417,28 @@ export function CadastroPage() {
                 fica habilitado. Este campo é só pra regras em texto (o que pode/não pode), não datas.
               </div>
             </div>
-
-            {locked && (
-              <div style={{ fontSize: 12, color: "var(--green-ink)", marginTop: 16 }}>
-                ✓ Empreendimento criado — dados básicos ficam travados a partir daqui; o resto ainda pode ser ajustado no Catálogo depois.
-              </div>
-            )}
           </div>
           <div className="row" style={{ justifyContent: "flex-end" }}>
-            <button type="button" className="btn btn--primary" disabled={!dadosPreenchidos} onClick={handleContinuarDados}>
+            <button type="button" className="btn btn--primary" disabled={!nomePreenchido} onClick={() => setStep(1)}>
               Continuar
             </button>
           </div>
         </div>
       )}
 
-      {step === 1 && empreendimentoIdCriado && (
+      {step === 1 && (
         <div className="stack gap-lg">
-          <PlantasManager empreendimentoId={empreendimentoIdCriado} plantaSelecionadaId={plantaId} onSelecionar={setPlantaSelecionadaId} />
-          <UnidadesHeatmap empreendimentoId={empreendimentoIdCriado} torres={torres} plantas={plantas} />
+          <div className="card">
+            <TorresManager torres={torres} onChange={setTorres} disabled={locked} />
+            {locked && (
+              <div style={{ fontSize: 12, color: "var(--green-ink)", marginTop: 16 }}>
+                ✓ Empreendimento criado — dados básicos e torres ficam travados a partir daqui; o resto ainda pode ser ajustado depois.
+              </div>
+            )}
+          </div>
           <div className="row" style={{ justifyContent: "space-between" }}>
             <button type="button" className="btn" onClick={() => setStep(0)}>Voltar</button>
-            <button type="button" className="btn btn--primary" disabled={plantas.length === 0} onClick={() => setStep(2)}>
+            <button type="button" className="btn btn--primary" disabled={!torresPreenchidas} onClick={handleCriarEmpreendimento}>
               Continuar
             </button>
           </div>
@@ -443,6 +446,30 @@ export function CadastroPage() {
       )}
 
       {step === 2 && empreendimentoIdCriado && (
+        <div className="stack gap-lg">
+          <PlantasManager empreendimentoId={empreendimentoIdCriado} plantaSelecionadaId={plantaId} onSelecionar={setPlantaSelecionadaId} />
+          <div className="row" style={{ justifyContent: "space-between" }}>
+            <button type="button" className="btn" onClick={() => setStep(1)}>Voltar</button>
+            <button type="button" className="btn btn--primary" disabled={plantas.length === 0} onClick={() => setStep(3)}>
+              Continuar
+            </button>
+          </div>
+        </div>
+      )}
+
+      {step === 3 && empreendimentoIdCriado && (
+        <div className="stack gap-lg">
+          <UnidadesHeatmap empreendimentoId={empreendimentoIdCriado} torres={torres} plantas={plantas} />
+          <div className="row" style={{ justifyContent: "space-between" }}>
+            <button type="button" className="btn" onClick={() => setStep(2)}>Voltar</button>
+            <button type="button" className="btn btn--primary" onClick={() => setStep(4)}>
+              Continuar
+            </button>
+          </div>
+        </div>
+      )}
+
+      {step === 4 && empreendimentoIdCriado && (
         <div className="stack gap-lg">
           {plantas.length > 1 && (
             <div className="row gap-sm" style={{ flexWrap: "wrap" }}>
@@ -463,15 +490,15 @@ export function CadastroPage() {
             <CatalogoPlantaEditor key={plantaId} empreendimentoId={empreendimentoIdCriado} plantaId={plantaId} construtoraId={construtoraLogadaId ?? ""} />
           )}
           <div className="row" style={{ justifyContent: "space-between" }}>
-            <button type="button" className="btn" onClick={() => setStep(1)}>Voltar</button>
-            <button type="button" className="btn btn--primary" onClick={() => setStep(3)}>
+            <button type="button" className="btn" onClick={() => setStep(3)}>Voltar</button>
+            <button type="button" className="btn btn--primary" onClick={() => setStep(5)}>
               Continuar
             </button>
           </div>
         </div>
       )}
 
-      {step === 3 && (
+      {step === 5 && (
         <div className="container--narrow stack gap-lg" style={{ padding: 0 }}>
           <div className="row" style={{ justifyContent: "space-between" }}>
             <div style={{ fontWeight: 700, fontSize: 14 }}>Arquivos do empreendimento</div>
@@ -524,15 +551,15 @@ export function CadastroPage() {
             })}
           </div>
           <div className="row" style={{ justifyContent: "space-between" }}>
-            <button type="button" className="btn" onClick={() => setStep(2)}>Voltar</button>
-            <button type="button" className="btn btn--primary" onClick={() => setStep(4)}>
+            <button type="button" className="btn" onClick={() => setStep(4)}>Voltar</button>
+            <button type="button" className="btn btn--primary" onClick={() => setStep(6)}>
               Continuar
             </button>
           </div>
         </div>
       )}
 
-      {step === 4 && (
+      {step === 6 && (
         <div className="container--narrow stack gap-lg" style={{ padding: 0 }}>
           <div className="card">
             <div style={{ fontSize: 12, fontWeight: 600, color: "var(--ink-soft)", textTransform: "uppercase", marginBottom: 10 }}>Resumo</div>
@@ -565,6 +592,10 @@ export function CadastroPage() {
                 <span className="text-soft" style={{ fontSize: 13 }}>Plantas cadastradas</span>
                 <span style={{ fontSize: 13, fontWeight: 600 }}>{plantas.length}</span>
               </div>
+              <div className="row" style={{ justifyContent: "space-between" }}>
+                <span className="text-soft" style={{ fontSize: 13 }}>Unidades associadas a planta</span>
+                <span style={{ fontSize: 13, fontWeight: 600 }}>{unidadesComPlanta} / {totalUnidadesTorres(torres)}</span>
+              </div>
               <div className="row" style={{ justifyContent: "space-between", alignItems: "center" }}>
                 <span className="text-soft" style={{ fontSize: 13 }}>Janela de personalização</span>
                 {empreendimentoIdCriado ? <JanelaBadge itens={catalogo.listTodosItensDoEmpreendimento(empreendimentoIdCriado)} /> : <span style={{ fontSize: 13 }}>—</span>}
@@ -576,7 +607,7 @@ export function CadastroPage() {
             </div>
           </div>
           <div className="row" style={{ justifyContent: "space-between" }}>
-            <button type="button" className="btn" onClick={() => setStep(3)}>Voltar</button>
+            <button type="button" className="btn" onClick={() => setStep(5)}>Voltar</button>
             <button type="button" className="btn btn--primary" onClick={handleConfirmar}>
               Confirmar cadastro
             </button>

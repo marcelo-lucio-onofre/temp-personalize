@@ -2,6 +2,9 @@ import { useState } from "react";
 import { Plus, Trash2 } from "lucide-react";
 import { NivelBadge } from "./Badge";
 import { SugestaoInput } from "./SugestaoInput";
+import { Modal } from "./Modal";
+import { FormField } from "./FormField";
+import { useToast } from "./Toast";
 import { deInputDate, numeroUnidade, paraInputDate } from "../domain/calculations";
 import { AMBIENTES_SUGERIDOS } from "../domain/catalogoReferencia";
 import type { AllowanceGroup, Ambiente, CategoriaArquivoPlanta, Item, MaterialCatalogItem, NivelAprovacao, Opcao, Planta, StatusPlanta, Torre, UnidadeAssociada } from "../domain/types";
@@ -444,47 +447,75 @@ interface CelulaUnidade {
  * digitado — o grid inteiro é gerado ao vivo a partir das Torres, só o
  * que o construtora clica e preenche (planta/cliente/valor) é persistido
  * (IUnidadeRepository, esparso por número).
+ *
+ * Clique alterna seleção (multi-seleção direta, sem modificador) — com
+ * várias unidades selecionadas, "Associar planta" abre um modal e aplica
+ * a mesma planta a todas de uma vez (cliente/valor não fazem sentido em
+ * lote, cada venda é diferente). Com exatamente uma selecionada, o mesmo
+ * modal também edita cliente/valor daquela unidade.
  */
 export function UnidadesHeatmap({ empreendimentoId, torres, plantas }: { empreendimentoId: string; torres: Torre[]; plantas: Planta[] }) {
   const { unidadesRepo, salvarUnidade } = useApp();
+  const toast = useToast();
   const salvas = unidadesRepo.listByEmpreendimento(empreendimentoId);
-  const [selecionada, setSelecionada] = useState<CelulaUnidade | null>(null);
+  const [selecionadas, setSelecionadas] = useState<Map<string, CelulaUnidade>>(new Map());
+  const [modalAberto, setModalAberto] = useState(false);
+  const [plantaId, setPlantaId] = useState("");
   const [clienteNome, setClienteNome] = useState("");
   const [valor, setValor] = useState("");
-  const [plantaId, setPlantaId] = useState("");
 
-  function selecionar(cel: CelulaUnidade) {
-    setSelecionada(cel);
-    const salva = salvas.find((u) => u.numero === cel.numero);
-    setClienteNome(salva?.clienteNome ?? "");
-    setValor(salva?.valor != null ? String(salva.valor) : "");
-    setPlantaId(salva?.plantaId ?? "");
+  function toggle(cel: CelulaUnidade) {
+    setSelecionadas((prev) => {
+      const next = new Map(prev);
+      if (next.has(cel.numero)) next.delete(cel.numero);
+      else next.set(cel.numero, cel);
+      return next;
+    });
   }
 
-  function handleSalvar() {
-    if (!selecionada) return;
-    const registro: UnidadeAssociada = {
-      numero: selecionada.numero,
-      empreendimentoId,
-      torreId: selecionada.torreId,
-      pavimento: selecionada.pavimento,
-      posicao: selecionada.posicao,
-      plantaId: plantaId || null,
-      clienteNome,
-      valor: valor ? Number(valor) : null,
-    };
-    salvarUnidade(registro);
+  function abrirModal() {
+    if (selecionadas.size === 1) {
+      const numero = [...selecionadas.keys()][0];
+      const salva = salvas.find((u) => u.numero === numero);
+      setPlantaId(salva?.plantaId ?? "");
+      setClienteNome(salva?.clienteNome ?? "");
+      setValor(salva?.valor != null ? String(salva.valor) : "");
+    } else {
+      setPlantaId("");
+      setClienteNome("");
+      setValor("");
+    }
+    setModalAberto(true);
+  }
+
+  function aplicar() {
+    const unica = selecionadas.size === 1;
+    for (const [numero, cel] of selecionadas) {
+      const existente = salvas.find((u) => u.numero === numero);
+      const registro: UnidadeAssociada = {
+        numero,
+        empreendimentoId,
+        torreId: cel.torreId,
+        pavimento: cel.pavimento,
+        posicao: cel.posicao,
+        plantaId: plantaId || null,
+        clienteNome: unica ? clienteNome : (existente?.clienteNome ?? ""),
+        valor: unica ? (valor ? Number(valor) : null) : (existente?.valor ?? null),
+      };
+      salvarUnidade(registro);
+    }
+    toast.success(unica ? "Unidade atualizada." : `${selecionadas.size} unidades associadas.`);
+    setModalAberto(false);
+    setSelecionadas(new Map());
   }
 
   if (torres.length === 0) return null;
-
-  const selecionadaSalva = selecionada ? salvas.find((u) => u.numero === selecionada.numero) : undefined;
 
   return (
     <div className="card">
       <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 4 }}>Associar unidades</div>
       <div className="text-soft" style={{ fontSize: 12.5, marginBottom: 16 }}>
-        Número gerado automaticamente (torre + pavimento + posição, ex. A301) — clique numa unidade pra associar planta, comprador e valor.
+        Número gerado automaticamente (torre + pavimento + posição, ex. A301) — clique pra selecionar uma ou várias unidades, depois associe a planta de uma vez.
       </div>
 
       <div className="stack gap-lg">
@@ -498,7 +529,7 @@ export function UnidadesHeatmap({ empreendimentoId, torres, plantas }: { empreen
                   {Array.from({ length: t.unidadesPorPavimento }, (_, i) => i + 1).map((pos) => {
                     const numero = numeroUnidade(t.nome, ti, pav, pos);
                     const salva = salvas.find((u) => u.numero === numero);
-                    const isSel = selecionada?.numero === numero;
+                    const isSel = selecionadas.has(numero);
                     let bg = "var(--paper-2)";
                     if (salva?.clienteNome) bg = "var(--green-bg)";
                     else if (salva?.plantaId) bg = "var(--amber-bg)";
@@ -506,7 +537,7 @@ export function UnidadesHeatmap({ empreendimentoId, torres, plantas }: { empreen
                       <button
                         key={numero}
                         type="button"
-                        onClick={() => selecionar({ numero, torreId: t.id, pavimento: pav, posicao: pos })}
+                        onClick={() => toggle({ numero, torreId: t.id, pavimento: pav, posicao: pos })}
                         title={numero}
                         style={{
                           width: 36,
@@ -516,6 +547,7 @@ export function UnidadesHeatmap({ empreendimentoId, torres, plantas }: { empreen
                           border: isSel ? "2px solid var(--brand)" : "1px solid var(--rule)",
                           borderRadius: 4,
                           background: bg,
+                          boxShadow: isSel ? "inset 0 0 0 1px var(--brand)" : "none",
                           cursor: "pointer",
                           flexShrink: 0,
                           padding: 0,
@@ -538,36 +570,50 @@ export function UnidadesHeatmap({ empreendimentoId, torres, plantas }: { empreen
         <span className="row gap-xs" style={{ alignItems: "center" }}><span style={{ width: 12, height: 12, borderRadius: 3, background: "var(--green-bg)" }} /> Vendida</span>
       </div>
 
-      {selecionada && (
-        <div className="stack gap-sm" style={{ marginTop: 20, borderTop: "1px solid var(--rule)", paddingTop: 16 }}>
-          <div className="row gap-sm" style={{ alignItems: "center" }}>
-            <span className="mono" style={{ fontWeight: 700, fontSize: 14 }}>{selecionada.numero}</span>
-            {selecionadaSalva?.clienteNome && <span className="badge badge--simples" style={{ fontSize: 10.5 }}>Vendida</span>}
-          </div>
-          <div className="grid grid-2" style={{ gap: 8 }}>
-            <div>
-              <label className="label">Planta</label>
-              <select className="input" value={plantaId} onChange={(e) => setPlantaId(e.target.value)}>
-                <option value="">Sem planta associada</option>
-                {plantas.map((p) => (
-                  <option key={p.id} value={p.id}>{p.nome}</option>
-                ))}
-              </select>
-            </div>
-            <div>
-              <label className="label">Valor (R$)</label>
-              <input className="input" type="number" min={0} value={valor} onChange={(e) => setValor(e.target.value)} />
-            </div>
-            <div style={{ gridColumn: "1 / -1" }}>
-              <label className="label">Cliente / comprador</label>
-              <input className="input" value={clienteNome} onChange={(e) => setClienteNome(e.target.value)} placeholder="Nome do comprador" />
-            </div>
-          </div>
-          <div className="row" style={{ justifyContent: "flex-end" }}>
-            <button type="button" className="btn btn--primary btn--sm" onClick={handleSalvar}>Salvar unidade</button>
+      {selecionadas.size > 0 && (
+        <div className="row gap-sm" style={{ marginTop: 16, alignItems: "center", justifyContent: "space-between", background: "var(--paper)", borderRadius: 8, padding: "10px 14px", flexWrap: "wrap" }}>
+          <span style={{ fontSize: 13, fontWeight: 600 }}>
+            {selecionadas.size} unidade{selecionadas.size > 1 ? "s" : ""} selecionada{selecionadas.size > 1 ? "s" : ""}
+          </span>
+          <div className="row gap-sm">
+            <button type="button" className="btn btn--sm" onClick={() => setSelecionadas(new Map())}>Limpar seleção</button>
+            <button type="button" className="btn btn--primary btn--sm" onClick={abrirModal}>Associar planta</button>
           </div>
         </div>
       )}
+
+      <Modal
+        open={modalAberto}
+        onClose={() => setModalAberto(false)}
+        title={selecionadas.size === 1 ? `Unidade ${[...selecionadas.keys()][0]}` : `Associar planta — ${selecionadas.size} unidades`}
+      >
+        <div className="stack gap-sm">
+          <FormField label="Planta">
+            <select className="input" value={plantaId} onChange={(e) => setPlantaId(e.target.value)}>
+              <option value="">Sem planta associada</option>
+              {plantas.map((p) => (
+                <option key={p.id} value={p.id}>{p.nome}</option>
+              ))}
+            </select>
+          </FormField>
+          {selecionadas.size === 1 && (
+            <>
+              <FormField label="Valor (R$)">
+                <input className="input" type="number" min={0} value={valor} onChange={(e) => setValor(e.target.value)} />
+              </FormField>
+              <FormField label="Cliente / comprador">
+                <input className="input" value={clienteNome} onChange={(e) => setClienteNome(e.target.value)} placeholder="Nome do comprador" />
+              </FormField>
+            </>
+          )}
+          <div className="row gap-sm" style={{ justifyContent: "flex-end", marginTop: 10 }}>
+            <button type="button" className="btn btn--sm" onClick={() => setModalAberto(false)}>Cancelar</button>
+            <button type="button" className="btn btn--primary btn--sm" onClick={aplicar}>
+              {selecionadas.size === 1 ? "Salvar unidade" : `Aplicar a ${selecionadas.size} unidades`}
+            </button>
+          </div>
+        </div>
+      </Modal>
     </div>
   );
 }

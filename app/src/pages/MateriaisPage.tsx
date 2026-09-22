@@ -97,7 +97,7 @@ export function MateriaisPage() {
   return (
     <div className="container">
       <PageHeader
-        breadcrumb={[{ label: "Painel", to: "/painel" }, { label: "Catálogo", to: "/catalogo" }, { label: "Materiais" }]}
+        breadcrumb={[{ label: "Painel", to: "/painel" }, { label: "Catálogo" }, { label: "Materiais" }]}
         title="Materiais"
         description="Identidade do produto — categoria, marca, fornecedor, modelo, SKU. Preço e prazo entram por item, no momento em que o material é anexado a uma opção."
         action={

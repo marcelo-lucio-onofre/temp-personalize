@@ -26,7 +26,7 @@ export function EmpreendimentosPage() {
   return (
     <div className="container container--wide">
       <PageHeader
-        breadcrumb={[{ label: "Painel", to: "/painel" }, { label: "Cadastro" }]}
+        breadcrumb={[{ label: "Painel", to: "/painel" }, { label: "Empreendimentos" }]}
         title="Empreendimentos"
         description="Cada empreendimento aqui vira torres/unidades e um catálogo próprio de personalização."
         action={

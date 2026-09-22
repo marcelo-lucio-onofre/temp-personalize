@@ -10,7 +10,7 @@ export function CategoriasPage() {
 
   return (
     <SimpleCadastroPage
-      breadcrumb={[{ label: "Painel", to: "/painel" }, { label: "Catálogo", to: "/catalogo" }, { label: "Categorias" }]}
+      breadcrumb={[{ label: "Painel", to: "/painel" }, { label: "Catálogo" }, { label: "Categorias" }]}
       titulo="Categorias de material"
       descricao="Taxonomia fechada usada no cadastro de Materiais — evita 'Piso' e 'piso' virando duas linhas diferentes em relatório."
       itemLabel="categoria"

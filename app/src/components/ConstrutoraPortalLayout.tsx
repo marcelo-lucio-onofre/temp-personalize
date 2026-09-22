@@ -6,7 +6,9 @@ import { planttaBrand } from "../data/mockData";
 import { useApp } from "../state/AppContext";
 
 interface NavItem {
-  to: string;
+  /** Sem `to` = rótulo de agrupamento, não navega (ex. "Catálogo" — só
+   * organiza os filhos, cada um é cadastro próprio). */
+  to?: string;
   label: string;
   icon: ComponentType<{ className?: string }>;
   children?: { to: string; label: string }[];
@@ -18,7 +20,6 @@ const operacao: NavItem[] = [
 ];
 const configuracao: NavItem[] = [
   {
-    to: "/catalogo",
     label: "Catálogo",
     icon: Package,
     children: [
@@ -28,7 +29,7 @@ const configuracao: NavItem[] = [
       { to: "/catalogo/fornecedores", label: "Fornecedores" },
     ],
   },
-  { to: "/cadastro", label: "Cadastro", icon: Building2 },
+  { to: "/cadastro", label: "Empreendimentos", icon: Building2 },
   { to: "/pessoas", label: "Pessoas", icon: Users },
   { to: "/marca", label: "Marca", icon: Palette },
 ];
@@ -37,10 +38,16 @@ function NavGroup({ items }: { items: NavItem[] }) {
   return (
     <nav className="stack" style={{ gap: 2 }}>
       {items.map((item) => (
-        <div key={item.to}>
-          <NavLink to={item.to} end className={({ isActive }) => "sidebar-nav-btn" + (isActive ? " active" : "")}>
-            <item.icon className="sidebar-nav-icon" /> {item.label}
-          </NavLink>
+        <div key={item.label}>
+          {item.to ? (
+            <NavLink to={item.to} end className={({ isActive }) => "sidebar-nav-btn" + (isActive ? " active" : "")}>
+              <item.icon className="sidebar-nav-icon" /> {item.label}
+            </NavLink>
+          ) : (
+            <div className="sidebar-nav-btn sidebar-nav-btn--static">
+              <item.icon className="sidebar-nav-icon" /> {item.label}
+            </div>
+          )}
           {item.children?.map((child) => (
             <NavLink key={child.to} to={child.to} className={({ isActive }) => "sidebar-nav-btn sidebar-nav-btn--sub" + (isActive ? " active" : "")}>
               {child.label}
