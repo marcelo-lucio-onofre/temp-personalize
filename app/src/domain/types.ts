@@ -179,6 +179,24 @@ export interface Planta {
   arquivos: Record<CategoriaArquivoPlanta, ArquivoCadastro[]>;
 }
 
+/**
+ * Uma unidade física dentro de uma torre — número calculado a partir de
+ * torre+pavimento+posição (ver domain/calculations.numeroUnidade), nunca
+ * digitado à mão. `numero` é a chave (único dentro do empreendimento).
+ * plantaId/clienteNome/valor começam vazios — o heatmap de associação
+ * preenche por clique.
+ */
+export interface UnidadeAssociada {
+  numero: string;
+  empreendimentoId: string;
+  torreId: string;
+  pavimento: number;
+  posicao: number;
+  plantaId: string | null;
+  clienteNome: string;
+  valor: number | null;
+}
+
 export interface Empreendimento {
   nome: string;
   construtora: string;

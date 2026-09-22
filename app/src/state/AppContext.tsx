@@ -16,6 +16,7 @@ import type {
   Role,
   Solicitacao,
   SolicitacaoMaterialProprio,
+  UnidadeAssociada,
   Vinculo,
 } from "../domain/types";
 
@@ -203,10 +204,12 @@ interface AppContextValue extends AppState {
   criarFornecedor: (input: Omit<Fornecedor, "id">) => Fornecedor;
   atualizarFornecedor: (id: string, patch: Partial<Omit<Fornecedor, "id" | "construtoraId">>) => void;
   removerFornecedor: (id: string) => void;
+  salvarUnidade: (unidade: UnidadeAssociada) => void;
   catalogo: typeof repositories.catalogo;
   catalogoMateriais: typeof repositories.materiais;
   catalogoCategorias: typeof repositories.categorias;
   catalogoMarcas: typeof repositories.marcas;
+  unidadesRepo: typeof repositories.unidades;
   catalogoFornecedores: typeof repositories.fornecedores;
   brandRepo: typeof repositories.brand;
   dashboard: typeof repositories.dashboard;
@@ -336,6 +339,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
     repositories.fornecedores.remove(id);
     dispatch({ type: "DADOS_ATUALIZADOS" });
   }, []);
+  const salvarUnidade = useCallback((unidade: UnidadeAssociada) => {
+    repositories.unidades.upsert(unidade);
+    dispatch({ type: "DADOS_ATUALIZADOS" });
+  }, []);
 
   const activeVinculo = state.vinculos.find((v) => v.id === state.activeVinculoId);
   // Brand comes from how the session logged in (loginScopeConstrutoraId),
@@ -383,11 +390,13 @@ export function AppProvider({ children }: { children: ReactNode }) {
       criarFornecedor,
       atualizarFornecedor,
       removerFornecedor,
+      salvarUnidade,
       catalogo: repositories.catalogo,
       catalogoMateriais: repositories.materiais,
       catalogoCategorias: repositories.categorias,
       catalogoMarcas: repositories.marcas,
       catalogoFornecedores: repositories.fornecedores,
+      unidadesRepo: repositories.unidades,
       brandRepo: repositories.brand,
       dashboard: repositories.dashboard,
     }),
@@ -425,6 +434,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       criarFornecedor,
       atualizarFornecedor,
       removerFornecedor,
+      salvarUnidade,
     ],
   );
 

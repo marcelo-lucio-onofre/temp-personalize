@@ -16,6 +16,7 @@ import type {
   Planta,
   Solicitacao,
   StatusSolicitacao,
+  UnidadeAssociada,
 } from "../../domain/types";
 import { plantaKey } from "../../domain/calculations";
 import {
@@ -46,6 +47,7 @@ import type {
   IMarcaRepository,
   IMaterialCatalogoRepository,
   ISolicitacaoRepository,
+  IUnidadeRepository,
   IVinculoRepository,
   NovaSolicitacaoInput,
 } from "./types";
@@ -176,6 +178,20 @@ export function makeFornecedorRepository(): IFornecedorRepository {
   return makeCrudRepo<Fornecedor>(fornecedoresIniciais, "forn");
 }
 
+export class InMemoryUnidadeRepository implements IUnidadeRepository {
+  private items: UnidadeAssociada[] = [];
+
+  listByEmpreendimento(empreendimentoId: string) {
+    return this.items.filter((u) => u.empreendimentoId === empreendimentoId);
+  }
+
+  upsert(unidade: UnidadeAssociada) {
+    const i = this.items.findIndex((u) => u.empreendimentoId === unidade.empreendimentoId && u.numero === unidade.numero);
+    if (i >= 0) this.items[i] = unidade;
+    else this.items.push(unidade);
+  }
+}
+
 export class InMemoryVinculoRepository implements IVinculoRepository {
   listForCliente() {
     return vinculos;
@@ -299,6 +315,7 @@ export const repositories = {
   categorias: makeCategoriaRepository(),
   marcas: makeMarcaRepository(),
   fornecedores: makeFornecedorRepository(),
+  unidades: new InMemoryUnidadeRepository(),
   vinculos: new InMemoryVinculoRepository(),
   brand: new InMemoryBrandRepository(),
   solicitacoes: new InMemorySolicitacaoRepository(),

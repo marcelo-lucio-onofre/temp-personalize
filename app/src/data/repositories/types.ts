@@ -17,6 +17,7 @@ import type {
   Planta,
   Solicitacao,
   StatusSolicitacao,
+  UnidadeAssociada,
   Vinculo,
 } from "../../domain/types";
 
@@ -76,6 +77,14 @@ export interface IFornecedorRepository {
   create(input: Omit<Fornecedor, "id">): Fornecedor;
   update(id: string, patch: Partial<Omit<Fornecedor, "id" | "construtoraId">>): Fornecedor | undefined;
   remove(id: string): void;
+}
+
+export interface IUnidadeRepository {
+  listByEmpreendimento(empreendimentoId: string): UnidadeAssociada[];
+  /** Substitui a unidade por `numero`+`empreendimentoId` — não há "criar" vs
+   * "editar" separado, o heatmap gera todas as unidades ao vivo a partir
+   * das torres e só grava quando o construtora associa planta/cliente/valor. */
+  upsert(unidade: UnidadeAssociada): void;
 }
 
 export interface IVinculoRepository {

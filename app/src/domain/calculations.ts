@@ -340,6 +340,24 @@ export function totalUnidadesTorres(torres: Pick<Torre, "pavimentos" | "unidades
   return torres.reduce((sum, t) => sum + t.pavimentos * t.unidadesPorPavimento, 0);
 }
 
+/** Letra da torre pro número da unidade — primeira letra do nome
+ * ("Torre A" -> "A"), ou A/B/C.. pelo índice se o nome não tiver letra. */
+export function letraTorre(nome: string, indice: number): string {
+  // Pega a letra isolada no nome ("Torre A" -> "A"), não a primeira letra
+  // qualquer (que pegaria o "T" de "Torre"). Sem letra isolada, cai pro
+  // índice (A/B/C... pela ordem de cadastro).
+  const letras = nome.trim().match(/\b[A-Za-z]\b/g);
+  const ultima = letras?.[letras.length - 1];
+  return (ultima ?? String.fromCharCode(65 + indice)).toUpperCase();
+}
+
+/** Número de unidade automático: letra da torre + pavimento + posição no
+ * andar (2 dígitos) — ex. Torre A, pavimento 3, 1ª unidade do andar ->
+ * "A301". Nunca digitado à mão, sempre derivado de torre+pavimento+posição. */
+export function numeroUnidade(torreNome: string, torreIndice: number, pavimento: number, posicao: number): string {
+  return `${letraTorre(torreNome, torreIndice)}${pavimento}${String(posicao).padStart(2, "0")}`;
+}
+
 export function normalizarContraLista(valor: string, conhecidos: readonly string[]): string {
   const v = valor.trim();
   if (!v) return v;

@@ -3,9 +3,9 @@ import { Link } from "react-router-dom";
 import { Plus, Trash2 } from "lucide-react";
 import { NivelBadge } from "./Badge";
 import { SugestaoInput } from "./SugestaoInput";
-import { deInputDate, paraInputDate } from "../domain/calculations";
+import { deInputDate, numeroUnidade, paraInputDate } from "../domain/calculations";
 import { AMBIENTES_SUGERIDOS } from "../domain/catalogoReferencia";
-import type { AllowanceGroup, Ambiente, CategoriaArquivoPlanta, Item, MaterialCatalogItem, NivelAprovacao, Opcao, Planta, StatusPlanta } from "../domain/types";
+import type { AllowanceGroup, Ambiente, CategoriaArquivoPlanta, Item, MaterialCatalogItem, NivelAprovacao, Opcao, Planta, StatusPlanta, Torre, UnidadeAssociada } from "../domain/types";
 import { useApp } from "../state/AppContext";
 
 export const gerarId = (prefixo: string) => `${prefixo}-${Date.now()}-${Math.round(Math.random() * 10000)}`;
@@ -510,6 +510,147 @@ export function PlantasManager({ empreendimentoId, plantaSelecionadaId, onSeleci
           );
         })}
       </div>
+    </div>
+  );
+}
+
+interface CelulaUnidade {
+  numero: string;
+  torreId: string;
+  pavimento: number;
+  posicao: number;
+}
+
+/**
+ * Heatmap clicável pra associar unidade → planta/comprador/valor. Número
+ * é sempre derivado de torre+pavimento+posição (numeroUnidade), nunca
+ * digitado — o grid inteiro é gerado ao vivo a partir das Torres, só o
+ * que o construtora clica e preenche (planta/cliente/valor) é persistido
+ * (IUnidadeRepository, esparso por número).
+ */
+export function UnidadesHeatmap({ empreendimentoId, torres, plantas }: { empreendimentoId: string; torres: Torre[]; plantas: Planta[] }) {
+  const { unidadesRepo, salvarUnidade } = useApp();
+  const salvas = unidadesRepo.listByEmpreendimento(empreendimentoId);
+  const [selecionada, setSelecionada] = useState<CelulaUnidade | null>(null);
+  const [clienteNome, setClienteNome] = useState("");
+  const [valor, setValor] = useState("");
+  const [plantaId, setPlantaId] = useState("");
+
+  function selecionar(cel: CelulaUnidade) {
+    setSelecionada(cel);
+    const salva = salvas.find((u) => u.numero === cel.numero);
+    setClienteNome(salva?.clienteNome ?? "");
+    setValor(salva?.valor != null ? String(salva.valor) : "");
+    setPlantaId(salva?.plantaId ?? "");
+  }
+
+  function handleSalvar() {
+    if (!selecionada) return;
+    const registro: UnidadeAssociada = {
+      numero: selecionada.numero,
+      empreendimentoId,
+      torreId: selecionada.torreId,
+      pavimento: selecionada.pavimento,
+      posicao: selecionada.posicao,
+      plantaId: plantaId || null,
+      clienteNome,
+      valor: valor ? Number(valor) : null,
+    };
+    salvarUnidade(registro);
+  }
+
+  if (torres.length === 0) return null;
+
+  const selecionadaSalva = selecionada ? salvas.find((u) => u.numero === selecionada.numero) : undefined;
+
+  return (
+    <div className="card">
+      <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 4 }}>Associar unidades</div>
+      <div className="text-soft" style={{ fontSize: 12.5, marginBottom: 16 }}>
+        Número gerado automaticamente (torre + pavimento + posição, ex. A301) — clique numa unidade pra associar planta, comprador e valor.
+      </div>
+
+      <div className="stack gap-lg">
+        {torres.map((t, ti) => (
+          <div key={t.id}>
+            <div style={{ fontSize: 12.5, fontWeight: 600, marginBottom: 8 }}>{t.nome}</div>
+            <div className="stack gap-xs">
+              {Array.from({ length: t.pavimentos }, (_, i) => t.pavimentos - i).map((pav) => (
+                <div key={pav} className="row gap-xs" style={{ alignItems: "center" }}>
+                  <span className="mono text-soft" style={{ fontSize: 10, width: 20, flexShrink: 0, textAlign: "right" }}>{pav}</span>
+                  {Array.from({ length: t.unidadesPorPavimento }, (_, i) => i + 1).map((pos) => {
+                    const numero = numeroUnidade(t.nome, ti, pav, pos);
+                    const salva = salvas.find((u) => u.numero === numero);
+                    const isSel = selecionada?.numero === numero;
+                    let bg = "var(--paper-2)";
+                    if (salva?.clienteNome) bg = "var(--green-bg)";
+                    else if (salva?.plantaId) bg = "var(--amber-bg)";
+                    return (
+                      <button
+                        key={numero}
+                        type="button"
+                        onClick={() => selecionar({ numero, torreId: t.id, pavimento: pav, posicao: pos })}
+                        title={numero}
+                        style={{
+                          width: 36,
+                          height: 26,
+                          fontSize: 9.5,
+                          fontFamily: "'IBM Plex Mono', monospace",
+                          border: isSel ? "2px solid var(--brand)" : "1px solid var(--rule)",
+                          borderRadius: 4,
+                          background: bg,
+                          cursor: "pointer",
+                          flexShrink: 0,
+                          padding: 0,
+                        }}
+                      >
+                        {numero}
+                      </button>
+                    );
+                  })}
+                </div>
+              ))}
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <div className="row gap-sm" style={{ marginTop: 16, fontSize: 11.5, color: "var(--ink-soft)" }}>
+        <span className="row gap-xs" style={{ alignItems: "center" }}><span style={{ width: 12, height: 12, borderRadius: 3, background: "var(--paper-2)", border: "1px solid var(--rule)" }} /> Livre</span>
+        <span className="row gap-xs" style={{ alignItems: "center" }}><span style={{ width: 12, height: 12, borderRadius: 3, background: "var(--amber-bg)" }} /> Planta associada</span>
+        <span className="row gap-xs" style={{ alignItems: "center" }}><span style={{ width: 12, height: 12, borderRadius: 3, background: "var(--green-bg)" }} /> Vendida</span>
+      </div>
+
+      {selecionada && (
+        <div className="stack gap-sm" style={{ marginTop: 20, borderTop: "1px solid var(--rule)", paddingTop: 16 }}>
+          <div className="row gap-sm" style={{ alignItems: "center" }}>
+            <span className="mono" style={{ fontWeight: 700, fontSize: 14 }}>{selecionada.numero}</span>
+            {selecionadaSalva?.clienteNome && <span className="badge badge--simples" style={{ fontSize: 10.5 }}>Vendida</span>}
+          </div>
+          <div className="grid grid-2" style={{ gap: 8 }}>
+            <div>
+              <label className="label">Planta</label>
+              <select className="input" value={plantaId} onChange={(e) => setPlantaId(e.target.value)}>
+                <option value="">Sem planta associada</option>
+                {plantas.map((p) => (
+                  <option key={p.id} value={p.id}>{p.nome}</option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="label">Valor (R$)</label>
+              <input className="input" type="number" min={0} value={valor} onChange={(e) => setValor(e.target.value)} />
+            </div>
+            <div style={{ gridColumn: "1 / -1" }}>
+              <label className="label">Cliente / comprador</label>
+              <input className="input" value={clienteNome} onChange={(e) => setClienteNome(e.target.value)} placeholder="Nome do comprador" />
+            </div>
+          </div>
+          <div className="row" style={{ justifyContent: "flex-end" }}>
+            <button type="button" className="btn btn--primary btn--sm" onClick={handleSalvar}>Salvar unidade</button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

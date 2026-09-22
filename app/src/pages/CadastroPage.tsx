@@ -3,7 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { Building2, FileStack, CheckCircle2, Layers, Lock, Package, Plus, Trash2 } from "lucide-react";
 import { Breadcrumb } from "../components/Breadcrumb";
 import { JanelaBadge } from "../components/Badge";
-import { CatalogoPlantaEditor, PlantasManager } from "../components/CatalogoAuthoring";
+import { CatalogoPlantaEditor, PlantasManager, UnidadesHeatmap } from "../components/CatalogoAuthoring";
 import { useApp } from "../state/AppContext";
 import { deInputDate, paraInputDate, totalUnidadesTorres } from "../domain/calculations";
 import type { ArquivoCadastro, CategoriaArquivo, StatusComercialEmpreendimento, TipoEmpreendimento, Torre } from "../domain/types";
@@ -425,6 +425,7 @@ export function CadastroPage() {
       {step === 1 && empreendimentoIdCriado && (
         <div className="stack gap-lg">
           <PlantasManager empreendimentoId={empreendimentoIdCriado} plantaSelecionadaId={plantaId} onSelecionar={setPlantaSelecionadaId} />
+          <UnidadesHeatmap empreendimentoId={empreendimentoIdCriado} torres={torres} plantas={plantas} />
           <div className="row" style={{ justifyContent: "space-between" }}>
             <button type="button" className="btn" onClick={() => setStep(0)}>Voltar</button>
             <button type="button" className="btn btn--primary" disabled={plantas.length === 0} onClick={() => setStep(2)}>
