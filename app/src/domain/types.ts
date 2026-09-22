@@ -141,15 +141,42 @@ export interface AllowanceGroup {
  * diferente da Sala da Planta B. Unidades reais se associam a uma Planta
  * (ver Vinculo.plantaId).
  */
+export type StatusPlanta = "ativa" | "inativa";
+
+export type CategoriaArquivoPlanta =
+  | "plantaArquitetonicaPdf"
+  | "plantaImagem"
+  | "dwg"
+  | "plantaHumanizada"
+  | "plantaMobiliada"
+  | "plantaEletrica"
+  | "plantaHidraulica"
+  | "plantaPontos"
+  | "memorialTipologia"
+  | "renderizacoes";
+
 export interface Planta {
   id: string;
+  codigo: string;
   nome: string;
+  tipologia: string;
   descricao?: string;
-  areaM2?: number;
+  areaPrivativaM2?: number;
+  areaTotalM2?: number;
   quartos?: number;
+  suites?: number;
+  banheiros?: number;
+  vagas?: number;
+  numeroAmbientes?: number;
+  versao: string;
+  dataVersao: string | null;
+  status: StatusPlanta;
+  opcoesPermitidas: string;
+  restricoes: string;
   /** Faixas/números de unidade cadastrados nesta planta, só pra exibição —
    * ex.: "101-110, 201-210". Não é usado pra resolver vínculo algum. */
   unidadesLabel?: string;
+  arquivos: Record<CategoriaArquivoPlanta, ArquivoCadastro[]>;
 }
 
 export interface Empreendimento {

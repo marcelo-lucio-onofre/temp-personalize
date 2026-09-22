@@ -5,7 +5,7 @@ import { NivelBadge } from "./Badge";
 import { SugestaoInput } from "./SugestaoInput";
 import { deInputDate, paraInputDate } from "../domain/calculations";
 import { AMBIENTES_SUGERIDOS } from "../domain/catalogoReferencia";
-import type { AllowanceGroup, Ambiente, Item, MaterialCatalogItem, NivelAprovacao, Opcao } from "../domain/types";
+import type { AllowanceGroup, Ambiente, CategoriaArquivoPlanta, Item, MaterialCatalogItem, NivelAprovacao, Opcao, Planta, StatusPlanta } from "../domain/types";
 import { useApp } from "../state/AppContext";
 
 export const gerarId = (prefixo: string) => `${prefixo}-${Date.now()}-${Math.round(Math.random() * 10000)}`;
@@ -283,10 +283,56 @@ function ItemRow({ item, grupos, materiais, onChange, onRemove, onOpcoesChange, 
   );
 }
 
+const ARQUIVOS_PLANTA_VAZIOS: Planta["arquivos"] = {
+  plantaArquitetonicaPdf: [], plantaImagem: [], dwg: [], plantaHumanizada: [], plantaMobiliada: [],
+  plantaEletrica: [], plantaHidraulica: [], plantaPontos: [], memorialTipologia: [], renderizacoes: [],
+};
+
+const META_ARQUIVOS_PLANTA: { key: CategoriaArquivoPlanta; label: string; accept: string }[] = [
+  { key: "plantaArquitetonicaPdf", label: "Planta arquitetônica (PDF)", accept: ".pdf" },
+  { key: "plantaImagem", label: "Planta em imagem", accept: "image/*" },
+  { key: "dwg", label: "DWG", accept: ".dwg,.dxf" },
+  { key: "plantaHumanizada", label: "Planta humanizada", accept: "image/*,.pdf" },
+  { key: "plantaMobiliada", label: "Planta mobiliada", accept: "image/*,.pdf" },
+  { key: "plantaEletrica", label: "Planta elétrica", accept: ".pdf,.dwg" },
+  { key: "plantaHidraulica", label: "Planta hidráulica", accept: ".pdf,.dwg" },
+  { key: "plantaPontos", label: "Planta de pontos", accept: ".pdf,.dwg" },
+  { key: "memorialTipologia", label: "Memorial da tipologia", accept: ".pdf,.doc,.docx" },
+  { key: "renderizacoes", label: "Renderizações dos ambientes", accept: "image/*" },
+];
+
+/** Linha compacta de upload — uma por categoria, sem drop-zone grande
+ * (a planta já tem muito campo; 10 categorias em caixa tracejada ficaria
+ * gigante). Mostra só contagem + limpar, não chip por arquivo. */
+function UploadPlantaRow({ label, accept, arquivos, onAdd, onClear }: { label: string; accept: string; arquivos: { id: string; name: string; size: number }[]; onAdd: (list: FileList | null) => void; onClear: () => void }) {
+  const has = arquivos.length > 0;
+  return (
+    <div className="row gap-sm" style={{ alignItems: "center", justifyContent: "space-between", padding: "6px 0", borderBottom: "1px solid var(--rule)", flexWrap: "wrap" }}>
+      <span style={{ fontSize: 12.5, flex: "1 1 180px" }}>{label}</span>
+      <span className="row gap-sm" style={{ alignItems: "center", flexShrink: 0 }}>
+        {has ? (
+          <>
+            <span className="badge badge--simples" style={{ fontSize: 11 }}>✓ {arquivos.length}</span>
+            <button type="button" style={{ border: "none", background: "none", color: "var(--red-ink)", cursor: "pointer", fontSize: 11, padding: 0 }} onClick={onClear}>
+              Limpar
+            </button>
+          </>
+        ) : (
+          <input type="file" multiple accept={accept} onChange={(e) => onAdd(e.target.files)} style={{ fontSize: 11, maxWidth: 170 }} />
+        )}
+      </span>
+    </div>
+  );
+}
+
 /**
  * CRUD de plantas (tipologias de unidade) de um empreendimento — usado
  * tanto no wizard de Cadastro (passo "Plantas e unidades") quanto em
  * CatalogoPage (pra trocar de planta antes de editar o catálogo dela).
+ * Card não-selecionado mostra resumo compacto; o formulário completo
+ * (características, versão, personalização, uploads) só aparece pra
+ * planta selecionada — com 10 categorias de upload por planta, mostrar
+ * tudo expandido pra toda planta ao mesmo tempo vira parede de campo.
  */
 export function PlantasManager({ empreendimentoId, plantaSelecionadaId, onSelecionar }: { empreendimentoId: string; plantaSelecionadaId?: string; onSelecionar?: (plantaId: string) => void }) {
   const { catalogo, salvarPlanta, removerPlanta } = useApp();
@@ -294,7 +340,10 @@ export function PlantasManager({ empreendimentoId, plantaSelecionadaId, onSeleci
 
   function adicionarPlanta() {
     const id = gerarId("planta");
-    salvarPlanta(empreendimentoId, { id, nome: "Nova planta" });
+    salvarPlanta(empreendimentoId, {
+      id, codigo: "", nome: "Nova planta", tipologia: "", versao: "1.0", dataVersao: null, status: "ativa",
+      opcoesPermitidas: "", restricoes: "", arquivos: ARQUIVOS_PLANTA_VAZIOS,
+    });
     onSelecionar?.(id);
   }
 
@@ -307,57 +356,159 @@ export function PlantasManager({ empreendimentoId, plantaSelecionadaId, onSeleci
         </button>
       </div>
       <div className="text-soft" style={{ fontSize: 12.5, marginBottom: 16 }}>
-        Um empreendimento raramente tem uma unidade só de tipologia — cadastre cada planta (metragem, quartos, quais unidades a seguem)
-        e depois monte o catálogo de cada uma separadamente.
+        Um empreendimento raramente tem uma unidade só de tipologia — cadastre cada planta (código, características, versão) e depois
+        monte o catálogo de cada uma separadamente. Clique numa planta pra editar os detalhes.
       </div>
 
       {plantas.length === 0 && <div className="text-soft" style={{ fontSize: 13 }}>Nenhuma planta cadastrada ainda.</div>}
 
       <div className="stack gap-sm">
-        {plantas.map((p) => (
-          <div
-            key={p.id}
-            style={{
-              border: p.id === plantaSelecionadaId ? "2px solid var(--brand)" : "1px solid var(--rule)",
-              borderRadius: 8,
-              padding: 12,
-              background: p.id === plantaSelecionadaId ? "var(--green-bg)" : "var(--paper)",
-              cursor: onSelecionar ? "pointer" : "default",
-            }}
-            onClick={() => onSelecionar?.(p.id)}
-          >
-            <div className="grid grid-2" style={{ gap: 8, marginBottom: 8 }} onClick={(e) => e.stopPropagation()}>
-              <div style={{ gridColumn: "1 / -1" }}>
-                <label className="label">Nome da planta</label>
-                <input className="input" value={p.nome} onChange={(e) => salvarPlanta(empreendimentoId, { ...p, nome: e.target.value })} placeholder="Planta A — 2 quartos" />
+        {plantas.map((p) => {
+          const selecionada = p.id === plantaSelecionadaId;
+          if (!selecionada) {
+            return (
+              <div
+                key={p.id}
+                className="row gap-sm"
+                style={{ alignItems: "center", justifyContent: "space-between", border: "1px solid var(--rule)", borderRadius: 8, padding: "10px 12px", background: "var(--paper)", cursor: onSelecionar ? "pointer" : "default" }}
+                onClick={() => onSelecionar?.(p.id)}
+              >
+                <div className="row gap-sm" style={{ alignItems: "center" }}>
+                  <span style={{ fontWeight: 600, fontSize: 13.5 }}>{p.nome || "Sem nome"}</span>
+                  {p.codigo && <span className="mono text-soft" style={{ fontSize: 11 }}>{p.codigo}</span>}
+                  <span className={p.status === "ativa" ? "badge badge--simples" : "badge badge--bloqueado"} style={{ fontSize: 10.5 }}>{p.status === "ativa" ? "Ativa" : "Inativa"}</span>
+                </div>
+                <span className="text-soft" style={{ fontSize: 12 }}>
+                  {p.areaPrivativaM2 ? `${p.areaPrivativaM2} m² · ` : ""}{p.quartos != null ? `${p.quartos} quartos` : p.tipologia}
+                </span>
               </div>
-              <div>
-                <label className="label">Área (m²)</label>
-                <input className="input" type="number" min={0} value={p.areaM2 ?? ""} onChange={(e) => salvarPlanta(empreendimentoId, { ...p, areaM2: e.target.value ? Number(e.target.value) : undefined })} />
+            );
+          }
+          return (
+            <div key={p.id} style={{ border: "2px solid var(--brand)", borderRadius: 8, padding: 14, background: "var(--green-bg)" }}>
+              <div style={{ fontSize: 12, fontWeight: 600, color: "var(--ink-soft)", marginBottom: 4 }}>Identificação</div>
+              <div className="grid grid-2" style={{ gap: 8, marginBottom: 14 }}>
+                <div>
+                  <label className="label">Código</label>
+                  <input className="input" value={p.codigo} onChange={(e) => salvarPlanta(empreendimentoId, { ...p, codigo: e.target.value })} placeholder="PA-01" />
+                </div>
+                <div>
+                  <label className="label">Nome</label>
+                  <input className="input" value={p.nome} onChange={(e) => salvarPlanta(empreendimentoId, { ...p, nome: e.target.value })} placeholder="Planta A — 2 quartos" />
+                </div>
+                <div style={{ gridColumn: "1 / -1" }}>
+                  <label className="label">Tipologia</label>
+                  <input className="input" value={p.tipologia} onChange={(e) => salvarPlanta(empreendimentoId, { ...p, tipologia: e.target.value })} placeholder="2 quartos, Studio, Garden..." />
+                </div>
               </div>
-              <div>
-                <label className="label">Quartos</label>
-                <input className="input" type="number" min={0} value={p.quartos ?? ""} onChange={(e) => salvarPlanta(empreendimentoId, { ...p, quartos: e.target.value ? Number(e.target.value) : undefined })} />
+
+              <div style={{ fontSize: 12, fontWeight: 600, color: "var(--ink-soft)", marginBottom: 4 }}>Características</div>
+              <div className="grid grid-2" style={{ gap: 8, marginBottom: 14 }}>
+                <div>
+                  <label className="label">Área privativa (m²)</label>
+                  <input className="input" type="number" min={0} value={p.areaPrivativaM2 ?? ""} onChange={(e) => salvarPlanta(empreendimentoId, { ...p, areaPrivativaM2: e.target.value ? Number(e.target.value) : undefined })} />
+                </div>
+                <div>
+                  <label className="label">Área total (m²)</label>
+                  <input className="input" type="number" min={0} value={p.areaTotalM2 ?? ""} onChange={(e) => salvarPlanta(empreendimentoId, { ...p, areaTotalM2: e.target.value ? Number(e.target.value) : undefined })} />
+                </div>
+                <div>
+                  <label className="label">Quartos</label>
+                  <input className="input" type="number" min={0} value={p.quartos ?? ""} onChange={(e) => salvarPlanta(empreendimentoId, { ...p, quartos: e.target.value ? Number(e.target.value) : undefined })} />
+                </div>
+                <div>
+                  <label className="label">Suítes</label>
+                  <input className="input" type="number" min={0} value={p.suites ?? ""} onChange={(e) => salvarPlanta(empreendimentoId, { ...p, suites: e.target.value ? Number(e.target.value) : undefined })} />
+                </div>
+                <div>
+                  <label className="label">Banheiros</label>
+                  <input className="input" type="number" min={0} value={p.banheiros ?? ""} onChange={(e) => salvarPlanta(empreendimentoId, { ...p, banheiros: e.target.value ? Number(e.target.value) : undefined })} />
+                </div>
+                <div>
+                  <label className="label">Vagas</label>
+                  <input className="input" type="number" min={0} value={p.vagas ?? ""} onChange={(e) => salvarPlanta(empreendimentoId, { ...p, vagas: e.target.value ? Number(e.target.value) : undefined })} />
+                </div>
               </div>
-              <div style={{ gridColumn: "1 / -1" }}>
-                <label className="label">Unidades associadas a esta planta</label>
-                <input
-                  className="input"
-                  value={p.unidadesLabel ?? ""}
-                  onChange={(e) => salvarPlanta(empreendimentoId, { ...p, unidadesLabel: e.target.value })}
-                  placeholder="Ex.: 101-110, 201-210, Torre A andares 2-14"
-                />
+
+              <div style={{ fontSize: 12, fontWeight: 600, color: "var(--ink-soft)", marginBottom: 4 }}>Configuração</div>
+              <div style={{ marginBottom: 14 }}>
+                <label className="label">Número de ambientes</label>
+                <input className="input" style={{ maxWidth: 160 }} type="number" min={0} value={p.numeroAmbientes ?? ""} onChange={(e) => salvarPlanta(empreendimentoId, { ...p, numeroAmbientes: e.target.value ? Number(e.target.value) : undefined })} />
               </div>
+
+              <div style={{ fontSize: 12, fontWeight: 600, color: "var(--ink-soft)", marginBottom: 4 }}>Versão / Status</div>
+              <div className="grid grid-2" style={{ gap: 8, marginBottom: 14 }}>
+                <div>
+                  <label className="label">Versão da planta</label>
+                  <input className="input" value={p.versao} onChange={(e) => salvarPlanta(empreendimentoId, { ...p, versao: e.target.value })} placeholder="1.0" />
+                </div>
+                <div>
+                  <label className="label">Data da versão</label>
+                  <input
+                    className="input"
+                    type="date"
+                    value={p.dataVersao ? paraInputDate(p.dataVersao) : ""}
+                    onChange={(e) => salvarPlanta(empreendimentoId, { ...p, dataVersao: e.target.value ? deInputDate(e.target.value) : null })}
+                  />
+                </div>
+                <div>
+                  <label className="label">Status</label>
+                  <select className="input" value={p.status} onChange={(e) => salvarPlanta(empreendimentoId, { ...p, status: e.target.value as StatusPlanta })}>
+                    <option value="ativa">Ativa</option>
+                    <option value="inativa">Inativa</option>
+                  </select>
+                </div>
+              </div>
+
+              <div style={{ fontSize: 12, fontWeight: 600, color: "var(--ink-soft)", marginBottom: 4 }}>Personalização</div>
+              <div className="grid grid-2" style={{ gap: 8, marginBottom: 14 }}>
+                <div>
+                  <label className="label">Opções permitidas</label>
+                  <input className="input" value={p.opcoesPermitidas} onChange={(e) => salvarPlanta(empreendimentoId, { ...p, opcoesPermitidas: e.target.value })} placeholder="Piso, revestimento, metais..." />
+                </div>
+                <div>
+                  <label className="label">Restrições</label>
+                  <input className="input" value={p.restricoes} onChange={(e) => salvarPlanta(empreendimentoId, { ...p, restricoes: e.target.value })} placeholder="Sem alteração de estrutura..." />
+                </div>
+                <div style={{ gridColumn: "1 / -1" }}>
+                  <label className="label">Unidades associadas a esta planta</label>
+                  <input
+                    className="input"
+                    value={p.unidadesLabel ?? ""}
+                    onChange={(e) => salvarPlanta(empreendimentoId, { ...p, unidadesLabel: e.target.value })}
+                    placeholder="Ex.: 101-110, 201-210, Torre A andares 2-14"
+                  />
+                </div>
+              </div>
+
+              <div style={{ fontSize: 12, fontWeight: 600, color: "var(--ink-soft)", marginBottom: 4 }}>Uploads</div>
+              <div style={{ marginBottom: 14 }}>
+                {META_ARQUIVOS_PLANTA.map((m) => (
+                  <UploadPlantaRow
+                    key={m.key}
+                    label={m.label}
+                    accept={m.accept}
+                    arquivos={p.arquivos[m.key]}
+                    onAdd={(list) => {
+                      if (!list?.length) return;
+                      const incoming = Array.from(list).map((f) => ({ id: `${m.key}-${Date.now()}-${f.name}`, name: f.name, size: f.size }));
+                      salvarPlanta(empreendimentoId, { ...p, arquivos: { ...p.arquivos, [m.key]: [...p.arquivos[m.key], ...incoming] } });
+                    }}
+                    onClear={() => salvarPlanta(empreendimentoId, { ...p, arquivos: { ...p.arquivos, [m.key]: [] } })}
+                  />
+                ))}
+              </div>
+
+              <button
+                type="button"
+                style={{ border: "none", background: "none", color: "var(--red-ink)", cursor: "pointer", fontSize: 12, fontWeight: 600, padding: 0 }}
+                onClick={() => removerPlanta(empreendimentoId, p.id)}
+              >
+                <Trash2 className="sidebar-nav-icon" style={{ width: 13, height: 13, marginRight: 4 }} /> Remover planta
+              </button>
             </div>
-            <button
-              type="button"
-              style={{ border: "none", background: "none", color: "var(--red-ink)", cursor: "pointer", fontSize: 12, fontWeight: 600, padding: 0 }}
-              onClick={(e) => { e.stopPropagation(); removerPlanta(empreendimentoId, p.id); }}
-            >
-              <Trash2 className="sidebar-nav-icon" style={{ width: 13, height: 13, marginRight: 4 }} /> Remover planta
-            </button>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );

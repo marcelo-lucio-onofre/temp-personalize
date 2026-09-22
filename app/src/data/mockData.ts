@@ -495,17 +495,22 @@ const ambientesPlantaBAurora: Ambiente[] = [
   },
 ];
 
+const ARQUIVOS_PLANTA_VAZIOS: Planta["arquivos"] = {
+  plantaArquitetonicaPdf: [], plantaImagem: [], dwg: [], plantaHumanizada: [], plantaMobiliada: [],
+  plantaEletrica: [], plantaHidraulica: [], plantaPontos: [], memorialTipologia: [], renderizacoes: [],
+};
+
 // Plantas (tipologias de unidade) por empreendimento — um prédio de
 // centenas de unidades quase nunca tem uma planta só. O catálogo abaixo
 // pertence à Planta, não ao empreendimento (ver domain/types.ts Planta).
 export const plantasPorEmpreendimento: Record<string, Planta[]> = {
   "00001": [
-    { id: "planta-a", nome: "Planta A — 2 quartos", descricao: "2 dormitórios, 1 suíte", areaM2: 68, quartos: 2, unidadesLabel: "Torres A e B, andares 2–14" },
-    { id: "planta-b", nome: "Planta B — 3 quartos", descricao: "3 dormitórios, suíte master com closet opcional", areaM2: 94, quartos: 3, unidadesLabel: "Torres A e B, andares 15–20 (coberturas e garden)" },
+    { id: "planta-a", codigo: "PA-01", nome: "Planta A — 2 quartos", tipologia: "2 quartos", descricao: "2 dormitórios, 1 suíte", areaPrivativaM2: 68, areaTotalM2: 78, quartos: 2, suites: 1, banheiros: 2, vagas: 1, numeroAmbientes: 6, versao: "1.0", dataVersao: "10/01/2026", status: "ativa", opcoesPermitidas: "Piso, revestimento, metais, louças", restricoes: "Sem alteração de estrutura ou hidráulica de posição fixa", unidadesLabel: "Torres A e B, andares 2–14", arquivos: ARQUIVOS_PLANTA_VAZIOS },
+    { id: "planta-b", codigo: "PB-01", nome: "Planta B — 3 quartos", tipologia: "3 quartos", descricao: "3 dormitórios, suíte master com closet opcional", areaPrivativaM2: 94, areaTotalM2: 108, quartos: 3, suites: 1, banheiros: 3, vagas: 2, numeroAmbientes: 8, versao: "1.0", dataVersao: "10/01/2026", status: "ativa", opcoesPermitidas: "Piso, revestimento, metais, louças, bancadas", restricoes: "Sem alteração de estrutura ou hidráulica de posição fixa", unidadesLabel: "Torres A e B, andares 15–20 (coberturas e garden)", arquivos: ARQUIVOS_PLANTA_VAZIOS },
   ],
-  "00002": [{ id: "planta-unica", nome: "Planta Única", descricao: "2 dormitórios, 1 suíte", areaM2: 62, quartos: 2, unidadesLabel: "Todas as unidades" }],
-  "00003": [{ id: "planta-unica", nome: "Planta Única", descricao: "2 dormitórios, 1 suíte", areaM2: 75, quartos: 2, unidadesLabel: "Torres A e B, todos os andares" }],
-  "00004": [{ id: "planta-unica", nome: "Planta Única", descricao: "3 dormitórios, 1 suíte", areaM2: 88, quartos: 3, unidadesLabel: "Torre única" }],
+  "00002": [{ id: "planta-unica", codigo: "PU-01", nome: "Planta Única", tipologia: "2 quartos", descricao: "2 dormitórios, 1 suíte", areaPrivativaM2: 62, areaTotalM2: 70, quartos: 2, suites: 1, banheiros: 2, vagas: 1, numeroAmbientes: 6, versao: "1.0", dataVersao: "05/02/2026", status: "ativa", opcoesPermitidas: "Piso, revestimento, metais, louças", restricoes: "Sem alteração de estrutura", unidadesLabel: "Todas as unidades", arquivos: ARQUIVOS_PLANTA_VAZIOS }],
+  "00003": [{ id: "planta-unica", codigo: "PU-01", nome: "Planta Única", tipologia: "2 quartos", descricao: "2 dormitórios, 1 suíte", areaPrivativaM2: 75, areaTotalM2: 85, quartos: 2, suites: 1, banheiros: 2, vagas: 2, numeroAmbientes: 6, versao: "1.0", dataVersao: "12/03/2026", status: "ativa", opcoesPermitidas: "Piso, revestimento, metais, louças, bancadas", restricoes: "Sem alteração de estrutura", unidadesLabel: "Torres A e B, todos os andares", arquivos: ARQUIVOS_PLANTA_VAZIOS }],
+  "00004": [{ id: "planta-unica", codigo: "PU-01", nome: "Planta Única", tipologia: "3 quartos", descricao: "3 dormitórios, 1 suíte", areaPrivativaM2: 88, areaTotalM2: 100, quartos: 3, suites: 1, banheiros: 2, vagas: 2, numeroAmbientes: 7, versao: "1.0", dataVersao: "20/03/2026", status: "ativa", opcoesPermitidas: "Piso, revestimento, metais, louças", restricoes: "Sem alteração de estrutura", unidadesLabel: "Torre única", arquivos: ARQUIVOS_PLANTA_VAZIOS }],
 };
 
 // Cada Planta tem seu próprio catálogo, completamente independente —
