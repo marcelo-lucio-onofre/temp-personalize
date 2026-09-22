@@ -585,16 +585,16 @@ export const pessoasIniciais: Pessoa[] = [
 // por item quando o material é anexado a uma opção (Opcao.preco/
 // custoConstrutora), já que preço varia por negociação e por item.
 export const materialCatalogInicial: MaterialCatalogItem[] = [
-  { id: "mc-001", construtoraId: "00001", categoriaId: categoriaId("00001", "Piso"), marcaId: marcaId("00001", "Portobello"), modelo: "Premium 80×80", sku: "PTB-PREM-8080", imagemUrl: null },
-  { id: "mc-002", construtoraId: "00001", categoriaId: categoriaId("00001", "Bancada"), marcaId: marcaId("00001", "Dekton"), modelo: "Sirius", sku: "DKT-SIRIUS", imagemUrl: null },
-  { id: "mc-003", construtoraId: "00001", categoriaId: categoriaId("00001", "Louças e Metais"), marcaId: marcaId("00001", "Docol"), modelo: "Benefit Black", sku: "DOC-BEN-BLK", imagemUrl: null },
-  { id: "mc-004", construtoraId: "00001", categoriaId: categoriaId("00001", "Cuba"), marcaId: marcaId("00001", "Tramontina"), modelo: "Morgana Dupla + Gourmet", sku: "TRAM-MORG-DP", imagemUrl: null },
-  { id: "mc-005", construtoraId: "00003", categoriaId: categoriaId("00003", "Piso"), marcaId: marcaId("00003", "Portobello"), modelo: "Marmorizado Extra", sku: "PTB-MARM-EX", imagemUrl: null },
-  { id: "mc-006", construtoraId: "00003", categoriaId: categoriaId("00003", "Revestimento"), marcaId: marcaId("00003", "Portobello"), modelo: "Off-White Grande Formato", sku: "PTB-OFFW-GF", imagemUrl: null },
-  { id: "mc-007", construtoraId: "00003", categoriaId: categoriaId("00003", "Bancada"), marcaId: marcaId("00003", "Silestone"), modelo: "Branco Ibiza", sku: "QRTZ-IBIZA", imagemUrl: null },
-  { id: "mc-008", construtoraId: "00003", categoriaId: categoriaId("00003", "Louças e Metais"), marcaId: marcaId("00003", "Docol"), modelo: "Benefit Black", sku: "DOC-BEN-BLK", imagemUrl: null },
-  { id: "mc-009", construtoraId: "00002", categoriaId: categoriaId("00002", "Piso"), marcaId: marcaId("00002", "Portobello"), modelo: "Marmorizado Extra", sku: "PTB-MARM-EX", imagemUrl: null },
-  { id: "mc-010", construtoraId: "00002", categoriaId: categoriaId("00002", "Bancada"), marcaId: marcaId("00002", "Dekton"), modelo: "Sirius", sku: "DKT-SIRIUS", imagemUrl: null },
+  { id: "mc-001", construtoraId: "00001", categoriaId: categoriaId("00001", "Piso"), marcaId: marcaId("00001", "Portobello"), fornecedorId: "forn-001", modelo: "Premium 80×80", sku: "PTB-PREM-8080", imagemUrl: null },
+  { id: "mc-002", construtoraId: "00001", categoriaId: categoriaId("00001", "Bancada"), marcaId: marcaId("00001", "Dekton"), fornecedorId: "forn-002", modelo: "Sirius", sku: "DKT-SIRIUS", imagemUrl: null },
+  { id: "mc-003", construtoraId: "00001", categoriaId: categoriaId("00001", "Louças e Metais"), marcaId: marcaId("00001", "Docol"), fornecedorId: "forn-003", modelo: "Benefit Black", sku: "DOC-BEN-BLK", imagemUrl: null },
+  { id: "mc-004", construtoraId: "00001", categoriaId: categoriaId("00001", "Cuba"), marcaId: marcaId("00001", "Tramontina"), fornecedorId: "forn-004", modelo: "Morgana Dupla + Gourmet", sku: "TRAM-MORG-DP", imagemUrl: null },
+  { id: "mc-005", construtoraId: "00003", categoriaId: categoriaId("00003", "Piso"), marcaId: marcaId("00003", "Portobello"), fornecedorId: "forn-005", modelo: "Marmorizado Extra", sku: "PTB-MARM-EX", imagemUrl: null },
+  { id: "mc-006", construtoraId: "00003", categoriaId: categoriaId("00003", "Revestimento"), marcaId: marcaId("00003", "Portobello"), fornecedorId: "forn-005", modelo: "Off-White Grande Formato", sku: "PTB-OFFW-GF", imagemUrl: null },
+  { id: "mc-007", construtoraId: "00003", categoriaId: categoriaId("00003", "Bancada"), marcaId: marcaId("00003", "Silestone"), fornecedorId: "forn-006", modelo: "Branco Ibiza", sku: "QRTZ-IBIZA", imagemUrl: null },
+  { id: "mc-008", construtoraId: "00003", categoriaId: categoriaId("00003", "Louças e Metais"), marcaId: marcaId("00003", "Docol"), fornecedorId: "forn-005", modelo: "Benefit Black", sku: "DOC-BEN-BLK", imagemUrl: null },
+  { id: "mc-009", construtoraId: "00002", categoriaId: categoriaId("00002", "Piso"), marcaId: marcaId("00002", "Portobello"), fornecedorId: "forn-007", modelo: "Marmorizado Extra", sku: "PTB-MARM-EX", imagemUrl: null },
+  { id: "mc-010", construtoraId: "00002", categoriaId: categoriaId("00002", "Bancada"), marcaId: marcaId("00002", "Dekton"), fornecedorId: "forn-007", modelo: "Sirius", sku: "DKT-SIRIUS", imagemUrl: null },
 ];
 
 export const solicitacoesIniciais: Solicitacao[] = [

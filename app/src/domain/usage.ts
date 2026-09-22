@@ -11,6 +11,12 @@ export function marcaEmUso(marcaId: string, materiais: MaterialCatalogItem[]): b
   return materiais.some((m) => m.marcaId === marcaId);
 }
 
+/** Fornecedor só pode ser excluído se nenhum Material da biblioteca o
+ * referencia como origem — mesma regra de Categoria/Marca. */
+export function fornecedorEmUso(fornecedorId: string, materiais: MaterialCatalogItem[]): boolean {
+  return materiais.some((m) => m.fornecedorId === fornecedorId);
+}
+
 /** Varre o catálogo inteiro do construtora (todos os empreendimentos,
  * plantas, ambientes, itens) atrás de Opcao.materialCatalogItemId — só
  * assim sabemos se um material da biblioteca já foi anexado a alguma

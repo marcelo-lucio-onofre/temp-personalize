@@ -17,48 +17,54 @@ interface Draft {
   id?: string;
   categoriaId: string;
   marcaId: string;
+  fornecedorId: string;
   modelo: string;
   sku: string;
-  errors: Partial<Record<"categoriaId" | "marcaId" | "modelo", string>>;
+  errors: Partial<Record<"categoriaId" | "marcaId" | "fornecedorId" | "modelo", string>>;
 }
 
 export function MateriaisPage() {
-  const { construtoraLogadaId, catalogo, catalogoMateriais, catalogoCategorias, catalogoMarcas, criarMaterial, atualizarMaterial, removerMaterial } = useApp();
+  const { construtoraLogadaId, catalogo, catalogoMateriais, catalogoCategorias, catalogoMarcas, catalogoFornecedores, criarMaterial, atualizarMaterial, removerMaterial } = useApp();
   const toast = useToast();
   const construtoraId = construtoraLogadaId ?? "";
   const materiais = catalogoMateriais.list(construtoraId);
   const categorias = catalogoCategorias.list(construtoraId);
   const marcas = catalogoMarcas.list(construtoraId);
-  const semPreRequisito = categorias.length === 0 || marcas.length === 0;
+  const fornecedores = catalogoFornecedores.list(construtoraId);
+  const semPreRequisito = categorias.length === 0 || marcas.length === 0 || fornecedores.length === 0;
   const emUsoIds = materiaisEmUsoIds(catalogo, construtoraId);
 
   const [query, setQuery] = useState("");
   const [categoriaFiltro, setCategoriaFiltro] = useState("");
   const [marcaFiltro, setMarcaFiltro] = useState("");
+  const [fornecedorFiltro, setFornecedorFiltro] = useState("");
   const [modal, setModal] = useState<Draft | null>(null);
   const [excluindo, setExcluindo] = useState<MaterialCatalogItem | null>(null);
 
   const categoriaNome = (id: string) => categorias.find((c) => c.id === id)?.nome ?? "?";
   const marcaNome = (id: string) => marcas.find((m) => m.id === id)?.nome ?? "?";
+  const fornecedorNome = (id: string) => fornecedores.find((f) => f.id === id)?.razaoSocial ?? "?";
 
   const filtrados = materiais.filter(
     (m) =>
       textMatch(query, m.modelo, m.sku) &&
       (!categoriaFiltro || m.categoriaId === categoriaFiltro) &&
-      (!marcaFiltro || m.marcaId === marcaFiltro),
+      (!marcaFiltro || m.marcaId === marcaFiltro) &&
+      (!fornecedorFiltro || m.fornecedorId === fornecedorFiltro),
   );
 
   function abrirCriar() {
-    setModal({ categoriaId: categorias[0]?.id ?? "", marcaId: marcas[0]?.id ?? "", modelo: "", sku: "", errors: {} });
+    setModal({ categoriaId: categorias[0]?.id ?? "", marcaId: marcas[0]?.id ?? "", fornecedorId: fornecedores[0]?.id ?? "", modelo: "", sku: "", errors: {} });
   }
   function abrirEditar(m: MaterialCatalogItem) {
-    setModal({ id: m.id, categoriaId: m.categoriaId, marcaId: m.marcaId, modelo: m.modelo, sku: m.sku, errors: {} });
+    setModal({ id: m.id, categoriaId: m.categoriaId, marcaId: m.marcaId, fornecedorId: m.fornecedorId, modelo: m.modelo, sku: m.sku, errors: {} });
   }
 
   function validar(d: Draft): Draft["errors"] {
     return {
       categoriaId: required()(d.categoriaId),
       marcaId: required()(d.marcaId),
+      fornecedorId: required()(d.fornecedorId),
       modelo: required()(d.modelo),
     };
   }
@@ -70,7 +76,7 @@ export function MateriaisPage() {
       setModal({ ...modal, errors });
       return;
     }
-    const payload = { categoriaId: modal.categoriaId, marcaId: modal.marcaId, modelo: modal.modelo.trim(), sku: modal.sku.trim() };
+    const payload = { categoriaId: modal.categoriaId, marcaId: modal.marcaId, fornecedorId: modal.fornecedorId, modelo: modal.modelo.trim(), sku: modal.sku.trim() };
     if (modal.id) {
       atualizarMaterial(modal.id, payload);
       toast.success("Material atualizado.");
@@ -93,7 +99,7 @@ export function MateriaisPage() {
       <PageHeader
         breadcrumb={[{ label: "Painel", to: "/painel" }, { label: "Catálogo", to: "/catalogo" }, { label: "Materiais" }]}
         title="Materiais"
-        description="Identidade do produto — categoria, marca, modelo, SKU. Preço e prazo entram por item, no momento em que o material é anexado a uma opção."
+        description="Identidade do produto — categoria, marca, fornecedor, modelo, SKU. Preço e prazo entram por item, no momento em que o material é anexado a uma opção."
         action={
           <button type="button" className="btn btn--primary btn--sm" disabled={semPreRequisito} onClick={abrirCriar}>
             <Plus className="sidebar-nav-icon" /> Novo material
@@ -103,7 +109,8 @@ export function MateriaisPage() {
 
       {semPreRequisito && (
         <div className="card text-soft" style={{ fontSize: 13, marginBottom: 16 }}>
-          Cadastre pelo menos uma <Link to="/catalogo/categorias">categoria</Link> e uma <Link to="/catalogo/marcas">marca</Link> antes de criar material.
+          Cadastre pelo menos uma <Link to="/catalogo/categorias">categoria</Link>, uma <Link to="/catalogo/marcas">marca</Link> e um{" "}
+          <Link to="/catalogo/fornecedores">fornecedor</Link> antes de criar material.
         </div>
       )}
 
@@ -121,6 +128,12 @@ export function MateriaisPage() {
               <option key={m.id} value={m.id}>{m.nome}</option>
             ))}
           </select>
+          <select className="input" style={{ maxWidth: 220 }} value={fornecedorFiltro} onChange={(e) => setFornecedorFiltro(e.target.value)}>
+            <option value="">Todo fornecedor</option>
+            {fornecedores.map((f) => (
+              <option key={f.id} value={f.id}>{f.nomeFantasia || f.razaoSocial}</option>
+            ))}
+          </select>
         </FilterBar>
       )}
 
@@ -129,6 +142,7 @@ export function MateriaisPage() {
           columns={[
             { key: "categoria", header: "Categoria", render: (m) => categoriaNome(m.categoriaId) },
             { key: "marca", header: "Marca", render: (m) => marcaNome(m.marcaId) },
+            { key: "fornecedor", header: "Fornecedor", render: (m) => fornecedorNome(m.fornecedorId) },
             { key: "modelo", header: "Modelo", render: (m) => m.modelo },
             { key: "sku", header: "SKU", mono: true, render: (m) => m.sku || "—" },
             {
@@ -188,6 +202,18 @@ export function MateriaisPage() {
               >
                 {marcas.map((m) => (
                   <option key={m.id} value={m.id}>{m.nome}</option>
+                ))}
+              </select>
+            </FormField>
+            <FormField label="Fornecedor" htmlFor="mat-fornecedor" required error={modal.errors.fornecedorId}>
+              <select
+                id="mat-fornecedor"
+                className={modal.errors.fornecedorId ? "input input--invalid" : "input"}
+                value={modal.fornecedorId}
+                onChange={(e) => setModal({ ...modal, fornecedorId: e.target.value, errors: { ...modal.errors, fornecedorId: undefined } })}
+              >
+                {fornecedores.map((f) => (
+                  <option key={f.id} value={f.id}>{f.nomeFantasia || f.razaoSocial}</option>
                 ))}
               </select>
             </FormField>

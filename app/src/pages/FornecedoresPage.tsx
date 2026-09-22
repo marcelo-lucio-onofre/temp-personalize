@@ -7,14 +7,16 @@ import { FilterBar, textMatch } from "../components/FilterBar";
 import { ConfirmDialog } from "../components/ConfirmDialog";
 import { useToast } from "../components/Toast";
 import { useApp } from "../state/AppContext";
+import { fornecedorEmUso } from "../domain/usage";
 import type { Fornecedor } from "../domain/types";
 
 export function FornecedoresPage() {
-  const { construtoraLogadaId, catalogoFornecedores, removerFornecedor } = useApp();
+  const { construtoraLogadaId, catalogoFornecedores, catalogoMateriais, removerFornecedor } = useApp();
   const navigate = useNavigate();
   const toast = useToast();
   const construtoraId = construtoraLogadaId ?? "";
   const fornecedores = catalogoFornecedores.list(construtoraId);
+  const materiais = catalogoMateriais.list(construtoraId);
 
   const [query, setQuery] = useState("");
   const [excluindo, setExcluindo] = useState<Fornecedor | null>(null);
@@ -63,20 +65,36 @@ export function FornecedoresPage() {
           { key: "cidade", header: "Cidade/UF", render: (f) => (f.cidade ? `${f.cidade}${f.uf ? "/" + f.uf : ""}` : "—") },
           { key: "telefone", header: "Telefone", mono: true, render: (f) => f.telefone || "—" },
           { key: "email", header: "E-mail", render: (f) => f.email || "—" },
+          {
+            key: "uso",
+            header: "Uso",
+            width: "110px",
+            render: (f) => (fornecedorEmUso(f.id, materiais) ? <span className="badge badge--neutro">Em uso</span> : <span className="text-soft">—</span>),
+          },
         ]}
         rows={filtrados}
         rowKey={(f) => f.id}
         emptyMessage={fornecedores.length === 0 ? "Nenhum fornecedor cadastrado ainda." : "Nenhum resultado pra esse filtro."}
-        actions={(f) => (
-          <>
-            <button type="button" className="table-icon-btn" onClick={() => navigate(`/catalogo/fornecedores/${f.id}`)} aria-label={`Editar ${f.razaoSocial}`}>
-              <Pencil size={14} />
-            </button>
-            <button type="button" className="table-icon-btn table-icon-btn--danger" onClick={() => setExcluindo(f)} aria-label={`Excluir ${f.razaoSocial}`}>
-              <Trash2 size={14} />
-            </button>
-          </>
-        )}
+        actions={(f) => {
+          const bloqueado = fornecedorEmUso(f.id, materiais);
+          return (
+            <>
+              <button type="button" className="table-icon-btn" onClick={() => navigate(`/catalogo/fornecedores/${f.id}`)} aria-label={`Editar ${f.razaoSocial}`}>
+                <Pencil size={14} />
+              </button>
+              <button
+                type="button"
+                className="table-icon-btn table-icon-btn--danger"
+                disabled={bloqueado}
+                title={bloqueado ? "Usado por materiais cadastrados — remova o vínculo antes de excluir." : undefined}
+                onClick={() => setExcluindo(f)}
+                aria-label={`Excluir ${f.razaoSocial}`}
+              >
+                <Trash2 size={14} />
+              </button>
+            </>
+          );
+        }}
       />
 
       {excluindo && (

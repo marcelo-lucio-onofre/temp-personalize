@@ -114,6 +114,9 @@ export interface MaterialCatalogItem {
   construtoraId: string;
   categoriaId: string;
   marcaId: string;
+  /** Quem entrega esse material — Fornecedor é cadastro próprio (ver
+   * `Fornecedor`), não texto solto. */
+  fornecedorId: string;
   modelo: string;
   sku: string;
   imagemUrl: string | null;
