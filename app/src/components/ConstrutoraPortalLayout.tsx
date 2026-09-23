@@ -1,13 +1,14 @@
-import { NavLink, Navigate, Outlet } from "react-router-dom";
+import { useState } from "react";
+import { NavLink, Navigate, Outlet, useLocation } from "react-router-dom";
 import type { ComponentType } from "react";
-import { BarChart3, Building2, Package, Palette, Settings2, LayoutDashboard, Users } from "lucide-react";
+import { BarChart3, Building2, ChevronDown, Contact, Package, Palette, Settings2, LayoutDashboard, Users } from "lucide-react";
 import { SidebarShell } from "./SidebarShell";
 import { planttaBrand } from "../data/mockData";
 import { useApp } from "../state/AppContext";
 
 interface NavItem {
-  /** Sem `to` = rótulo de agrupamento, não navega (ex. "Catálogo" — só
-   * organiza os filhos, cada um é cadastro próprio). */
+  /** Sem `to` = grupo recolhível (ex. "Cadastros auxiliares" — só organiza
+   * os filhos, cada um é cadastro próprio; não navega por si). */
   to?: string;
   label: string;
   icon: ComponentType<{ className?: string }>;
@@ -20,7 +21,7 @@ const operacao: NavItem[] = [
 ];
 const configuracao: NavItem[] = [
   {
-    label: "Catálogo",
+    label: "Cadastros auxiliares",
     icon: Package,
     children: [
       { to: "/catalogo/materiais", label: "Materiais" },
@@ -31,29 +32,50 @@ const configuracao: NavItem[] = [
   },
   { to: "/cadastro", label: "Empreendimentos", icon: Building2 },
   { to: "/pessoas", label: "Pessoas", icon: Users },
+  { to: "/contatos", label: "Contatos", icon: Contact },
   { to: "/marca", label: "Marca", icon: Palette },
 ];
+
+function NavGroupItem({ item }: { item: NavItem }) {
+  const location = useLocation();
+  const hasActiveChild = item.children?.some((child) => location.pathname.startsWith(child.to)) ?? false;
+  const [open, setOpen] = useState(true);
+
+  if (!item.children) {
+    return (
+      <NavLink to={item.to!} end className={({ isActive }) => "sidebar-nav-btn" + (isActive ? " active" : "")}>
+        <item.icon className="sidebar-nav-icon" /> {item.label}
+      </NavLink>
+    );
+  }
+
+  return (
+    <div>
+      <button
+        type="button"
+        className={"sidebar-nav-btn sidebar-nav-btn--group" + (hasActiveChild ? " active" : "")}
+        onClick={() => setOpen((v) => !v)}
+        aria-expanded={open}
+      >
+        <item.icon className="sidebar-nav-icon" /> {item.label}
+        <ChevronDown className={"sidebar-nav-chevron" + (open ? " sidebar-nav-chevron--open" : "")} />
+      </button>
+      <div className="sidebar-nav-children" style={{ maxHeight: open ? `${item.children.length * 36}px` : "0px" }}>
+        {item.children.map((child) => (
+          <NavLink key={child.to} to={child.to} className={({ isActive }) => "sidebar-nav-btn sidebar-nav-btn--sub" + (isActive ? " active" : "")}>
+            {child.label}
+          </NavLink>
+        ))}
+      </div>
+    </div>
+  );
+}
 
 function NavGroup({ items }: { items: NavItem[] }) {
   return (
     <nav className="stack" style={{ gap: 2 }}>
       {items.map((item) => (
-        <div key={item.label}>
-          {item.to ? (
-            <NavLink to={item.to} end className={({ isActive }) => "sidebar-nav-btn" + (isActive ? " active" : "")}>
-              <item.icon className="sidebar-nav-icon" /> {item.label}
-            </NavLink>
-          ) : (
-            <div className="sidebar-nav-btn sidebar-nav-btn--static">
-              <item.icon className="sidebar-nav-icon" /> {item.label}
-            </div>
-          )}
-          {item.children?.map((child) => (
-            <NavLink key={child.to} to={child.to} className={({ isActive }) => "sidebar-nav-btn sidebar-nav-btn--sub" + (isActive ? " active" : "")}>
-              {child.label}
-            </NavLink>
-          ))}
-        </div>
+        <NavGroupItem key={item.label} item={item} />
       ))}
     </nav>
   );

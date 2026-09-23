@@ -34,7 +34,7 @@ export function FornecedorFormPage() {
   if (id && !existente) {
     return (
       <div className="container">
-        <PageHeader breadcrumb={[{ label: "Painel", to: "/painel" }, { label: "Catálogo" }, { label: "Fornecedores", to: "/catalogo/fornecedores" }, { label: "Não encontrado" }]} title="Fornecedor não encontrado" />
+        <PageHeader breadcrumb={[{ label: "Painel", to: "/painel" }, { label: "Cadastros auxiliares" }, { label: "Fornecedores", to: "/catalogo/fornecedores" }, { label: "Não encontrado" }]} title="Fornecedor não encontrado" />
       </div>
     );
   }
@@ -80,7 +80,7 @@ export function FornecedorFormPage() {
       <PageHeader
         breadcrumb={[
           { label: "Painel", to: "/painel" },
-          { label: "Catálogo" },
+          { label: "Cadastros auxiliares" },
           { label: "Fornecedores", to: "/catalogo/fornecedores" },
           { label: existente ? existente.razaoSocial || "Editar" : "Novo fornecedor" },
         ]}

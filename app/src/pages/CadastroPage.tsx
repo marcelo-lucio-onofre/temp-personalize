@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
-import { Building, Building2, FileStack, CheckCircle2, Grid3x3, Layers, Lock, Package, Plus, Trash2 } from "lucide-react";
+import { Building, Building2, FileStack, CheckCircle2, Grid3x3, Layers, Package, Plus, Trash2 } from "lucide-react";
 import { PageHeader } from "../components/PageHeader";
 import { JanelaBadge } from "../components/Badge";
 import { CatalogoPlantaEditor, PlantasManager, UnidadesHeatmap } from "../components/CatalogoAuthoring";
@@ -32,7 +32,6 @@ const ARQUIVOS_VAZIOS: Record<CategoriaArquivo, ArquivoCadastro[]> = {
 };
 
 const TIPOS: TipoEmpreendimento[] = ["Residencial", "Comercial", "Misto", "Loteamento"];
-const STATUS_COMERCIAL: StatusComercialEmpreendimento[] = ["Planejamento", "Lançamento", "Em obras", "Entregue"];
 
 const gerarIdTorre = () => `torre-${Date.now()}-${Math.round(Math.random() * 10000)}`;
 
@@ -138,7 +137,7 @@ function fmtSize(bytes: number): string {
  */
 export function CadastroPage() {
   const { id } = useParams<{ id: string }>();
-  const { vinculos, construtoraLogadaId, cadastros, cadastrarEmpreendimento, atualizarArquivosCadastro, catalogo, unidadesRepo } = useApp();
+  const { vinculos, construtoraLogadaId, cadastros, cadastrarEmpreendimento, atualizarArquivosCadastro, catalogo, unidadesRepo, pessoasRepo } = useApp();
   const navigate = useNavigate();
 
   /** Retomando um cadastro existente (`/cadastro/:id`, vindo da listagem) —
@@ -160,7 +159,7 @@ export function CadastroPage() {
   const [torres, setTorres] = useState<Torre[]>(existente?.torres ?? []);
   const [lancamento, setLancamento] = useState<string | null>(existente?.lancamento ?? null);
   const [previsaoEntrega, setPrevisaoEntrega] = useState<string | null>(existente?.previsaoEntrega ?? null);
-  const [statusComercial, setStatusComercial] = useState<StatusComercialEmpreendimento>(existente?.statusComercial ?? "Planejamento");
+  const [statusComercial] = useState<StatusComercialEmpreendimento>(existente?.statusComercial ?? "Planejamento");
   const [responsavelConstrutora, setResponsavelConstrutora] = useState(existente?.responsavelConstrutora ?? "");
   const [gerenteObra, setGerenteObra] = useState(existente?.gerenteObra ?? "");
   const [regrasPersonalizacao, setRegrasPersonalizacao] = useState(existente?.regrasPersonalizacao ?? "");
@@ -178,6 +177,11 @@ export function CadastroPage() {
   function removeFile(key: CategoriaArquivo, id: string) {
     setFiles((prev) => ({ ...prev, [key]: prev[key].filter((f) => f.id !== id) }));
   }
+
+  const pessoasResponsaveis = (construtoraLogadaId ? pessoasRepo.list(construtoraLogadaId) : []).filter(
+    (p) => !(p.papeis.length === 1 && p.papeis[0] === "Cliente"),
+  );
+  const nomesResponsaveis = [...new Set(pessoasResponsaveis.map((p) => p.nome))];
 
   const locked = Boolean(empreendimentoIdCriado);
   const nomePreenchido = Boolean(nome.trim());
@@ -310,22 +314,11 @@ export function CadastroPage() {
               </div>
             </div>
 
-            <div style={{ fontSize: 12, fontWeight: 600, color: "var(--ink-soft)", marginBottom: 4 }}>Empresa</div>
-            <div style={{ marginBottom: 16 }}>
-              <label className="label">Construtora/incorporadora responsável</label>
-              <div
-                className="row gap-sm"
-                style={{ alignItems: "center", padding: "10px 12px", border: "1px solid var(--rule)", borderRadius: 8, background: "var(--paper)", color: "var(--ink-soft)" }}
-              >
-                <Lock className="sidebar-nav-icon" style={{ width: 14, height: 14 }} />
-                <span style={{ color: "var(--ink)", fontWeight: 600 }}>{construtoraNome}</span>
-              </div>
-              <div style={{ fontSize: 11.5, color: "var(--ink-soft)", marginTop: 6 }}>
-                Definida pelo login — o empreendimento é sempre cadastrado na construtora logada.
-              </div>
-            </div>
-
             <div style={{ fontSize: 12, fontWeight: 600, color: "var(--ink-soft)", marginBottom: 4 }}>Localização</div>
+            <div style={{ marginBottom: 8, maxWidth: 200 }}>
+              <label className="label">CEP</label>
+              <input className="input" value={cep} onChange={(e) => setCep(e.target.value)} placeholder="00000-000" disabled={locked} />
+            </div>
             <div className="grid grid-2" style={{ gap: 8, marginBottom: 16 }}>
               <div style={{ gridColumn: "1 / -1" }}>
                 <label className="label">Endereço</label>
@@ -338,10 +331,6 @@ export function CadastroPage() {
               <div>
                 <label className="label">UF</label>
                 <input className="input" value={uf} maxLength={2} onChange={(e) => setUf(e.target.value.toUpperCase())} placeholder="SP" disabled={locked} />
-              </div>
-              <div>
-                <label className="label">CEP</label>
-                <input className="input" value={cep} onChange={(e) => setCep(e.target.value)} placeholder="00000-000" disabled={locked} />
               </div>
             </div>
 
@@ -377,26 +366,37 @@ export function CadastroPage() {
                   onChange={(e) => setPrevisaoEntrega(e.target.value ? deInputDate(e.target.value) : null)}
                 />
               </div>
-              <div>
-                <label className="label">Status</label>
-                <select className="input" value={statusComercial} onChange={(e) => setStatusComercial(e.target.value as StatusComercialEmpreendimento)} disabled={locked}>
-                  {STATUS_COMERCIAL.map((s) => (
-                    <option key={s} value={s}>{s}</option>
-                  ))}
-                </select>
-              </div>
             </div>
 
             <div style={{ fontSize: 12, fontWeight: 600, color: "var(--ink-soft)", marginBottom: 4 }}>Responsáveis</div>
             <div className="grid grid-2" style={{ gap: 8, marginBottom: 16 }}>
               <div>
                 <label className="label">Responsável da construtora</label>
-                <input className="input" value={responsavelConstrutora} onChange={(e) => setResponsavelConstrutora(e.target.value)} placeholder="Nome" disabled={locked} />
+                <input
+                  className="input"
+                  list="responsaveis-sugestoes"
+                  value={responsavelConstrutora}
+                  onChange={(e) => setResponsavelConstrutora(e.target.value)}
+                  placeholder="Nome"
+                  disabled={locked}
+                />
               </div>
               <div>
                 <label className="label">Gerente da obra</label>
-                <input className="input" value={gerenteObra} onChange={(e) => setGerenteObra(e.target.value)} placeholder="Nome" disabled={locked} />
+                <input
+                  className="input"
+                  list="responsaveis-sugestoes"
+                  value={gerenteObra}
+                  onChange={(e) => setGerenteObra(e.target.value)}
+                  placeholder="Nome"
+                  disabled={locked}
+                />
               </div>
+              <datalist id="responsaveis-sugestoes">
+                {nomesResponsaveis.map((n) => (
+                  <option key={n} value={n} />
+                ))}
+              </datalist>
             </div>
 
             <div style={{ fontSize: 12, fontWeight: 600, color: "var(--ink-soft)", marginBottom: 4 }}>Personalização</div>

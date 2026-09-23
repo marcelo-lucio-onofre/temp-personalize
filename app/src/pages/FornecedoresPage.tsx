@@ -33,7 +33,7 @@ export function FornecedoresPage() {
   return (
     <div className="container">
       <PageHeader
-        breadcrumb={[{ label: "Painel", to: "/painel" }, { label: "Catálogo" }, { label: "Fornecedores" }]}
+        breadcrumb={[{ label: "Painel", to: "/painel" }, { label: "Cadastros auxiliares" }, { label: "Fornecedores" }]}
         title="Fornecedores"
         description="Quem entrega o material — cadastro próprio, independente do material em si."
         action={
