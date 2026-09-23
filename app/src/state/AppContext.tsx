@@ -8,6 +8,7 @@ import type {
   Brand,
   CadastroEmpreendimentoInput,
   Categoria,
+  ContatoConstrutora,
   EmpreendimentoCadastrado,
   Fornecedor,
   Marca,
@@ -182,6 +183,7 @@ interface AppContextValue extends AppState {
   logout: () => void;
   selecionarVinculo: (vinculoId: string) => void;
   saveBrand: (construtoraId: string, brand: Brand) => void;
+  saveContatoConstrutora: (construtoraId: string, contato: ContatoConstrutora) => void;
   chooseOption: (itemId: string, opcaoId: string) => void;
   setParametrico: (itemId: string, qtd: number) => void;
   submitCustomMaterial: (submission: SolicitacaoMaterialProprio) => void;
@@ -217,6 +219,7 @@ interface AppContextValue extends AppState {
   pessoasRepo: typeof repositories.pessoas;
   catalogoFornecedores: typeof repositories.fornecedores;
   brandRepo: typeof repositories.brand;
+  contatoConstrutoraRepo: typeof repositories.contatoConstrutora;
   dashboard: typeof repositories.dashboard;
 }
 
@@ -240,6 +243,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const selecionarVinculo = useCallback((vinculoId: string) => dispatch({ type: "SELECIONAR_VINCULO", vinculoId }), []);
   const saveBrand = useCallback((construtoraId: string, brand: Brand) => {
     repositories.brand.saveBrand(construtoraId, brand);
+    dispatch({ type: "DADOS_ATUALIZADOS" });
+  }, []);
+  const saveContatoConstrutora = useCallback((construtoraId: string, contato: ContatoConstrutora) => {
+    repositories.contatoConstrutora.saveContato(construtoraId, contato);
     dispatch({ type: "DADOS_ATUALIZADOS" });
   }, []);
 
@@ -385,6 +392,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       logout,
       selecionarVinculo,
       saveBrand,
+      saveContatoConstrutora,
       chooseOption,
       setParametrico,
       submitCustomMaterial,
@@ -420,6 +428,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       unidadesRepo: repositories.unidades,
       pessoasRepo: repositories.pessoas,
       brandRepo: repositories.brand,
+      contatoConstrutoraRepo: repositories.contatoConstrutora,
       dashboard: repositories.dashboard,
     }),
     [
@@ -433,6 +442,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       logout,
       selecionarVinculo,
       saveBrand,
+      saveContatoConstrutora,
       chooseOption,
       setParametrico,
       submitCustomMaterial,

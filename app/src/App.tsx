@@ -14,6 +14,7 @@ import { LandingPage } from "./pages/LandingPage";
 import { LoginClientePage } from "./pages/LoginClientePage";
 import { LoginConstrutoraPage } from "./pages/LoginConstrutoraPage";
 import { MarcaPage } from "./pages/MarcaPage";
+import { ContatosConstrutoraPage } from "./pages/ContatosConstrutoraPage";
 import { MarcasPage } from "./pages/MarcasPage";
 import { MateriaisPage } from "./pages/MateriaisPage";
 import { MinhaUnidadePage } from "./pages/MinhaUnidadePage";
@@ -76,6 +77,7 @@ export default function App() {
         <Route path="/pessoas/novo" element={<PessoaFormPage />} />
         <Route path="/pessoas/:id" element={<PessoaFormPage />} />
         <Route path="/marca" element={<MarcaPage />} />
+        <Route path="/contatos" element={<ContatosConstrutoraPage />} />
         <Route path="/painel" element={<PainelPage />} />
         <Route path="/aprovacao/:id" element={<AprovacaoPage />} />
         <Route path="/dashboard" element={<DashboardPage />} />

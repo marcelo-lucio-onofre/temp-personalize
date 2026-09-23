@@ -11,6 +11,13 @@ export function NivelBadge({ nivel }: { nivel: NivelAprovacao }) {
   return <span className={classByNivel[nivel]}>{nivelLabel(nivel)}</span>;
 }
 
+/** Exigência documental (ART/RRT) — independente do nível de aprovação,
+ * que é sobre quem decide, não sobre o que precisa ser registrado. */
+export function ArtBadge({ requerArt }: { requerArt?: boolean }) {
+  if (!requerArt) return null;
+  return <span className="badge badge--tecnico">Requer ART</span>;
+}
+
 const classByStatusPrazo = {
   aberto: "badge badge--simples",
   nao_iniciado: "badge badge--tecnico",

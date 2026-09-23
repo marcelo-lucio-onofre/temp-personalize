@@ -12,6 +12,24 @@ export interface Brand {
   logo: string | null;
 }
 
+/** Dados institucionais e de contato da construtora — quem procurar,
+ * não como o portal do cliente aparece (isso é `Brand`). Um registro por
+ * construtora, editável, nunca some (fica `null` só antes do primeiro
+ * salvamento). */
+export interface ContatoConstrutora {
+  razaoSocial: string;
+  nomeFantasia: string;
+  cnpj: string;
+  telefone: string;
+  email: string;
+  site: string;
+  cep: string;
+  endereco: string;
+  cidade: string;
+  uf: string;
+  responsavel: string;
+}
+
 export interface Opcao {
   id: string;
   nome: string;
@@ -59,6 +77,13 @@ export interface Item {
   /** When set, this item's cost is drawn from a shared AllowanceGroup
    * instead of judged purely against its own valorPadrao. */
   allowanceGroupId?: string;
+  /** Alteração exige ART/RRT (Anotação/Registro de Responsabilidade
+   * Técnica) do profissional responsável — independente do nível de
+   * aprovação, que é sobre quem decide, não sobre exigência documental. */
+  requerArt?: boolean;
+  /** Taxa da ART/RRT cobrada do cliente, somada ao custo da opção
+   * escolhida — só se aplica quando `requerArt` é true. */
+  custoArt?: number;
 }
 
 export interface Ambiente {

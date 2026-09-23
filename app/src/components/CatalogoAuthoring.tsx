@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Plus, Trash2 } from "lucide-react";
-import { NivelBadge } from "./Badge";
+import { ArtBadge, NivelBadge } from "./Badge";
 import { SugestaoInput } from "./SugestaoInput";
 import { Modal } from "./Modal";
 import { FormField } from "./FormField";
@@ -86,6 +86,7 @@ function ItemRow({ item, grupos, materiais, onChange, onRemove, onOpcoesChange, 
       <div className="row gap-sm" style={{ alignItems: "flex-start", marginBottom: 10, flexWrap: "wrap" }}>
         <input className="input" style={{ flex: "1 1 200px" }} value={item.nome} onChange={(e) => onChange({ nome: e.target.value })} placeholder="Nome do item" />
         <NivelBadge nivel={item.nivel} />
+        <ArtBadge requerArt={item.requerArt} />
         <button type="button" style={{ border: "none", background: "none", color: "var(--red-ink)", cursor: "pointer", padding: 4 }} onClick={onRemove} aria-label="Remover item">
           <Trash2 className="sidebar-nav-icon" style={{ width: 15, height: 15 }} />
         </button>
@@ -108,6 +109,23 @@ function ItemRow({ item, grupos, materiais, onChange, onRemove, onOpcoesChange, 
             <option value={3}>3 — Proibido (bloqueio imediato)</option>
           </select>
         </div>
+        <div style={{ display: "flex", alignItems: "flex-end" }}>
+          <label className="row gap-xs" style={{ fontSize: 13 }}>
+            <input type="checkbox" checked={Boolean(item.requerArt)} onChange={(e) => onChange({ requerArt: e.target.checked })} /> Exige ART/RRT do responsável técnico
+          </label>
+        </div>
+        {item.requerArt && (
+          <div>
+            <label className="label">Taxa de ART (R$) — cobrada do cliente</label>
+            <input
+              className="input"
+              type="number"
+              min={0}
+              value={item.custoArt ?? 0}
+              onChange={(e) => onChange({ custoArt: Number(e.target.value) })}
+            />
+          </div>
+        )}
         <div>
           <label className="label">Prazo de decisão — início</label>
           <input

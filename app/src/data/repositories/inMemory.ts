@@ -8,6 +8,7 @@ import type {
   Brand,
   CadastroEmpreendimentoInput,
   Categoria,
+  ContatoConstrutora,
   EmpreendimentoCadastrado,
   Fornecedor,
   Item,
@@ -43,6 +44,7 @@ import type {
   IBrandRepository,
   ICatalogoRepository,
   ICategoriaRepository,
+  IContatoConstrutoraRepository,
   IDashboardRepository,
   IEmpreendimentoCadastroRepository,
   IFornecedorRepository,
@@ -221,6 +223,17 @@ export class InMemoryBrandRepository implements IBrandRepository {
   }
 }
 
+export class InMemoryContatoConstrutoraRepository implements IContatoConstrutoraRepository {
+  private contatos: Record<string, ContatoConstrutora> = {};
+  getContato(construtoraId: string) {
+    return this.contatos[construtoraId] ?? null;
+  }
+  saveContato(construtoraId: string, contato: ContatoConstrutora) {
+    this.contatos[construtoraId] = contato;
+    return contato;
+  }
+}
+
 export class InMemorySolicitacaoRepository implements ISolicitacaoRepository {
   private items: Solicitacao[] = solicitacoesIniciais.map((s) => ({ ...s, timeline: [...s.timeline] }));
 
@@ -325,6 +338,7 @@ export const repositories = {
   unidades: new InMemoryUnidadeRepository(),
   vinculos: new InMemoryVinculoRepository(),
   brand: new InMemoryBrandRepository(),
+  contatoConstrutora: new InMemoryContatoConstrutoraRepository(),
   solicitacoes: new InMemorySolicitacaoRepository(),
   cadastros: new InMemoryEmpreendimentoCadastroRepository(),
   dashboard: new InMemoryDashboardRepository(),

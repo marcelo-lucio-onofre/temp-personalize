@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import { Link, Navigate, useNavigate, useParams } from "react-router-dom";
 import { Breadcrumb } from "../components/Breadcrumb";
 import { PrazoBadge } from "../components/Badge";
@@ -7,7 +7,7 @@ import { useApp } from "../state/AppContext";
 
 export function SelecaoPage() {
   const { itemId } = useParams<{ itemId: string }>();
-  const { catalogo, activeVinculo, vinculoChoices: choices, chooseOption, customSubmissions, submitCustomMaterial } = useApp();
+  const { catalogo, activeVinculo, vinculoChoices: choices, chooseOption } = useApp();
   const allowanceGroups = activeVinculo ? catalogo.getAllowanceGroups(activeVinculo.id) : [];
   const navigate = useNavigate();
 
@@ -20,15 +20,6 @@ export function SelecaoPage() {
     return null;
   }, [catalogo, activeVinculo, itemId]);
 
-  const [showCustomForm, setShowCustomForm] = useState(false);
-  const [customNome, setCustomNome] = useState("");
-  const [customRef, setCustomRef] = useState("");
-  const [prop1Forn, setProp1Forn] = useState("");
-  const [prop1Valor, setProp1Valor] = useState("");
-  const [prop2Forn, setProp2Forn] = useState("");
-  const [prop2Valor, setProp2Valor] = useState("");
-  const [avisoAceito, setAvisoAceito] = useState(false);
-
   if (!found) return <Navigate to="/personalizacoes" replace />;
   const { ambiente, item } = found;
   const allowanceGroup = allowanceGroups.find((g) => g.id === item.allowanceGroupId);
@@ -36,26 +27,8 @@ export function SelecaoPage() {
 
   const chosenId = choices[item.id] ?? item.opcoes.find((o) => o.padrao)?.id;
   const custoOpcao = item.opcoes.find((o) => o.id === chosenId)?.preco ?? 0;
-  const saldo = item.valorPadrao - custoOpcao;
-  const alreadySubmitted = Boolean(customSubmissions[item.id]);
-  const canSubmitCustom = Boolean(
-    customNome.trim() && customRef.trim() && prop1Forn.trim() && prop1Valor.trim() && prop2Forn.trim() && prop2Valor.trim() && avisoAceito,
-  );
-
-  function handleSubmitCustom() {
-    if (!canSubmitCustom) return;
-    submitCustomMaterial({
-      itemId: item.id,
-      materialNome: customNome,
-      referencia: customRef,
-      propostas: [
-        { fornecedor: prop1Forn, valor: prop1Valor },
-        { fornecedor: prop2Forn, valor: prop2Valor },
-      ],
-      status: "enviado_para_analise",
-      avisoRiscoAceito: avisoAceito,
-    });
-  }
+  const custoArt = item.requerArt ? (item.custoArt ?? 0) : 0;
+  const saldo = item.valorPadrao - custoOpcao - custoArt;
 
   return (
     <div className="container container--narrow">
@@ -135,89 +108,6 @@ export function SelecaoPage() {
         );
       })()}
 
-      <div className="card" style={{ borderStyle: "dashed", marginBottom: 24 }}>
-        {!showCustomForm ? (
-          <div className="row" style={{ justifyContent: "space-between", alignItems: "center" }}>
-            <div>
-              <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 2 }}>Não encontrou o que procura?</div>
-              <div style={{ fontSize: 13, color: "var(--ink-soft)" }}>
-                Traga seu próprio material com referência e ao menos 2 propostas de fornecedor para análise.
-              </div>
-            </div>
-            <button type="button" className="btn" onClick={() => setShowCustomForm(true)}>
-              Enviar material próprio
-            </button>
-          </div>
-        ) : (
-          <div>
-            <div className="row" style={{ justifyContent: "space-between", marginBottom: 14 }}>
-              <div style={{ fontWeight: 700, fontSize: 15 }}>Material próprio — análise técnica e financeira</div>
-              <span className="badge badge--tecnico">Requer análise</span>
-            </div>
-            <div style={{ marginBottom: 12 }}>
-              <label className="label">Material desejado</label>
-              <input className="input" value={customNome} onChange={(e) => setCustomNome(e.target.value)} placeholder="Ex.: Porcelanato importado XY 90×90" />
-            </div>
-            <div style={{ marginBottom: 16 }}>
-              <label className="label">Referência (link, código do fabricante ou foto)</label>
-              <input className="input" value={customRef} onChange={(e) => setCustomRef(e.target.value)} placeholder="Ex.: link do fabricante ou código do produto" />
-            </div>
-            <div style={{ fontSize: 12, fontWeight: 600, color: "var(--ink-soft)", textTransform: "uppercase", marginBottom: 10 }}>
-              Propostas de fornecedor (mín. 2)
-            </div>
-            <div className="grid grid-2" style={{ marginBottom: 10 }}>
-              <div>
-                <label className="label">Fornecedor — proposta 1</label>
-                <input className="input" value={prop1Forn} onChange={(e) => setProp1Forn(e.target.value)} placeholder="Nome do fornecedor" />
-              </div>
-              <div>
-                <label className="label">Valor — proposta 1</label>
-                <input className="input" value={prop1Valor} onChange={(e) => setProp1Valor(e.target.value)} placeholder="R$" />
-              </div>
-              <div>
-                <label className="label">Fornecedor — proposta 2</label>
-                <input className="input" value={prop2Forn} onChange={(e) => setProp2Forn(e.target.value)} placeholder="Nome do fornecedor" />
-              </div>
-              <div>
-                <label className="label">Valor — proposta 2</label>
-                <input className="input" value={prop2Valor} onChange={(e) => setProp2Valor(e.target.value)} placeholder="R$" />
-              </div>
-            </div>
-            <div style={{ fontSize: 12, color: "var(--ink-soft)", marginBottom: 16 }}>
-              O crédito do item padrão ({fmtBRL(item.valorPadrao)}) permanece no seu ledger até a aprovação técnica e financeira do material proposto.
-            </div>
-
-            <div style={{ border: "1px solid var(--red-bg)", background: "var(--red-bg)", borderRadius: 8, padding: 12, marginBottom: 14 }}>
-              <div style={{ fontWeight: 700, fontSize: 13, color: "var(--red-ink)", marginBottom: 4 }}>Risco de atraso na obra</div>
-              <div style={{ fontSize: 12.5, color: "var(--red-ink)", lineHeight: 1.5, marginBottom: 10 }}>
-                Material fora do catálogo não tem prazo de entrega garantido e pode atrasar a entrega da sua unidade. Conforme cláusula
-                contratual, um atraso causado por material fora do catálogo pode gerar multa ao comprador — sujeito a análise jurídica
-                caso a caso.
-              </div>
-              <label className="row gap-xs" style={{ alignItems: "flex-start", fontSize: 12.5, color: "var(--red-ink)", cursor: "pointer" }}>
-                <input type="checkbox" checked={avisoAceito} onChange={(e) => setAvisoAceito(e.target.checked)} style={{ marginTop: 2 }} />
-                <span>Estou ciente do risco de atraso na obra e de possível multa contratual, e desejo prosseguir mesmo assim.</span>
-              </label>
-            </div>
-
-            <div className="row gap-sm">
-              <button
-                type="button"
-                className="btn"
-                style={alreadySubmitted ? { background: "var(--green-bg)", color: "var(--green-ink)", border: "none" } : canSubmitCustom ? { background: "var(--brand)", color: "#fff", border: "none" } : {}}
-                disabled={alreadySubmitted || !canSubmitCustom}
-                onClick={handleSubmitCustom}
-              >
-                {alreadySubmitted ? "Enviado para análise ✓" : "Enviar para análise"}
-              </button>
-              <button type="button" className="btn" onClick={() => setShowCustomForm(false)}>
-                Cancelar
-              </button>
-            </div>
-          </div>
-        )}
-      </div>
-
       <div className="card" style={{ border: "2px solid var(--brand)", marginBottom: 24 }}>
         <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 10, color: "var(--green-ink)" }}>Impacto no ledger de crédito</div>
         <div className="grid grid-2" style={{ textAlign: "center" }}>
@@ -232,6 +122,17 @@ export function SelecaoPage() {
             </div>
           </div>
         </div>
+        {item.requerArt && (
+          <div className="row" style={{ justifyContent: "space-between", alignItems: "center", marginTop: 14, padding: "10px 12px", background: "var(--paper)", borderRadius: 8 }}>
+            <div>
+              <span className="badge badge--tecnico">Requer ART</span>
+              <span style={{ fontSize: 12.5, color: "var(--ink-soft)", marginLeft: 8 }}>Taxa de ART/RRT cobrada junto com esta alteração.</span>
+            </div>
+            <div className="mono" style={{ fontSize: 15, fontWeight: 700, color: "var(--red-ink)" }}>
+              {custoArt > 0 ? "−" + fmtBRL(custoArt) : "R$ 0"}
+            </div>
+          </div>
+        )}
         <div className="text-center" style={{ marginTop: 14 }}>
           <div style={{ fontSize: 12, color: "var(--ink-soft)", marginBottom: 4 }}>Saldo líquido</div>
           <div className="mono" style={{ fontSize: 18, fontWeight: 700, color: saldo >= 0 ? "var(--green-ink)" : "var(--red-ink)" }}>

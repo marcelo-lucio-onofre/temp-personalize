@@ -7,6 +7,7 @@ import type {
   Brand,
   CadastroEmpreendimentoInput,
   Categoria,
+  ContatoConstrutora,
   DashboardData,
   Empreendimento,
   EmpreendimentoCadastrado,
@@ -106,6 +107,12 @@ export interface IBrandRepository {
    * client portal falls back to plantta's own brand in that case. */
   getBrand(construtoraId: string): Brand | null;
   saveBrand(construtoraId: string, brand: Brand): Brand;
+}
+
+export interface IContatoConstrutoraRepository {
+  /** null antes do primeiro salvamento. */
+  getContato(construtoraId: string): ContatoConstrutora | null;
+  saveContato(construtoraId: string, contato: ContatoConstrutora): ContatoConstrutora;
 }
 
 export interface NovaSolicitacaoInput {
