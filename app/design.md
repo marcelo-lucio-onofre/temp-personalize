@@ -30,6 +30,7 @@ Definida em `src/index.css`, bloco `:root`. Valores em oklch (fonte da verdade �
 | `--amber-ink` / `--amber-bg` | `oklch(42%/94% 0.12/0.05 75)` | Nível técnico, pendente |
 | `--red-ink` / `--red-bg` | `oklch(42%/94% 0.12/0.05 25)` | Débito, bloqueado, recusado |
 | `--violet-bg` / `--violet-ink` | `oklch(95%/42% 0.035/0.12 260)` | Em análise |
+| `--alert-*` | `oklch(... 40)` (laranja) | Ação com consequência que o cliente precisa ler antes — hoje só o termo de não personalização. Não é erro (vermelho) nem pendência (âmbar) |
 | `--brand` | `var(--green)` por padrão, **sobrescrito pela marca da construtora logada** | Ver seção 6 |
 
 Regra: `--green` é sempre um verde **desaturado** (chroma ~0.10, não 0.16+) — verde de segurança de canteiro, não esmeralda de startup.
@@ -72,6 +73,7 @@ O portal do cliente pode rodar com a marca da plantta (padrão) ou com a marca r
 - ~~Seta "→" decorativa no fim de link/botão~~ → removida em todo lugar.
 - ~~Ícone emoji na sidebar~~ → `lucide-react` em todo lugar (mesma lib usada em `reservas-hub` e `omnix`, os dois projetos-referência do time).
 - ~~Menu lateral com árvore estática de construtora/empreendimento/unidade~~ → removido; seleção de unidade virou passo 1 do wizard "Nova personalização". Sidebar do cliente tem "Minha unidade" (resumo financeiro) + "Minhas personalizações" (a lista) — "Nova personalização" nunca foi item de menu, só o botão na própria página.
+- ~~Dois itens de menu no portal do cliente ("Minha unidade" + "Minhas personalizações")~~ → unificados num só, "Minhas personalizações" (`/personalizacoes`; `/minha-unidade` redireciona). A tela virou árvore expansível numa página só: Construtora (logo/iniciais, colapsável, só aparece com mais de uma) → Empreendimento (foto do cadastro ou "imagem indisponível", colapsável, "Baixar plantas") → Unidade (card com resumo financeiro, status agregado, "Ver termo da unidade", "Baixar planta da unidade" e o termo de **não personalização**) → Ambiente (status agregado + termo) → Item (nível + status + termo). Status/termo em todo nível — nunca uma lista plana de solicitações. Termo de não personalização: botão laranja (`--alert-*`) com ícone de alerta, modal com ciência obrigatória (checkbox) antes de assinar; depois de assinado some o "Ver termo da unidade" e aparece o aviso com data/hora + "Revogar termo assinado e iniciar personalização". Chevrons são sempre o mesmo `ChevronDown` do lucide girando -90° quando fechado — um ícone só pra todo nível de expandir/recolher.
 - ~~`CatalogoPage` com seletor de construtora local (qualquer construtora logada podia editar o catálogo de qualquer outra)~~ → removido; login de construtora agora carrega identidade real (`construtoraLogadaId`, escolhida num seletor na própria tela de login), e Painel/Catálogo/Marca escopam a ela — nunca mais um seletor cruzado dentro da tela.
 - ~~`MarcaPage` salvando num singleton único de marca~~ → marca virou dado por-construtora (`IBrandRepository` chaveado por `construtoraId`) — ver seção 6. O singleton antigo nunca chegava a `effectiveBrand`, então editar marca não tinha efeito visível nenhum; corrigido junto.
 
@@ -80,7 +82,7 @@ O portal do cliente pode rodar com a marca da plantta (padrão) ou com a marca r
 Sessão de benchmarking (comparação com Buildertrend/CoConstruct/Nuki/Spotlar/FastBuilt etc.) resultou em cinco fases de trabalho — ver histórico de commits a partir de "Add plantta React prototype; Phase 1 catalog authoring". Novas telas seguem exatamente as convenções acima (nenhum padrão paralelo foi criado):
 
 - `CatalogoPage` (`/catalogo`, construtora) — autoria de ambientes/itens/opções/verbas e biblioteca de materiais reutilizável (`MaterialCatalogItem`). É a tela com maior risco de "SaaS-card-kit genérico" — usa blocos tintados simples (não `.card` aninhado) para linhas de item/opção, só o container de ambiente é `.card`.
-- `MinhaUnidadePage` (`/minha-unidade`, cliente) — "Monte sua unidade": valor do imóvel + personalizações aprovadas/pendentes + total, via `domain/calculations.resumirUnidade`.
+- ~~`MinhaUnidadePage` (`/minha-unidade`, cliente)~~ — absorvida pelo card de unidade em `PersonalizacoesPage` (mesmo `resumirUnidade`), ver seção 7.
 - `TermoPage` (`/termo/:vinculoId`) — documento de alteração dinâmico, agora fora dos dois shells de portal (acessível por cliente e construtora, guard próprio por `role`), lendo dados reais em vez de conteúdo fixo.
 - `AllowanceGroup` (verba compartilhada entre itens de um ambiente) — saldo ao vivo via `domain/calculations.saldoAllowanceGroup`, mostrado como painel adicional ao lado do "Impacto no ledger de crédito" já existente, tanto no wizard quanto em `SelecaoPage`.
 - `PrazoBadge` (`components/Badge.tsx`) — status aberto/encerrado do prazo de decisão do item, mesma semântica verde/vermelho de crédito/débito.

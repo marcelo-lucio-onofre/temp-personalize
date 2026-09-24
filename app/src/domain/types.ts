@@ -234,6 +234,10 @@ export interface Empreendimento {
   cpf: string;
   totalUnidades: number;
   valorImovel: number;
+  /** Foto do empreendimento enviada pela construtora no cadastro — o
+   * cliente só visualiza, nunca troca. Sem foto, a UI mostra o estado
+   * "imagem indisponível". */
+  imagemUrl?: string | null;
 }
 
 /**

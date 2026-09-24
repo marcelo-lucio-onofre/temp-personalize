@@ -18,7 +18,6 @@ import { MarcaPage } from "./pages/MarcaPage";
 import { ContatosConstrutoraPage } from "./pages/ContatosConstrutoraPage";
 import { MarcasPage } from "./pages/MarcasPage";
 import { MateriaisPage } from "./pages/MateriaisPage";
-import { MinhaUnidadePage } from "./pages/MinhaUnidadePage";
 import { PessoasPage } from "./pages/PessoasPage";
 import { PessoaFormPage } from "./pages/PessoaFormPage";
 import { NovaPersonalizacaoPage } from "./pages/NovaPersonalizacaoPage";
@@ -40,7 +39,7 @@ export default function App() {
       <Route path="/login/cliente/marca" element={<LoginClientePage />} />
       <Route path="/login/construtora" element={<LoginConstrutoraPage />} />
       <Route path="/descadastro" element={<DescadastroPage />} />
-      {/* Reachable from both portals (cliente's "Minha unidade" and
+      {/* Reachable from both portals (cliente's "Minhas personalizações" and
           construtora's Aprovação) — lives outside either layout, with its
           own role check, since it's a standalone document, not nav-bound
           to one portal. */}
@@ -48,13 +47,15 @@ export default function App() {
 
       {/* Client portal — brand-themed (plantta or construtora, see
           ClientPortalLayout / effectiveBrand). "Minhas personalizações" is
-          the landing page and the only standing sidebar destination; the
-          unit picker lives inside the wizard (step 1), not as its own menu
-          item. Portal/Carrinho/Calculadora/Seleção stay reachable (mainly
+          the landing page and the only sidebar destination — it unified the
+          old "Minha unidade" screen into its Construtora → Empreendimento →
+          Unidade → Ambiente → Item tree, so /minha-unidade just redirects
+          there. The unit picker for a new request lives inside the wizard
+          (step 1), not as its own menu item. Portal/Carrinho/Calculadora/Seleção stay reachable (mainly
           from "Editar escolha" on a personalização's detail) but aren't
           advertised in the sidebar anymore. */}
       <Route element={<ClientPortalLayout />}>
-        <Route path="/minha-unidade" element={<MinhaUnidadePage />} />
+        <Route path="/minha-unidade" element={<Navigate to="/personalizacoes" replace />} />
         <Route path="/personalizacoes" element={<PersonalizacoesPage />} />
         <Route path="/personalizacoes/nova" element={<NovaPersonalizacaoPage />} />
         <Route path="/personalizacoes/:id" element={<PersonalizacaoDetalhePage />} />
