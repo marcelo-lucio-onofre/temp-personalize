@@ -9,11 +9,19 @@ export function Modal({
   open,
   onClose,
   title,
+  eyebrow,
+  icon,
+  maxWidth,
   children,
 }: {
   open: boolean;
   onClose: () => void;
   title: string;
+  /** Linha pequena acima do título (ex.: qual nível do termo está aberto). */
+  eyebrow?: string;
+  icon?: React.ReactNode;
+  /** Largura máxima do painel — padrão vem do `.modal-panel` (480px). */
+  maxWidth?: number;
   children: React.ReactNode;
 }) {
   const panelRef = useRef<HTMLDivElement>(null);
@@ -39,9 +47,15 @@ export function Modal({
 
   return (
     <div className="modal-overlay" onMouseDown={(e) => { if (e.target === e.currentTarget) onClose(); }}>
-      <div className="modal-panel" role="dialog" aria-modal="true" aria-label={title} ref={panelRef}>
+      <div className="modal-panel" role="dialog" aria-modal="true" aria-label={title} ref={panelRef} style={maxWidth ? { maxWidth } : undefined}>
         <div className="row" style={{ justifyContent: "space-between", alignItems: "flex-start", marginBottom: 16 }}>
-          <h2 style={{ fontSize: 16, fontWeight: 700 }}>{title}</h2>
+          <div className="row gap-sm" style={{ alignItems: "center" }}>
+            {icon}
+            <div>
+              {eyebrow && <div className="modal-eyebrow">{eyebrow}</div>}
+              <h2 style={{ fontSize: 16, fontWeight: 700 }}>{title}</h2>
+            </div>
+          </div>
           <button type="button" className="modal-close" onClick={onClose} aria-label="Fechar">
             <X size={18} />
           </button>

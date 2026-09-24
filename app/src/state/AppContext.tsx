@@ -75,6 +75,9 @@ interface AppState {
   choices: Record<string, Record<string, string>>;
   parametrico: Record<string, Record<string, number>>;
   customSubmissions: Record<string, SolicitacaoMaterialProprio>;
+  /** Termo de não personalização assinado, por vínculo → ISO datetime da
+   * assinatura. Ausente = cliente não abriu mão (ou revogou). */
+  naoPersonalizacao: Record<string, string>;
   solicitacoes: Solicitacao[];
   cadastros: EmpreendimentoCadastrado[];
   /** Bumped whenever data that lives outside the reducer (catalog, brand)
@@ -91,6 +94,8 @@ type Action =
   | { type: "CHOOSE_OPTION"; vinculoId: string; itemId: string; opcaoId: string }
   | { type: "SET_PARAMETRICO"; vinculoId: string; itemId: string; qtd: number }
   | { type: "SUBMIT_CUSTOM_MATERIAL"; submission: SolicitacaoMaterialProprio }
+  | { type: "ASSINAR_NAO_PERSONALIZACAO"; vinculoId: string; assinadoEm: string }
+  | { type: "REVOGAR_NAO_PERSONALIZACAO"; vinculoId: string }
   | { type: "APROVAR_SOLICITACAO"; id: string }
   | { type: "RECUSAR_SOLICITACAO"; id: string }
   | { type: "REFRESH_SOLICITACOES" }
@@ -108,6 +113,7 @@ function buildInitialState(): AppState {
     choices: {},
     parametrico: {},
     customSubmissions: {},
+    naoPersonalizacao: {},
     solicitacoes: repositories.solicitacoes.list(),
     cadastros: repositories.cadastros.list(),
     dadosVersion: 0,
@@ -152,6 +158,13 @@ function reducer(state: AppState, action: Action): AppState {
         ...state,
         customSubmissions: { ...state.customSubmissions, [action.submission.itemId]: action.submission },
       };
+    case "ASSINAR_NAO_PERSONALIZACAO":
+      return { ...state, naoPersonalizacao: { ...state.naoPersonalizacao, [action.vinculoId]: action.assinadoEm } };
+    case "REVOGAR_NAO_PERSONALIZACAO": {
+      const naoPersonalizacao = { ...state.naoPersonalizacao };
+      delete naoPersonalizacao[action.vinculoId];
+      return { ...state, naoPersonalizacao };
+    }
     case "APROVAR_SOLICITACAO": {
       repositories.solicitacoes.updateStatus(action.id, "aprovado");
       return { ...state, solicitacoes: [...repositories.solicitacoes.list()] };
@@ -187,6 +200,8 @@ interface AppContextValue extends AppState {
   chooseOption: (itemId: string, opcaoId: string) => void;
   setParametrico: (itemId: string, qtd: number) => void;
   submitCustomMaterial: (submission: SolicitacaoMaterialProprio) => void;
+  assinarNaoPersonalizacao: (vinculoId: string) => void;
+  revogarNaoPersonalizacao: (vinculoId: string) => void;
   aprovarSolicitacao: (id: string) => void;
   recusarSolicitacao: (id: string) => void;
   criarSolicitacao: (input: NovaSolicitacaoInput) => Solicitacao;
@@ -269,6 +284,11 @@ export function AppProvider({ children }: { children: ReactNode }) {
     (submission: SolicitacaoMaterialProprio) => dispatch({ type: "SUBMIT_CUSTOM_MATERIAL", submission }),
     [],
   );
+  const assinarNaoPersonalizacao = useCallback(
+    (vinculoId: string) => dispatch({ type: "ASSINAR_NAO_PERSONALIZACAO", vinculoId, assinadoEm: new Date().toISOString() }),
+    [],
+  );
+  const revogarNaoPersonalizacao = useCallback((vinculoId: string) => dispatch({ type: "REVOGAR_NAO_PERSONALIZACAO", vinculoId }), []);
   const aprovarSolicitacao = useCallback((id: string) => dispatch({ type: "APROVAR_SOLICITACAO", id }), []);
   const recusarSolicitacao = useCallback((id: string) => dispatch({ type: "RECUSAR_SOLICITACAO", id }), []);
   const criarSolicitacao = useCallback((input: NovaSolicitacaoInput) => {
@@ -396,6 +416,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
       chooseOption,
       setParametrico,
       submitCustomMaterial,
+      assinarNaoPersonalizacao,
+      revogarNaoPersonalizacao,
       aprovarSolicitacao,
       recusarSolicitacao,
       criarSolicitacao,
@@ -446,6 +468,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
       chooseOption,
       setParametrico,
       submitCustomMaterial,
+      assinarNaoPersonalizacao,
+      revogarNaoPersonalizacao,
       aprovarSolicitacao,
       recusarSolicitacao,
       criarSolicitacao,

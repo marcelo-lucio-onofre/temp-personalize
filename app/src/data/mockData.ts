@@ -73,6 +73,11 @@ export const empreendimentoVistaVerde: Empreendimento = {
 // overlay on someone else's). Two empreendimentos: Boulevard has two of
 // the client's units, Jardins has one. All three already have finished
 // personalization history (see solicitacoesIniciais below).
+// Foto que a Alliance subiu no cadastro do Boulevard — só esse
+// empreendimento tem foto no mock, pra demonstrar os dois estados (foto /
+// "imagem indisponível") na tela Minhas personalizações.
+const ALLIANCE_BOULEVARD_IMAGEM = "https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=200&h=150&fit=crop";
+
 // Two units, same empreendimento — each needs its own record since
 // `unidade`/`torre` differ (PortalPage etc. read them directly).
 export const empreendimentoAllianceBoulevard501: Empreendimento = {
@@ -84,6 +89,7 @@ export const empreendimentoAllianceBoulevard501: Empreendimento = {
   cpf: "•••.•••.•••-89",
   totalUnidades: 220,
   valorImovel: 980000,
+  imagemUrl: ALLIANCE_BOULEVARD_IMAGEM,
 };
 
 export const empreendimentoAllianceBoulevard1502: Empreendimento = {
@@ -95,6 +101,7 @@ export const empreendimentoAllianceBoulevard1502: Empreendimento = {
   cpf: "•••.•••.•••-89",
   totalUnidades: 220,
   valorImovel: 1050000,
+  imagemUrl: ALLIANCE_BOULEVARD_IMAGEM,
 };
 
 export const empreendimentoAllianceJardins: Empreendimento = {

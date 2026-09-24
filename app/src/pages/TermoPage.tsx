@@ -7,8 +7,8 @@ import { useApp } from "../state/AppContext";
 /**
  * Termo de alteração / memorial personalizado — documento gerado a partir
  * de dados reais (não mais uma linha fixa hardcoded), agregando TODAS as
- * personalizações aprovadas da unidade. Reachable pelo cliente ("Minha
- * unidade" → "Gerar memorial personalizado") e pela construtora ("Ver
+ * personalizações aprovadas da unidade. Reachable pelo cliente ("Minhas
+ * personalizações" → "Ver termo da unidade" → "Abrir documento completo") e pela construtora ("Ver
  * termo de alteração" em Aprovação) — por isso vive fora dos dois shells
  * de portal, com seu próprio guard de acesso.
  */
