@@ -7,6 +7,7 @@ import { CalculadoraPage } from "./pages/CalculadoraPage";
 import { CarrinhoPage } from "./pages/CarrinhoPage";
 import { CategoriasPage } from "./pages/CategoriasPage";
 import { DashboardPage } from "./pages/DashboardPage";
+import { DescadastroPage } from "./pages/DescadastroPage";
 import { EmpreendimentosPage } from "./pages/EmpreendimentosPage";
 import { FornecedoresPage } from "./pages/FornecedoresPage";
 import { FornecedorFormPage } from "./pages/FornecedorFormPage";
@@ -38,6 +39,7 @@ export default function App() {
       <Route path="/login/cliente" element={<SimpleLoginClientePage />} />
       <Route path="/login/cliente/marca" element={<LoginClientePage />} />
       <Route path="/login/construtora" element={<LoginConstrutoraPage />} />
+      <Route path="/descadastro" element={<DescadastroPage />} />
       {/* Reachable from both portals (cliente's "Minha unidade" and
           construtora's Aprovação) — lives outside either layout, with its
           own role check, since it's a standalone document, not nav-bound
