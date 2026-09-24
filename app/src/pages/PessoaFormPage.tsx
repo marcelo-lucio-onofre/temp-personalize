@@ -6,6 +6,8 @@ import { useToast } from "../components/Toast";
 import { UploadCompactRow } from "../components/CatalogoAuthoring";
 import { useApp } from "../state/AppContext";
 import { email as emailValidator, required } from "../domain/validation";
+import { gerarSenhaTemporaria } from "../domain/senha";
+import { enviarEmailBoasVindas } from "../services/emailjs";
 import type { CategoriaArquivoPessoa, Pessoa, StatusRegistroProfissional, TipoPapel } from "../domain/types";
 
 const PAPEIS: TipoPapel[] = ["Arquiteto", "Engenheiro", "Técnico", "Designer", "Projetista", "Consultor", "Cliente", "Responsável pela construtora", "Outro"];
@@ -82,8 +84,19 @@ export function PessoaFormPage() {
       atualizarPessoa(existente.id, draft);
       toast.success("Pessoa atualizada.");
     } else {
-      criarPessoa({ construtoraId, ...draft });
+      const pessoa = criarPessoa({ construtoraId, ...draft });
       toast.success("Pessoa criada.");
+      if (pessoa.papeis.includes("Cliente") && pessoa.email) {
+        enviarEmailBoasVindas({
+          nome: pessoa.nome,
+          email: pessoa.email,
+          senha: gerarSenhaTemporaria(),
+          loginUrl: `${window.location.origin}/login/cliente`,
+          unsubscribeUrl: `${window.location.origin}/descadastro`,
+        })
+          .then(() => toast.success("E-mail de boas-vindas enviado."))
+          .catch(() => toast.error("Não foi possível enviar o e-mail de boas-vindas."));
+      }
     }
     navigate("/pessoas");
   }
