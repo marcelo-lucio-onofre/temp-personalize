@@ -197,7 +197,7 @@ export const ambientes: Ambiente[] = [
         prazoFim: "20/10/2026",
         opcoes: [
           { id: "p1", nome: "Porcelanato Standard 60×60", preco: 6000, padrao: true },
-          { id: "p2", nome: "Porcelanato Portobello Premium 80×80", preco: 8500 },
+          { id: "p2", nome: "Porcelanato Portobello Premium 80×80", preco: 8500, materialCatalogItemId: "mc-001" },
           { id: "p3", nome: "Porcelanato Marmorizado Extra", preco: 9800 },
           { id: "p0", nome: "Remover item (gera crédito)", preco: 0, remocao: true },
         ],
@@ -506,6 +506,7 @@ const ambientesPlantaBAurora: Ambiente[] = [
 const ARQUIVOS_PLANTA_VAZIOS: Planta["arquivos"] = {
   plantaArquitetonicaPdf: [], plantaImagem: [], dwg: [], plantaHumanizada: [], plantaMobiliada: [],
   plantaEletrica: [], plantaHidraulica: [], plantaPontos: [], memorialTipologia: [], renderizacoes: [],
+  modelo3d: [],
 };
 
 // Plantas (tipologias de unidade) por empreendimento — um prédio de
@@ -592,7 +593,19 @@ export const pessoasIniciais: Pessoa[] = [
 // por item quando o material é anexado a uma opção (Opcao.preco/
 // custoConstrutora), já que preço varia por negociação e por item.
 export const materialCatalogInicial: MaterialCatalogItem[] = [
-  { id: "mc-001", construtoraId: "00001", categoriaId: categoriaId("00001", "Piso"), marcaId: marcaId("00001", "Portobello"), fornecedorId: "forn-001", modelo: "Premium 80×80", sku: "PTB-PREM-8080", imagemUrl: null },
+  {
+    id: "mc-001",
+    construtoraId: "00001",
+    categoriaId: categoriaId("00001", "Piso"),
+    marcaId: marcaId("00001", "Portobello"),
+    fornecedorId: "forn-001",
+    modelo: "Premium 80×80",
+    sku: "PTB-PREM-8080",
+    imagemUrl:
+      "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNTYiIGhlaWdodD0iMjU2Ij48cmVjdCB3aWR0aD0iMjU2IiBoZWlnaHQ9IjI1NiIgZmlsbD0iIzlhOWM5NCIvPjxyZWN0IHg9IjIiIHk9IjIiIHdpZHRoPSI2MCIgaGVpZ2h0PSI2MCIgZmlsbD0iI2M5Y2JjMyIvPjxyZWN0IHg9IjY2IiB5PSIyIiB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIGZpbGw9IiNjM2M1YmQiLz48cmVjdCB4PSIxMzAiIHk9IjIiIHdpZHRoPSI2MCIgaGVpZ2h0PSI2MCIgZmlsbD0iI2NkY2ZjNyIvPjxyZWN0IHg9IjE5NCIgeT0iMiIgd2lkdGg9IjYwIiBoZWlnaHQ9IjYwIiBmaWxsPSIjYzZjOGMwIi8+PHJlY3QgeD0iMiIgeT0iNjYiIHdpZHRoPSI2MCIgaGVpZ2h0PSI2MCIgZmlsbD0iI2MzYzViZCIvPjxyZWN0IHg9IjY2IiB5PSI2NiIgd2lkdGg9IjYwIiBoZWlnaHQ9IjYwIiBmaWxsPSIjY2RjZmM3Ii8+PHJlY3QgeD0iMTMwIiB5PSI2NiIgd2lkdGg9IjYwIiBoZWlnaHQ9IjYwIiBmaWxsPSIjYzZjOGMwIi8+PHJlY3QgeD0iMTk0IiB5PSI2NiIgd2lkdGg9IjYwIiBoZWlnaHQ9IjYwIiBmaWxsPSIjYzljYmMzIi8+PHJlY3QgeD0iMiIgeT0iMTMwIiB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIGZpbGw9IiNjZGNmYzciLz48cmVjdCB4PSI2NiIgeT0iMTMwIiB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIGZpbGw9IiNjNmM4YzAiLz48cmVjdCB4PSIxMzAiIHk9IjEzMCIgd2lkdGg9IjYwIiBoZWlnaHQ9IjYwIiBmaWxsPSIjYzljYmMzIi8+PHJlY3QgeD0iMTk0IiB5PSIxMzAiIHdpZHRoPSI2MCIgaGVpZ2h0PSI2MCIgZmlsbD0iI2MzYzViZCIvPjxyZWN0IHg9IjIiIHk9IjE5NCIgd2lkdGg9IjYwIiBoZWlnaHQ9IjYwIiBmaWxsPSIjYzZjOGMwIi8+PHJlY3QgeD0iNjYiIHk9IjE5NCIgd2lkdGg9IjYwIiBoZWlnaHQ9IjYwIiBmaWxsPSIjYzljYmMzIi8+PHJlY3QgeD0iMTMwIiB5PSIxOTQiIHdpZHRoPSI2MCIgaGVpZ2h0PSI2MCIgZmlsbD0iI2MzYzViZCIvPjxyZWN0IHg9IjE5NCIgeT0iMTk0IiB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIGZpbGw9IiNjZGNmYzciLz48L3N2Zz4=",
+    roughness: 0.55,
+    metalness: 0.02,
+  },
   { id: "mc-002", construtoraId: "00001", categoriaId: categoriaId("00001", "Bancada"), marcaId: marcaId("00001", "Dekton"), fornecedorId: "forn-002", modelo: "Sirius", sku: "DKT-SIRIUS", imagemUrl: null },
   { id: "mc-003", construtoraId: "00001", categoriaId: categoriaId("00001", "Louças e Metais"), marcaId: marcaId("00001", "Docol"), fornecedorId: "forn-003", modelo: "Benefit Black", sku: "DOC-BEN-BLK", imagemUrl: null },
   { id: "mc-004", construtoraId: "00001", categoriaId: categoriaId("00001", "Cuba"), marcaId: marcaId("00001", "Tramontina"), fornecedorId: "forn-004", modelo: "Morgana Dupla + Gourmet", sku: "TRAM-MORG-DP", imagemUrl: null },

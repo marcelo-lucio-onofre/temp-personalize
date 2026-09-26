@@ -144,7 +144,16 @@ export interface MaterialCatalogItem {
   fornecedorId: string;
   modelo: string;
   sku: string;
+  /** Foto do material — base para a textura no preview 3D. Guarda a imagem
+   * enviada como data URL (protótipo sem backend de arquivos); em produção
+   * seria a URL do asset num storage/CDN. */
   imagemUrl: string | null;
+  /** Aspereza da superfície pro preview 3D (PBR) — 0 = espelhado, 1 = fosco.
+   * Sem valor, o preview assume um padrão razoável pra categoria. */
+  roughness?: number;
+  /** Reflexividade metálica pro preview 3D (PBR) — 0 = não-metal, 1 =
+   * metal puro (torneiras, metais). */
+  metalness?: number;
 }
 
 /**
@@ -181,7 +190,8 @@ export type CategoriaArquivoPlanta =
   | "plantaHidraulica"
   | "plantaPontos"
   | "memorialTipologia"
-  | "renderizacoes";
+  | "renderizacoes"
+  | "modelo3d";
 
 export interface Planta {
   id: string;

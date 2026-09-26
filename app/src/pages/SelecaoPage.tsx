@@ -1,15 +1,33 @@
-import { useMemo } from "react";
+import { lazy, Suspense, useMemo, useState } from "react";
 import { Link, Navigate, useNavigate, useParams } from "react-router-dom";
+import { Box } from "lucide-react";
 import { Breadcrumb } from "../components/Breadcrumb";
 import { PrazoBadge } from "../components/Badge";
 import { fmtBRL, fmtSigned, saldoAllowanceGroup } from "../domain/calculations";
 import { useApp } from "../state/AppContext";
+import type { Opcao } from "../domain/types";
+
+// Carregado sob demanda — puxa three.js/R3F, só quando o cliente pede pra
+// ver uma opção em 3D.
+const Material3DPreview = lazy(() => import("../components/Material3DPreview").then((m) => ({ default: m.Material3DPreview })));
 
 export function SelecaoPage() {
   const { itemId } = useParams<{ itemId: string }>();
-  const { catalogo, activeVinculo, vinculoChoices: choices, chooseOption } = useApp();
+  const { catalogo, catalogoMateriais, activeVinculo, vinculoChoices: choices, chooseOption } = useApp();
   const allowanceGroups = activeVinculo ? catalogo.getAllowanceGroups(activeVinculo.id) : [];
   const navigate = useNavigate();
+  const [preview3dOptId, setPreview3dOptId] = useState<string | null>(null);
+
+  const materiaisPorId = useMemo(() => {
+    if (!activeVinculo) return new Map<string, ReturnType<typeof catalogoMateriais.list>[number]>();
+    return new Map(catalogoMateriais.list(activeVinculo.construtoraId).map((m) => [m.id, m]));
+  }, [catalogoMateriais, activeVinculo]);
+
+  function materialDaOpcao(opt: Opcao) {
+    if (!opt.materialCatalogItemId) return undefined;
+    const material = materiaisPorId.get(opt.materialCatalogItemId);
+    return material?.imagemUrl ? material : undefined;
+  }
 
   const found = useMemo(() => {
     if (!activeVinculo) return null;
@@ -74,18 +92,22 @@ export function SelecaoPage() {
                 const diff = opt.preco - item.valorPadrao;
                 const diffLabel = opt.remocao ? "+" + fmtBRL(item.valorPadrao) : diff !== 0 ? fmtSigned(diff) : null;
                 const diffColor = opt.remocao || diff < 0 ? "var(--green-ink)" : "var(--red-ink)";
+                const material = materialDaOpcao(opt);
+                const previewAberto = preview3dOptId === opt.id;
                 return (
+                  <div key={opt.id} className="card" style={{ padding: 0, border: sel ? "2px solid var(--brand)" : "2px solid var(--rule)", background: sel ? "var(--green-bg)" : "#fff" }}>
                   <button
-                    key={opt.id}
                     type="button"
-                    className="card row"
+                    className="row"
                     style={{
                       justifyContent: "space-between",
                       alignItems: "center",
                       cursor: "pointer",
                       textAlign: "left",
-                      border: sel ? "2px solid var(--brand)" : "2px solid var(--rule)",
-                      background: sel ? "var(--green-bg)" : "#fff",
+                      width: "100%",
+                      padding: 14,
+                      background: "transparent",
+                      border: "none",
                     }}
                     onClick={() => chooseOption(item.id, opt.id)}
                   >
@@ -101,6 +123,24 @@ export function SelecaoPage() {
                       </div>
                     )}
                   </button>
+                  {material && (
+                    <div style={{ padding: "0 14px 14px" }}>
+                      <button
+                        type="button"
+                        className="btn btn--sm"
+                        style={{ marginBottom: previewAberto ? 10 : 0 }}
+                        onClick={(e) => { e.stopPropagation(); setPreview3dOptId(previewAberto ? null : opt.id); }}
+                      >
+                        <Box size={14} /> {previewAberto ? "Ocultar preview 3D" : "Ver em 3D"}
+                      </button>
+                      {previewAberto && (
+                        <Suspense fallback={<div className="text-soft" style={{ fontSize: 12.5, padding: 12 }}>Carregando preview 3D…</div>}>
+                          <Material3DPreview imagemUrl={material.imagemUrl} roughness={material.roughness} metalness={material.metalness} height={200} />
+                        </Suspense>
+                      )}
+                    </div>
+                  )}
+                  </div>
                 );
               })}
             </div>
