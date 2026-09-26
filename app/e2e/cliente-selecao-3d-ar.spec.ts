@@ -1,0 +1,33 @@
+import { test, expect } from "./fixtures";
+import { gotoComoCliente, VINCULOS } from "./helpers";
+
+test.describe("Cliente — Seleção com preview 3D e AR", () => {
+  test("opção com material fotografado mostra preview 3D e AR", async ({ page }) => {
+    await gotoComoCliente(page, VINCULOS.aurora, "/selecao/piso_sala");
+    await expect(page.getByRole("heading", { name: /Piso — Sala de Estar/ })).toBeVisible();
+
+    const opcaoComFoto = page.locator(".card", { hasText: "Porcelanato Portobello Premium 80×80" });
+    await opcaoComFoto.getByRole("button", { name: "Ver em 3D" }).click();
+    await expect(page.locator("canvas")).toBeVisible({ timeout: 15_000 });
+
+    await opcaoComFoto.getByRole("button", { name: "Ver em AR" }).click();
+    await expect(page.locator("model-viewer")).toBeVisible({ timeout: 15_000 });
+  });
+
+  test("configurador do ambiente inteiro aparece só depois de escolher um material com foto", async ({ page }) => {
+    await gotoComoCliente(page, VINCULOS.aurora, "/selecao/revestimento");
+    await expect(page.getByText("Ver Banheiro Suíte completo em 3D")).toHaveCount(0);
+
+    await page.click('button:has-text("Porcelanato Off-White Grande Formato")');
+    await page.click('button:has-text("Ver Banheiro Suíte completo em 3D")');
+    await expect(page.locator("canvas")).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByText(/Revestimento: Off-White Grande Formato/)).toBeVisible();
+  });
+
+  test("escolher uma opção atualiza o ledger de crédito", async ({ page }) => {
+    await gotoComoCliente(page, VINCULOS.aurora, "/selecao/piso_sala");
+    await page.click('button:has-text("Porcelanato Portobello Premium 80×80")');
+    await expect(page.getByText("Impacto no ledger de crédito")).toBeVisible();
+    await expect(page.getByText("−R$ 8.500,00").or(page.getByText("−R$ 8.500"))).toBeVisible();
+  });
+});
