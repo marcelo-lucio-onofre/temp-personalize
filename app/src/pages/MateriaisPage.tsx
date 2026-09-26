@@ -8,6 +8,7 @@ import { Modal } from "../components/Modal";
 import { ConfirmDialog } from "../components/ConfirmDialog";
 import { FormField } from "../components/FormField";
 import { useToast } from "../components/Toast";
+import { registrarVisualizacao } from "../lib/analytics";
 
 // Carregado sob demanda — puxa three.js/R3F/model-viewer, ~400KB, só quando
 // o modal com foto cadastrada é aberto (a maioria das páginas nunca precisa
@@ -331,7 +332,14 @@ export function MateriaisPage() {
                   <button type="button" className={previewModo === "3d" ? "btn btn--sm btn--primary" : "btn btn--sm"} onClick={() => setPreviewModo("3d")}>
                     <Box size={14} /> Preview 3D
                   </button>
-                  <button type="button" className={previewModo === "ar" ? "btn btn--sm btn--primary" : "btn btn--sm"} onClick={() => setPreviewModo("ar")}>
+                  <button
+                    type="button"
+                    className={previewModo === "ar" ? "btn btn--sm btn--primary" : "btn btn--sm"}
+                    onClick={() => {
+                      if (previewModo !== "ar" && modal.id) registrarVisualizacao({ nome: "preview_ar_material_catalogo", materialId: modal.id, modelo: modal.modelo });
+                      setPreviewModo("ar");
+                    }}
+                  >
                     <Smartphone size={14} /> Ver em AR
                   </button>
                 </div>

@@ -31,18 +31,15 @@ export function MaterialARSwatch({
 
   useEffect(() => {
     let cancelado = false;
-    let urlGerada: string | null = null;
     setGlbUrl(null);
     setErro(false);
 
+    // gerarGlbAmostraMaterial cacheia por material — reabrir o AR do mesmo
+    // material (fechar/abrir, trocar de opção e voltar) é instantâneo, e a
+    // URL retornada não deve ser revogada aqui (ver lib/materialGlb).
     gerarGlbAmostraMaterial(imagemUrl, { roughness, metalness })
       .then((url) => {
-        if (cancelado) {
-          URL.revokeObjectURL(url);
-          return;
-        }
-        urlGerada = url;
-        setGlbUrl(url);
+        if (!cancelado) setGlbUrl(url);
       })
       .catch(() => {
         if (!cancelado) setErro(true);
@@ -50,7 +47,6 @@ export function MaterialARSwatch({
 
     return () => {
       cancelado = true;
-      if (urlGerada) URL.revokeObjectURL(urlGerada);
     };
   }, [imagemUrl, roughness, metalness]);
 

@@ -4,6 +4,7 @@ import { Box, Smartphone } from "lucide-react";
 import { Breadcrumb } from "../components/Breadcrumb";
 import { PrazoBadge } from "../components/Badge";
 import { fmtBRL, fmtSigned, saldoAllowanceGroup } from "../domain/calculations";
+import { registrarVisualizacao } from "../lib/analytics";
 import { useApp } from "../state/AppContext";
 import type { Opcao } from "../domain/types";
 
@@ -110,7 +111,12 @@ export function SelecaoPage() {
             type="button"
             className="row"
             style={{ justifyContent: "space-between", alignItems: "center", width: "100%", padding: 14, background: "transparent", border: "none", cursor: "pointer" }}
-            onClick={() => setShowAmbiente3D((v) => !v)}
+            onClick={() => {
+              setShowAmbiente3D((v) => {
+                if (!v) registrarVisualizacao({ nome: "preview_3d_ambiente", ambiente: ambiente.nome });
+                return !v;
+              });
+            }}
           >
             <div style={{ fontWeight: 700, fontSize: 14 }}>
               <Box size={15} style={{ marginRight: 6, verticalAlign: -2 }} />
@@ -199,14 +205,22 @@ export function SelecaoPage() {
                         <button
                           type="button"
                           className="btn btn--sm"
-                          onClick={(e) => { e.stopPropagation(); setPreview(modoAberto === "3d" ? null : { optId: opt.id, modo: "3d" }); }}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            if (modoAberto !== "3d") registrarVisualizacao({ nome: "preview_3d_opcao", ambiente: ambiente.nome, item: item.nome, opcao: opt.nome });
+                            setPreview(modoAberto === "3d" ? null : { optId: opt.id, modo: "3d" });
+                          }}
                         >
                           <Box size={14} /> {modoAberto === "3d" ? "Ocultar 3D" : "Ver em 3D"}
                         </button>
                         <button
                           type="button"
                           className="btn btn--sm"
-                          onClick={(e) => { e.stopPropagation(); setPreview(modoAberto === "ar" ? null : { optId: opt.id, modo: "ar" }); }}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            if (modoAberto !== "ar") registrarVisualizacao({ nome: "preview_ar_opcao", ambiente: ambiente.nome, item: item.nome, opcao: opt.nome });
+                            setPreview(modoAberto === "ar" ? null : { optId: opt.id, modo: "ar" });
+                          }}
                         >
                           <Smartphone size={14} /> {modoAberto === "ar" ? "Ocultar AR" : "Ver em AR"}
                         </button>
