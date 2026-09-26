@@ -300,6 +300,20 @@ export const ambientes: Ambiente[] = [
     nome: "Banheiro Suíte",
     itens: [
       {
+        id: "piso_banheiro",
+        nome: "Piso",
+        nivel: 1,
+        padrao: "Porcelanato Antiderrapante Bege",
+        valorPadrao: 1900,
+        prazoInicio: "01/09/2026",
+        prazoFim: "20/10/2026",
+        opcoes: [
+          { id: "psb1", nome: "Porcelanato Antiderrapante Bege", preco: 1900, padrao: true },
+          { id: "psb2", nome: "Porcelanato Antiderrapante Areia", preco: 2300, materialCatalogItemId: "mc-011" },
+          { id: "psb0", nome: "Remover item (gera crédito)", preco: 0, remocao: true },
+        ],
+      },
+      {
         id: "revestimento",
         nome: "Revestimento",
         nivel: 1,
@@ -309,7 +323,7 @@ export const ambientes: Ambiente[] = [
         prazoFim: "20/10/2026",
         opcoes: [
           { id: "rv1", nome: "Porcelanato Acetinado Bege", preco: 2400, padrao: true },
-          { id: "rv2", nome: "Porcelanato Off-White Grande Formato", preco: 3600 },
+          { id: "rv2", nome: "Porcelanato Off-White Grande Formato", preco: 3600, materialCatalogItemId: "mc-012" },
           { id: "rv0", nome: "Remover item (gera crédito)", preco: 0, remocao: true },
         ],
       },
@@ -609,6 +623,32 @@ export const materialCatalogInicial: MaterialCatalogItem[] = [
   { id: "mc-002", construtoraId: "00001", categoriaId: categoriaId("00001", "Bancada"), marcaId: marcaId("00001", "Dekton"), fornecedorId: "forn-002", modelo: "Sirius", sku: "DKT-SIRIUS", imagemUrl: null },
   { id: "mc-003", construtoraId: "00001", categoriaId: categoriaId("00001", "Louças e Metais"), marcaId: marcaId("00001", "Docol"), fornecedorId: "forn-003", modelo: "Benefit Black", sku: "DOC-BEN-BLK", imagemUrl: null },
   { id: "mc-004", construtoraId: "00001", categoriaId: categoriaId("00001", "Cuba"), marcaId: marcaId("00001", "Tramontina"), fornecedorId: "forn-004", modelo: "Morgana Dupla + Gourmet", sku: "TRAM-MORG-DP", imagemUrl: null },
+  {
+    id: "mc-011",
+    construtoraId: "00001",
+    categoriaId: categoriaId("00001", "Piso"),
+    marcaId: marcaId("00001", "Eliane"),
+    fornecedorId: "forn-001",
+    modelo: "Antiderrapante Areia",
+    sku: "ELI-ANTID-AREIA",
+    imagemUrl:
+      "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNTYiIGhlaWdodD0iMjU2Ij48cmVjdCB3aWR0aD0iMjU2IiBoZWlnaHQ9IjI1NiIgZmlsbD0iI2EzOTA2ZCIvPjxyZWN0IHg9IjIiIHk9IjIiIHdpZHRoPSI2MCIgaGVpZ2h0PSI2MCIgZmlsbD0iI2NiYjg5NiIvPjxyZWN0IHg9IjY2IiB5PSIyIiB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIGZpbGw9IiNkMWJmYTAiLz48cmVjdCB4PSIxMzAiIHk9IjIiIHdpZHRoPSI2MCIgaGVpZ2h0PSI2MCIgZmlsbD0iI2M2YjI4YyIvPjxyZWN0IHg9IjE5NCIgeT0iMiIgd2lkdGg9IjYwIiBoZWlnaHQ9IjYwIiBmaWxsPSIjY2ZiYzk4Ii8+PHJlY3QgeD0iMiIgeT0iNjYiIHdpZHRoPSI2MCIgaGVpZ2h0PSI2MCIgZmlsbD0iI2QxYmZhMCIvPjxyZWN0IHg9IjY2IiB5PSI2NiIgd2lkdGg9IjYwIiBoZWlnaHQ9IjYwIiBmaWxsPSIjYzZiMjhjIi8+PHJlY3QgeD0iMTMwIiB5PSI2NiIgd2lkdGg9IjYwIiBoZWlnaHQ9IjYwIiBmaWxsPSIjY2ZiYzk4Ii8+PHJlY3QgeD0iMTk0IiB5PSI2NiIgd2lkdGg9IjYwIiBoZWlnaHQ9IjYwIiBmaWxsPSIjY2JiODk2Ii8+PHJlY3QgeD0iMiIgeT0iMTMwIiB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIGZpbGw9IiNjNmIyOGMiLz48cmVjdCB4PSI2NiIgeT0iMTMwIiB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIGZpbGw9IiNjZmJjOTgiLz48cmVjdCB4PSIxMzAiIHk9IjEzMCIgd2lkdGg9IjYwIiBoZWlnaHQ9IjYwIiBmaWxsPSIjY2JiODk2Ii8+PHJlY3QgeD0iMTk0IiB5PSIxMzAiIHdpZHRoPSI2MCIgaGVpZ2h0PSI2MCIgZmlsbD0iI2QxYmZhMCIvPjxyZWN0IHg9IjIiIHk9IjE5NCIgd2lkdGg9IjYwIiBoZWlnaHQ9IjYwIiBmaWxsPSIjY2ZiYzk4Ii8+PHJlY3QgeD0iNjYiIHk9IjE5NCIgd2lkdGg9IjYwIiBoZWlnaHQ9IjYwIiBmaWxsPSIjY2JiODk2Ii8+PHJlY3QgeD0iMTMwIiB5PSIxOTQiIHdpZHRoPSI2MCIgaGVpZ2h0PSI2MCIgZmlsbD0iI2QxYmZhMCIvPjxyZWN0IHg9IjE5NCIgeT0iMTk0IiB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIGZpbGw9IiNjNmIyOGMiLz48L3N2Zz4=",
+    roughness: 0.6,
+    metalness: 0,
+  },
+  {
+    id: "mc-012",
+    construtoraId: "00001",
+    categoriaId: categoriaId("00001", "Revestimento"),
+    marcaId: marcaId("00001", "Portobello"),
+    fornecedorId: "forn-001",
+    modelo: "Off-White Grande Formato",
+    sku: "PTB-OFFW-GF",
+    imagemUrl:
+      "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNTYiIGhlaWdodD0iMjU2Ij48cmVjdCB3aWR0aD0iMjU2IiBoZWlnaHQ9IjI1NiIgZmlsbD0iI2Q4ZDVjYiIvPjxyZWN0IHg9Ii02MiIgeT0iMiIgd2lkdGg9IjYwIiBoZWlnaHQ9IjYwIiBmaWxsPSIjZjJmMGVhIi8+PHJlY3QgeD0iMiIgeT0iMiIgd2lkdGg9IjYwIiBoZWlnaHQ9IjYwIiBmaWxsPSIjZjJmMGVhIi8+PHJlY3QgeD0iNjYiIHk9IjIiIHdpZHRoPSI2MCIgaGVpZ2h0PSI2MCIgZmlsbD0iI2YyZjBlYSIvPjxyZWN0IHg9IjEzMCIgeT0iMiIgd2lkdGg9IjYwIiBoZWlnaHQ9IjYwIiBmaWxsPSIjZjJmMGVhIi8+PHJlY3QgeD0iMTk0IiB5PSIyIiB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIGZpbGw9IiNmMmYwZWEiLz48cmVjdCB4PSIyNTgiIHk9IjIiIHdpZHRoPSI2MCIgaGVpZ2h0PSI2MCIgZmlsbD0iI2YyZjBlYSIvPjxyZWN0IHg9Ii0zMCIgeT0iNjYiIHdpZHRoPSI2MCIgaGVpZ2h0PSI2MCIgZmlsbD0iI2YyZjBlYSIvPjxyZWN0IHg9IjM0IiB5PSI2NiIgd2lkdGg9IjYwIiBoZWlnaHQ9IjYwIiBmaWxsPSIjZjJmMGVhIi8+PHJlY3QgeD0iOTgiIHk9IjY2IiB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIGZpbGw9IiNmMmYwZWEiLz48cmVjdCB4PSIxNjIiIHk9IjY2IiB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIGZpbGw9IiNmMmYwZWEiLz48cmVjdCB4PSIyMjYiIHk9IjY2IiB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIGZpbGw9IiNmMmYwZWEiLz48cmVjdCB4PSIyOTAiIHk9IjY2IiB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIGZpbGw9IiNmMmYwZWEiLz48cmVjdCB4PSItNjIiIHk9IjEzMCIgd2lkdGg9IjYwIiBoZWlnaHQ9IjYwIiBmaWxsPSIjZjJmMGVhIi8+PHJlY3QgeD0iMiIgeT0iMTMwIiB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIGZpbGw9IiNmMmYwZWEiLz48cmVjdCB4PSI2NiIgeT0iMTMwIiB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIGZpbGw9IiNmMmYwZWEiLz48cmVjdCB4PSIxMzAiIHk9IjEzMCIgd2lkdGg9IjYwIiBoZWlnaHQ9IjYwIiBmaWxsPSIjZjJmMGVhIi8+PHJlY3QgeD0iMTk0IiB5PSIxMzAiIHdpZHRoPSI2MCIgaGVpZ2h0PSI2MCIgZmlsbD0iI2YyZjBlYSIvPjxyZWN0IHg9IjI1OCIgeT0iMTMwIiB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIGZpbGw9IiNmMmYwZWEiLz48cmVjdCB4PSItMzAiIHk9IjE5NCIgd2lkdGg9IjYwIiBoZWlnaHQ9IjYwIiBmaWxsPSIjZjJmMGVhIi8+PHJlY3QgeD0iMzQiIHk9IjE5NCIgd2lkdGg9IjYwIiBoZWlnaHQ9IjYwIiBmaWxsPSIjZjJmMGVhIi8+PHJlY3QgeD0iOTgiIHk9IjE5NCIgd2lkdGg9IjYwIiBoZWlnaHQ9IjYwIiBmaWxsPSIjZjJmMGVhIi8+PHJlY3QgeD0iMTYyIiB5PSIxOTQiIHdpZHRoPSI2MCIgaGVpZ2h0PSI2MCIgZmlsbD0iI2YyZjBlYSIvPjxyZWN0IHg9IjIyNiIgeT0iMTk0IiB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIGZpbGw9IiNmMmYwZWEiLz48cmVjdCB4PSIyOTAiIHk9IjE5NCIgd2lkdGg9IjYwIiBoZWlnaHQ9IjYwIiBmaWxsPSIjZjJmMGVhIi8+PC9zdmc+",
+    roughness: 0.3,
+    metalness: 0.05,
+  },
   { id: "mc-005", construtoraId: "00003", categoriaId: categoriaId("00003", "Piso"), marcaId: marcaId("00003", "Portobello"), fornecedorId: "forn-005", modelo: "Marmorizado Extra", sku: "PTB-MARM-EX", imagemUrl: null },
   { id: "mc-006", construtoraId: "00003", categoriaId: categoriaId("00003", "Revestimento"), marcaId: marcaId("00003", "Portobello"), fornecedorId: "forn-005", modelo: "Off-White Grande Formato", sku: "PTB-OFFW-GF", imagemUrl: null },
   { id: "mc-007", construtoraId: "00003", categoriaId: categoriaId("00003", "Bancada"), marcaId: marcaId("00003", "Silestone"), fornecedorId: "forn-006", modelo: "Branco Ibiza", sku: "QRTZ-IBIZA", imagemUrl: null },

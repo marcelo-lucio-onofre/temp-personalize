@@ -8,20 +8,33 @@ import { useApp } from "../state/AppContext";
 import type { Opcao } from "../domain/types";
 
 // Carregado sob demanda — puxa three.js/R3F, só quando o cliente pede pra
-// ver uma opção em 3D.
+// ver uma opção (ou o ambiente inteiro) em 3D.
 const Material3DPreview = lazy(() => import("../components/Material3DPreview").then((m) => ({ default: m.Material3DPreview })));
+const AmbienteConfigurador3D = lazy(() => import("../components/AmbienteConfigurador3D").then((m) => ({ default: m.AmbienteConfigurador3D })));
+
+/** Nomes de categoria que o configurador 3D do ambiente sabe desenhar —
+ * ver CATEGORIAS_MATERIAL em domain/catalogoReferencia.ts. Um item cujo
+ * material caia numa categoria fora dessa lista (ex.: Louças e Metais)
+ * simplesmente não aparece na cena — não é um erro. */
+type SuperficieCategoria = "Piso" | "Revestimento" | "Bancada";
 
 export function SelecaoPage() {
   const { itemId } = useParams<{ itemId: string }>();
-  const { catalogo, catalogoMateriais, activeVinculo, vinculoChoices: choices, chooseOption } = useApp();
+  const { catalogo, catalogoMateriais, catalogoCategorias, activeVinculo, vinculoChoices: choices, chooseOption } = useApp();
   const allowanceGroups = activeVinculo ? catalogo.getAllowanceGroups(activeVinculo.id) : [];
   const navigate = useNavigate();
   const [preview3dOptId, setPreview3dOptId] = useState<string | null>(null);
+  const [showAmbiente3D, setShowAmbiente3D] = useState(false);
 
   const materiaisPorId = useMemo(() => {
     if (!activeVinculo) return new Map<string, ReturnType<typeof catalogoMateriais.list>[number]>();
     return new Map(catalogoMateriais.list(activeVinculo.construtoraId).map((m) => [m.id, m]));
   }, [catalogoMateriais, activeVinculo]);
+
+  const categoriaNomePorId = useMemo(() => {
+    if (!activeVinculo) return new Map<string, string>();
+    return new Map(catalogoCategorias.list(activeVinculo.construtoraId).map((c) => [c.id, c.nome]));
+  }, [catalogoCategorias, activeVinculo]);
 
   function materialDaOpcao(opt: Opcao) {
     if (!opt.materialCatalogItemId) return undefined;
@@ -43,6 +56,29 @@ export function SelecaoPage() {
   const allowanceGroup = allowanceGroups.find((g) => g.id === item.allowanceGroupId);
   const itensDoGrupo = allowanceGroup ? ambiente.itens.filter((i) => allowanceGroup.itemIds.includes(i.id)) : [];
 
+  /** Varre todos os itens do ambiente (não só o item desta página) e pega,
+   * pra cada categoria de superfície, o material da opção já escolhida —
+   * é isso que deixa o configurador do ambiente reagir a piso + revestimento
+   * juntos, mesmo escolhidos em páginas de item diferentes. */
+  function superficieDaCategoria(categoria: SuperficieCategoria) {
+    for (const it of ambiente.itens) {
+      const escolhidoId = choices[it.id] ?? it.opcoes.find((o) => o.padrao)?.id;
+      const opt = it.opcoes.find((o) => o.id === escolhidoId);
+      const material = opt?.materialCatalogItemId ? materiaisPorId.get(opt.materialCatalogItemId) : undefined;
+      if (material?.imagemUrl && categoriaNomePorId.get(material.categoriaId) === categoria) {
+        return { imagemUrl: material.imagemUrl, roughness: material.roughness, metalness: material.metalness, nome: material.modelo };
+      }
+    }
+    return undefined;
+  }
+
+  const superficiesAmbiente = {
+    piso: superficieDaCategoria("Piso"),
+    revestimento: superficieDaCategoria("Revestimento"),
+    bancada: superficieDaCategoria("Bancada"),
+  };
+  const temSuperficieComFoto = Boolean(superficiesAmbiente.piso || superficiesAmbiente.revestimento || superficiesAmbiente.bancada);
+
   const chosenId = choices[item.id] ?? item.opcoes.find((o) => o.padrao)?.id;
   const custoOpcao = item.opcoes.find((o) => o.id === chosenId)?.preco ?? 0;
   const custoArt = item.requerArt ? (item.custoArt ?? 0) : 0;
@@ -63,6 +99,36 @@ export function SelecaoPage() {
           <span style={{ fontSize: 13, color: "var(--ink-soft)" }}>Material leva {item.leadTimeDias} dias para chegar após aprovação.</span>
         )}
       </div>
+
+      {temSuperficieComFoto && (
+        <div className="card" style={{ padding: 0, marginBottom: 24, overflow: "hidden" }}>
+          <button
+            type="button"
+            className="row"
+            style={{ justifyContent: "space-between", alignItems: "center", width: "100%", padding: 14, background: "transparent", border: "none", cursor: "pointer" }}
+            onClick={() => setShowAmbiente3D((v) => !v)}
+          >
+            <div style={{ fontWeight: 700, fontSize: 14 }}>
+              <Box size={15} style={{ marginRight: 6, verticalAlign: -2 }} />
+              Ver {ambiente.nome} completo em 3D
+            </div>
+            <span className="text-soft" style={{ fontSize: 12.5 }}>{showAmbiente3D ? "Ocultar" : "Mostrar"}</span>
+          </button>
+          {showAmbiente3D && (
+            <div style={{ padding: "0 14px 14px" }}>
+              <Suspense fallback={<div className="text-soft" style={{ fontSize: 12.5, padding: 12 }}>Carregando ambiente 3D…</div>}>
+                <AmbienteConfigurador3D
+                  ambienteNome={ambiente.nome}
+                  piso={superficiesAmbiente.piso}
+                  revestimento={superficiesAmbiente.revestimento}
+                  bancada={superficiesAmbiente.bancada}
+                  height={280}
+                />
+              </Suspense>
+            </div>
+          )}
+        </div>
+      )}
 
       {(() => {
         const emUso = Boolean(choices[item.id]);
