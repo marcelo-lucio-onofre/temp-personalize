@@ -1,16 +1,19 @@
 import { lazy, Suspense, useMemo, useState } from "react";
 import { Link, Navigate, useNavigate, useParams } from "react-router-dom";
-import { Box } from "lucide-react";
+import { Box, Smartphone } from "lucide-react";
 import { Breadcrumb } from "../components/Breadcrumb";
 import { PrazoBadge } from "../components/Badge";
 import { fmtBRL, fmtSigned, saldoAllowanceGroup } from "../domain/calculations";
 import { useApp } from "../state/AppContext";
 import type { Opcao } from "../domain/types";
 
-// Carregado sob demanda — puxa three.js/R3F, só quando o cliente pede pra
-// ver uma opção (ou o ambiente inteiro) em 3D.
+// Carregado sob demanda — puxa three.js/R3F/model-viewer, só quando o
+// cliente pede pra ver uma opção (ou o ambiente inteiro) em 3D/AR.
 const Material3DPreview = lazy(() => import("../components/Material3DPreview").then((m) => ({ default: m.Material3DPreview })));
 const AmbienteConfigurador3D = lazy(() => import("../components/AmbienteConfigurador3D").then((m) => ({ default: m.AmbienteConfigurador3D })));
+const MaterialARSwatch = lazy(() => import("../components/MaterialARSwatch").then((m) => ({ default: m.MaterialARSwatch })));
+
+type Preview = { optId: string; modo: "3d" | "ar" } | null;
 
 /** Nomes de categoria que o configurador 3D do ambiente sabe desenhar —
  * ver CATEGORIAS_MATERIAL em domain/catalogoReferencia.ts. Um item cujo
@@ -23,7 +26,7 @@ export function SelecaoPage() {
   const { catalogo, catalogoMateriais, catalogoCategorias, activeVinculo, vinculoChoices: choices, chooseOption } = useApp();
   const allowanceGroups = activeVinculo ? catalogo.getAllowanceGroups(activeVinculo.id) : [];
   const navigate = useNavigate();
-  const [preview3dOptId, setPreview3dOptId] = useState<string | null>(null);
+  const [preview, setPreview] = useState<Preview>(null);
   const [showAmbiente3D, setShowAmbiente3D] = useState(false);
 
   const materiaisPorId = useMemo(() => {
@@ -39,7 +42,8 @@ export function SelecaoPage() {
   function materialDaOpcao(opt: Opcao) {
     if (!opt.materialCatalogItemId) return undefined;
     const material = materiaisPorId.get(opt.materialCatalogItemId);
-    return material?.imagemUrl ? material : undefined;
+    if (!material?.imagemUrl) return undefined;
+    return { ...material, imagemUrl: material.imagemUrl };
   }
 
   const found = useMemo(() => {
@@ -159,7 +163,7 @@ export function SelecaoPage() {
                 const diffLabel = opt.remocao ? "+" + fmtBRL(item.valorPadrao) : diff !== 0 ? fmtSigned(diff) : null;
                 const diffColor = opt.remocao || diff < 0 ? "var(--green-ink)" : "var(--red-ink)";
                 const material = materialDaOpcao(opt);
-                const previewAberto = preview3dOptId === opt.id;
+                const modoAberto = preview?.optId === opt.id ? preview.modo : null;
                 return (
                   <div key={opt.id} className="card" style={{ padding: 0, border: sel ? "2px solid var(--brand)" : "2px solid var(--rule)", background: sel ? "var(--green-bg)" : "#fff" }}>
                   <button
@@ -191,17 +195,30 @@ export function SelecaoPage() {
                   </button>
                   {material && (
                     <div style={{ padding: "0 14px 14px" }}>
-                      <button
-                        type="button"
-                        className="btn btn--sm"
-                        style={{ marginBottom: previewAberto ? 10 : 0 }}
-                        onClick={(e) => { e.stopPropagation(); setPreview3dOptId(previewAberto ? null : opt.id); }}
-                      >
-                        <Box size={14} /> {previewAberto ? "Ocultar preview 3D" : "Ver em 3D"}
-                      </button>
-                      {previewAberto && (
+                      <div className="row gap-sm" style={{ marginBottom: modoAberto ? 10 : 0 }}>
+                        <button
+                          type="button"
+                          className="btn btn--sm"
+                          onClick={(e) => { e.stopPropagation(); setPreview(modoAberto === "3d" ? null : { optId: opt.id, modo: "3d" }); }}
+                        >
+                          <Box size={14} /> {modoAberto === "3d" ? "Ocultar 3D" : "Ver em 3D"}
+                        </button>
+                        <button
+                          type="button"
+                          className="btn btn--sm"
+                          onClick={(e) => { e.stopPropagation(); setPreview(modoAberto === "ar" ? null : { optId: opt.id, modo: "ar" }); }}
+                        >
+                          <Smartphone size={14} /> {modoAberto === "ar" ? "Ocultar AR" : "Ver em AR"}
+                        </button>
+                      </div>
+                      {modoAberto === "3d" && (
                         <Suspense fallback={<div className="text-soft" style={{ fontSize: 12.5, padding: 12 }}>Carregando preview 3D…</div>}>
                           <Material3DPreview imagemUrl={material.imagemUrl} roughness={material.roughness} metalness={material.metalness} height={200} />
+                        </Suspense>
+                      )}
+                      {modoAberto === "ar" && (
+                        <Suspense fallback={<div className="text-soft" style={{ fontSize: 12.5, padding: 12 }}>Preparando visualização em AR…</div>}>
+                          <MaterialARSwatch imagemUrl={material.imagemUrl} nome={opt.nome} roughness={material.roughness} metalness={material.metalness} height={280} />
                         </Suspense>
                       )}
                     </div>

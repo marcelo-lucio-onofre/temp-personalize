@@ -1,6 +1,6 @@
 import { lazy, Suspense, useState } from "react";
 import { Link } from "react-router-dom";
-import { Pencil, Plus, Trash2, ImageOff } from "lucide-react";
+import { Pencil, Plus, Trash2, ImageOff, Box, Smartphone } from "lucide-react";
 import { PageHeader } from "../components/PageHeader";
 import { DataTable } from "../components/DataTable";
 import { FilterBar, textMatch } from "../components/FilterBar";
@@ -9,9 +9,11 @@ import { ConfirmDialog } from "../components/ConfirmDialog";
 import { FormField } from "../components/FormField";
 import { useToast } from "../components/Toast";
 
-// Carregado sob demanda — puxa three.js/R3F, ~400KB, só quando o modal com
-// foto cadastrada é aberto (a maioria das páginas nunca precisa desse peso).
+// Carregado sob demanda — puxa three.js/R3F/model-viewer, ~400KB, só quando
+// o modal com foto cadastrada é aberto (a maioria das páginas nunca precisa
+// desse peso).
 const Material3DPreview = lazy(() => import("../components/Material3DPreview").then((m) => ({ default: m.Material3DPreview })));
+const MaterialARSwatch = lazy(() => import("../components/MaterialARSwatch").then((m) => ({ default: m.MaterialARSwatch })));
 import { useApp } from "../state/AppContext";
 import { materiaisEmUsoIds } from "../domain/usage";
 import { required } from "../domain/validation";
@@ -46,6 +48,7 @@ export function MateriaisPage() {
   const [marcaFiltro, setMarcaFiltro] = useState("");
   const [fornecedorFiltro, setFornecedorFiltro] = useState("");
   const [modal, setModal] = useState<Draft | null>(null);
+  const [previewModo, setPreviewModo] = useState<"3d" | "ar">("3d");
   const [excluindo, setExcluindo] = useState<MaterialCatalogItem | null>(null);
 
   const categoriaNome = (id: string) => categorias.find((c) => c.id === id)?.nome ?? "?";
@@ -61,6 +64,7 @@ export function MateriaisPage() {
   );
 
   function abrirCriar() {
+    setPreviewModo("3d");
     setModal({
       categoriaId: categorias[0]?.id ?? "",
       marcaId: marcas[0]?.id ?? "",
@@ -74,6 +78,7 @@ export function MateriaisPage() {
     });
   }
   function abrirEditar(m: MaterialCatalogItem) {
+    setPreviewModo("3d");
     setModal({
       id: m.id,
       categoriaId: m.categoriaId,
@@ -322,9 +327,23 @@ export function MateriaisPage() {
                     />
                   </FormField>
                 </div>
-                <Suspense fallback={<div className="text-soft" style={{ fontSize: 12.5, padding: 12 }}>Carregando preview 3D…</div>}>
-                  <Material3DPreview imagemUrl={modal.imagemUrl} roughness={modal.roughness} metalness={modal.metalness} height={200} />
-                </Suspense>
+                <div className="row gap-sm" style={{ marginBottom: 10 }}>
+                  <button type="button" className={previewModo === "3d" ? "btn btn--sm btn--primary" : "btn btn--sm"} onClick={() => setPreviewModo("3d")}>
+                    <Box size={14} /> Preview 3D
+                  </button>
+                  <button type="button" className={previewModo === "ar" ? "btn btn--sm btn--primary" : "btn btn--sm"} onClick={() => setPreviewModo("ar")}>
+                    <Smartphone size={14} /> Ver em AR
+                  </button>
+                </div>
+                {previewModo === "3d" ? (
+                  <Suspense fallback={<div className="text-soft" style={{ fontSize: 12.5, padding: 12 }}>Carregando preview 3D…</div>}>
+                    <Material3DPreview imagemUrl={modal.imagemUrl} roughness={modal.roughness} metalness={modal.metalness} height={200} />
+                  </Suspense>
+                ) : (
+                  <Suspense fallback={<div className="text-soft" style={{ fontSize: 12.5, padding: 12 }}>Preparando visualização em AR…</div>}>
+                    <MaterialARSwatch imagemUrl={modal.imagemUrl} nome={modal.modelo || "Material"} roughness={modal.roughness} metalness={modal.metalness} height={280} />
+                  </Suspense>
+                )}
               </>
             )}
 
