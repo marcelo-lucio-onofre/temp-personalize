@@ -5,14 +5,39 @@ import { Mesh, SRGBColorSpace, type Texture } from "three";
 import { KTX2Loader } from "three-stdlib";
 import { Box } from "lucide-react";
 
-// Modelo real (não placeholder): cadeira licenciada CC0 do repositório
-// oficial de amostras da Khronos (glTF-Sample-Assets), comprimida com
-// Draco (geometria) + KTX2/Basis Universal ETC1S (textura) — ver
-// scripts/compress-model.mjs. 3,93MB -> 0,69MB (82% menor). Os decoders
-// (public/decoders/) são os mesmos que o three.js usa em produção.
-const MODELO_CADEIRA_URL = "/models/sheen-chair.glb";
+// Mobília real (não placeholder): modelos licenciados do repositório oficial
+// de amostras da Khronos (glTF-Sample-Assets), baixados com
+// scripts/fetch-sample-assets.mjs e comprimidos com Draco (geometria) +
+// KTX2/Basis Universal ETC1S (textura) via scripts/compress-model.mjs. Os
+// decoders (public/decoders/) são os mesmos que o three.js usa em produção
+// — nada depende de CDN externo em runtime.
 const DRACO_DECODER_PATH = "/decoders/draco/";
 const KTX2_TRANSCODER_PATH = "/decoders/basis/";
+
+interface ModeloReferencia {
+  url: string;
+  /** Redução real medida (original -> comprimido), ver scripts/compress-model.mjs. */
+  reducao: string;
+  credito: string;
+}
+
+const MODELOS: Record<"cadeira" | "sofa" | "geladeira", ModeloReferencia> = {
+  cadeira: {
+    url: "/models/sheen-chair.glb",
+    reducao: "3,93MB → 0,69MB (−82%)",
+    credito: "Cadeira: Eric Chadwick/Wayfair, CC0 — glTF-Sample-Assets (Khronos)",
+  },
+  sofa: {
+    url: "/models/sheen-sofa.glb",
+    reducao: "10,11MB → 3,57MB (−63%)",
+    credito: "Sofá: Darmstadt Graphics Group/Fran Calvente, CC-BY 4.0 — glTF-Sample-Assets (Khronos)",
+  },
+  geladeira: {
+    url: "/models/commercial-refrigerator.glb",
+    reducao: "9,66MB → 3,33MB (−66%)",
+    credito: "Geladeira: Darmstadt Graphics Group/Sean Thomas, CC-BY 4.0 — glTF-Sample-Assets (Khronos)",
+  },
+};
 
 const ROOM_W = 5;
 const ROOM_D = 3.6;
@@ -87,9 +112,21 @@ function Superficie(props: {
   return material ? <SuperficieComFoto {...rest} material={material} repeatScale={repeatScale} /> : <SuperficieNeutra {...rest} />;
 }
 
-/** Carrega o .glb real da cadeira (Draco + KTX2) com os decoders locais —
- * é a mesma configuração que qualquer modelo de ambiente real usaria. */
-function CadeiraReferencia({ position, rotationY = 0 }: { position: [number, number, number]; rotationY?: number }) {
+/** Carrega um .glb real (Draco + KTX2) com os decoders locais — mesma
+ * configuração que qualquer modelo de ambiente real usaria. Componente
+ * próprio (não condicional) porque useGLTF não pode ser chamado
+ * condicionalmente, igual ao motivo do SuperficieComFoto acima. */
+function ModeloReal({
+  modelo,
+  position,
+  rotationY = 0,
+  scale = 1,
+}: {
+  modelo: ModeloReferencia;
+  position: [number, number, number];
+  rotationY?: number;
+  scale?: number;
+}) {
   const { gl } = useThree();
   const extendLoader = useMemo(
     () => (loader: Parameters<NonNullable<Parameters<typeof useGLTF>[3]>>[0]) => {
@@ -98,7 +135,7 @@ function CadeiraReferencia({ position, rotationY = 0 }: { position: [number, num
     },
     [gl],
   );
-  const { scene } = useGLTF(MODELO_CADEIRA_URL, DRACO_DECODER_PATH, false, extendLoader);
+  const { scene } = useGLTF(modelo.url, DRACO_DECODER_PATH, false, extendLoader);
 
   useEffect(() => {
     scene.traverse((obj) => {
@@ -109,18 +146,26 @@ function CadeiraReferencia({ position, rotationY = 0 }: { position: [number, num
     });
   }, [scene]);
 
-  return <primitive object={scene} position={position} rotation={[0, rotationY, 0]} />;
+  return <primitive object={scene} position={position} rotation={[0, rotationY, 0]} scale={scale} />;
 }
 
-/** Peça de mobília só pra dar escala/contexto ao ambiente — a cadeira da
- * "sala" é um .glb real e comprimido (ver CadeiraReferencia); os demais
- * tipos ainda são caixas simples até existir um asset real equivalente
- * (móvel de banheiro/cozinha não tem equivalente CC0 pronto disponível). */
+/** Peça(s) de mobília real pra dar escala/contexto ao ambiente — cada tipo
+ * usa o .glb mais próximo disponível no catálogo CC0/CC-BY da Khronos (ver
+ * MODELOS acima). Sem equivalente pronto pra cama/louça de banheiro nesse
+ * catálogo, então quarto e banheiro ainda usam formas simples. */
 function MobiliaDeReferencia({ tipo }: { tipo: "quarto" | "banheiro" | "cozinha" | "sala" | "generico" }) {
   const cinza = "#d8d4c6";
   const branco = "#ffffff";
   if (tipo === "sala") {
-    return <CadeiraReferencia position={[-1.3, 0, 0.5]} rotationY={Math.PI * 0.2} />;
+    return (
+      <>
+        <ModeloReal modelo={MODELOS.sofa} position={[-1.1, 0, -0.6]} rotationY={Math.PI * 0.08} scale={1.05} />
+        <ModeloReal modelo={MODELOS.cadeira} position={[0.9, 0, 0.7]} rotationY={-Math.PI * 0.35} />
+      </>
+    );
+  }
+  if (tipo === "cozinha") {
+    return <ModeloReal modelo={MODELOS.geladeira} position={[-1.9, 0, -1.5]} rotationY={Math.PI * 0.5} />;
   }
   if (tipo === "quarto") {
     return (
@@ -144,15 +189,15 @@ function MobiliaDeReferencia({ tipo }: { tipo: "quarto" | "banheiro" | "cozinha"
       </mesh>
     );
   }
-  if (tipo === "cozinha") {
-    return (
-      <mesh position={[-1.7, 0.45, -1.5]} castShadow receiveShadow>
-        <boxGeometry args={[2.4, 0.9, 0.6]} />
-        <meshStandardMaterial color={cinza} roughness={0.6} />
-      </mesh>
-    );
-  }
   return null;
+}
+
+/** Créditos dos modelos reais mostrados nesse tipo de ambiente — exigência
+ * de licença (CC-BY pede atribuição; CC0 não exige mas é boa prática). */
+function creditosPorTipo(tipo: "quarto" | "banheiro" | "cozinha" | "sala" | "generico"): ModeloReferencia[] {
+  if (tipo === "sala") return [MODELOS.sofa, MODELOS.cadeira];
+  if (tipo === "cozinha") return [MODELOS.geladeira];
+  return [];
 }
 
 /** Deriva o "tipo" de ambiente pelo nome pra escolher a peça de referência —
@@ -210,9 +255,10 @@ function TextureMaterial({ material }: { material: SuperficieMaterial }) {
  * refletindo as opções já escolhidas pelo cliente em todos os itens do
  * ambiente (não só o item que está sendo editado). O casco do cômodo
  * (piso/paredes) ainda é genérico — um modelo .glb real por planta
- * (arquitetura de verdade) segue como próximo passo, quando existir esse
- * asset; a mobília de referência da sala já usa um .glb real, comprimido
- * com Draco+KTX2 (ver CadeiraReferencia). */
+ * (arquitetura de verdade, a partir da planta baixa de cada empreendimento)
+ * segue como próximo passo, quando existir esse asset; a mobília de
+ * referência de sala e cozinha já usa .glb reais, comprimidos com
+ * Draco+KTX2 (ver MODELOS/ModeloReal acima). */
 export function AmbienteConfigurador3D({
   ambienteNome,
   piso,
@@ -228,6 +274,7 @@ export function AmbienteConfigurador3D({
 }) {
   const tipo = tipoAmbientePorNome(ambienteNome);
   const legendas = [piso && `Piso: ${piso.nome}`, revestimento && `Revestimento: ${revestimento.nome}`, bancada && `Bancada: ${bancada.nome}`].filter(Boolean);
+  const creditos = creditosPorTipo(tipo);
 
   if (!piso && !revestimento && !bancada) {
     return (
@@ -271,6 +318,11 @@ export function AmbienteConfigurador3D({
               {l}
             </div>
           ))}
+        </div>
+      )}
+      {creditos.length > 0 && (
+        <div style={{ padding: "6px 12px", borderTop: "1px solid var(--rule)", fontSize: 10, color: "var(--ink-softer)", lineHeight: 1.5 }}>
+          {creditos.map((c) => c.credito).join(" · ")}
         </div>
       )}
     </div>
