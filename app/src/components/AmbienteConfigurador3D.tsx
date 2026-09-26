@@ -1,8 +1,18 @@
-import { Suspense } from "react";
-import { Canvas } from "@react-three/fiber";
-import { OrbitControls, useTexture } from "@react-three/drei";
-import { SRGBColorSpace, type Texture } from "three";
+import { Suspense, useEffect, useMemo } from "react";
+import { Canvas, useThree } from "@react-three/fiber";
+import { OrbitControls, useTexture, useGLTF } from "@react-three/drei";
+import { Mesh, SRGBColorSpace, type Texture } from "three";
+import { KTX2Loader } from "three-stdlib";
 import { Box } from "lucide-react";
+
+// Modelo real (não placeholder): cadeira licenciada CC0 do repositório
+// oficial de amostras da Khronos (glTF-Sample-Assets), comprimida com
+// Draco (geometria) + KTX2/Basis Universal ETC1S (textura) — ver
+// scripts/compress-model.mjs. 3,93MB -> 0,69MB (82% menor). Os decoders
+// (public/decoders/) são os mesmos que o three.js usa em produção.
+const MODELO_CADEIRA_URL = "/models/sheen-chair.glb";
+const DRACO_DECODER_PATH = "/decoders/draco/";
+const KTX2_TRANSCODER_PATH = "/decoders/basis/";
 
 const ROOM_W = 5;
 const ROOM_D = 3.6;
@@ -77,12 +87,41 @@ function Superficie(props: {
   return material ? <SuperficieComFoto {...rest} material={material} repeatScale={repeatScale} /> : <SuperficieNeutra {...rest} />;
 }
 
-/** Peça de mobília genérica só pra dar escala/contexto ao ambiente — não é
- * um modelo real, é um placeholder até existir um .glb por ambiente (ver
- * plano de implementação, Fase 2 -> Fase 3). */
+/** Carrega o .glb real da cadeira (Draco + KTX2) com os decoders locais —
+ * é a mesma configuração que qualquer modelo de ambiente real usaria. */
+function CadeiraReferencia({ position, rotationY = 0 }: { position: [number, number, number]; rotationY?: number }) {
+  const { gl } = useThree();
+  const extendLoader = useMemo(
+    () => (loader: Parameters<NonNullable<Parameters<typeof useGLTF>[3]>>[0]) => {
+      const ktx2Loader = new KTX2Loader().setTranscoderPath(KTX2_TRANSCODER_PATH).detectSupport(gl);
+      loader.setKTX2Loader(ktx2Loader);
+    },
+    [gl],
+  );
+  const { scene } = useGLTF(MODELO_CADEIRA_URL, DRACO_DECODER_PATH, false, extendLoader);
+
+  useEffect(() => {
+    scene.traverse((obj) => {
+      if (obj instanceof Mesh) {
+        obj.castShadow = true;
+        obj.receiveShadow = true;
+      }
+    });
+  }, [scene]);
+
+  return <primitive object={scene} position={position} rotation={[0, rotationY, 0]} />;
+}
+
+/** Peça de mobília só pra dar escala/contexto ao ambiente — a cadeira da
+ * "sala" é um .glb real e comprimido (ver CadeiraReferencia); os demais
+ * tipos ainda são caixas simples até existir um asset real equivalente
+ * (móvel de banheiro/cozinha não tem equivalente CC0 pronto disponível). */
 function MobiliaDeReferencia({ tipo }: { tipo: "quarto" | "banheiro" | "cozinha" | "sala" | "generico" }) {
   const cinza = "#d8d4c6";
   const branco = "#ffffff";
+  if (tipo === "sala") {
+    return <CadeiraReferencia position={[-1.3, 0, 0.5]} rotationY={Math.PI * 0.2} />;
+  }
   if (tipo === "quarto") {
     return (
       <group>
@@ -110,14 +149,6 @@ function MobiliaDeReferencia({ tipo }: { tipo: "quarto" | "banheiro" | "cozinha"
       <mesh position={[-1.7, 0.45, -1.5]} castShadow receiveShadow>
         <boxGeometry args={[2.4, 0.9, 0.6]} />
         <meshStandardMaterial color={cinza} roughness={0.6} />
-      </mesh>
-    );
-  }
-  if (tipo === "sala") {
-    return (
-      <mesh position={[-1.2, 0.25, 0.3]} castShadow receiveShadow>
-        <boxGeometry args={[1.6, 0.5, 0.7]} />
-        <meshStandardMaterial color={cinza} roughness={0.85} />
       </mesh>
     );
   }
@@ -177,8 +208,11 @@ function TextureMaterial({ material }: { material: SuperficieMaterial }) {
 
 /** Configurador 3D do ambiente inteiro — mostra piso/parede/bancada juntos,
  * refletindo as opções já escolhidas pelo cliente em todos os itens do
- * ambiente (não só o item que está sendo editado). O cômodo em si é
- * genérico (placeholder): um modelo .glb real por planta é a Fase 3. */
+ * ambiente (não só o item que está sendo editado). O casco do cômodo
+ * (piso/paredes) ainda é genérico — um modelo .glb real por planta
+ * (arquitetura de verdade) segue como próximo passo, quando existir esse
+ * asset; a mobília de referência da sala já usa um .glb real, comprimido
+ * com Draco+KTX2 (ver CadeiraReferencia). */
 export function AmbienteConfigurador3D({
   ambienteNome,
   piso,

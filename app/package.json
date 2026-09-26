@@ -7,7 +7,9 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "oxlint",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "assets:fetch": "node scripts/fetch-sample-assets.mjs",
+    "assets:compress": "node scripts/compress-model.mjs assets-source/sheen-chair.original.glb public/models/sheen-chair.glb"
   },
   "dependencies": {
     "@emailjs/browser": "^4.4.1",
@@ -21,10 +23,15 @@
     "three": "^0.186.1"
   },
   "devDependencies": {
+    "@gltf-transform/cli": "^4.5.0",
+    "@gltf-transform/core": "^4.5.0",
+    "@gltf-transform/extensions": "^4.5.0",
+    "@gltf-transform/functions": "^4.5.0",
     "@types/node": "^24.13.3",
     "@types/react": "^19.2.18",
     "@types/react-dom": "^19.2.7",
     "@vitejs/plugin-react": "^6.1.1",
+    "draco3dgltf": "^1.5.7",
     "oxlint": "^1.81.0",
     "playwright": "^1.63.0",
     "typescript": "~6.0.2",
